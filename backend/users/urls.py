@@ -4,6 +4,6 @@ import users.views
 
 
 urlpatterns = [
-    django.urls.path('signin/', users.views.SignUpView.as_view(), name='signin'),
-    django.urls.path('signup/', users.views.SignUpView.as_view(), name='signup'),
+    django.urls.path('login/', users.views.LoginView.as_view(), name='signin'),
+    django.urls.path('register/', users.views.RegisterView.as_view(), name='signup'),
 ]
