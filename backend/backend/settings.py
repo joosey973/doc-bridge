@@ -1,8 +1,9 @@
 from pathlib import Path
+from 
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = 'django-insecure-0qn+j7q@h=aivx&doj83ad#vfap(&x+ao@9akh-x32^1rf2v4@'
+SECRET_KEY = 
 
 DEBUG = True
 
@@ -35,7 +36,7 @@ ROOT_URLCONF = 'backend.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'templates'],
+        'DIRS': [],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
