@@ -7,6 +7,10 @@ import './App.css';
 const API_URL = 'http://localhost:3001';
 
 function App() {
+  // ===== СОСТОЯНИЯ ДЛЯ НАВИГАЦИИ =====
+  const [currentPage, setCurrentPage] = useState('pastes'); // 'pastes' или 'converter'
+
+  // ===== СОСТОЯНИЯ ДЛЯ ПАСТ =====
   const [pastes, setPastes] = useState([]);
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
@@ -19,7 +23,14 @@ function App() {
   const [serverStatus, setServerStatus] = useState('⏳ Проверка...');
   const [selectedPaste, setSelectedPaste] = useState(null);
   
-  // Авторизация
+  // ===== СОСТОЯНИЯ ДЛЯ КОНВЕРТЕРА =====
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [filePreview, setFilePreview] = useState(null);
+  const [convertFrom, setConvertFrom] = useState('pdf');
+  const [convertTo, setConvertTo] = useState('docx');
+  const [isDragging, setIsDragging] = useState(false);
+
+  // ===== АВТОРИЗАЦИЯ =====
   const [token, setToken] = useState(localStorage.getItem('token') || '');
   const [user, setUser] = useState(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
@@ -30,7 +41,7 @@ function App() {
   const [authEmail, setAuthEmail] = useState('');
   const [authError, setAuthError] = useState('');
 
-  // Категории
+  // ===== КАТЕГОРИИ =====
   const categories = [
     { id: 'work', name: '💼 Работа' },
     { id: 'personal', name: '👤 Личная жизнь' },
@@ -41,6 +52,31 @@ function App() {
     { id: 'entertainment', name: '🎬 Развлечения' },
     { id: 'other', name: '📌 Другое' },
   ];
+
+  // ===== ФОРМАТЫ ДЛЯ КОНВЕРТЕРА =====
+  const formats = {
+    pdf: ['docx', 'txt', 'jpg', 'png'],
+    docx: ['pdf', 'txt'],
+    jpg: ['png', 'pdf'],
+    png: ['jpg', 'pdf'],
+    txt: ['pdf', 'docx'],
+  };
+
+  const formatNames = {
+    pdf: '📄 PDF',
+    docx: '📝 DOCX',
+    jpg: '🖼️ JPG',
+    png: '🖼️ PNG',
+    txt: '📃 TXT',
+  };
+
+  const formatExtensions = {
+    pdf: '.pdf',
+    docx: '.docx',
+    jpg: '.jpg',
+    png: '.png',
+    txt: '.txt',
+  };
 
   // ===== АВТОРИЗАЦИЯ =====
   useEffect(() => {
@@ -72,7 +108,6 @@ function App() {
     e.preventDefault();
     setAuthError('');
 
-    // Проверка подтверждения пароля при регистрации
     if (authMode === 'register' && authPassword !== authPasswordConfirm) {
       setAuthError('❌ Пароли не совпадают!');
       return;
@@ -118,7 +153,7 @@ function App() {
     setTimeout(() => setMessage(''), 3000);
   };
 
-  // ===== ОСТАЛЬНЫЕ ФУНКЦИИ =====
+  // ===== ФУНКЦИИ ДЛЯ ПАСТ =====
   useEffect(() => {
     const checkServer = async () => {
       try {
@@ -136,8 +171,10 @@ function App() {
   }, []);
 
   useEffect(() => {
-    fetchPastes();
-  }, []);
+    if (currentPage === 'pastes') {
+      fetchPastes();
+    }
+  }, [currentPage]);
 
   const fetchPastes = async () => {
     try {
@@ -242,6 +279,112 @@ function App() {
     }
   };
 
+  // ===== ФУНКЦИИ ДЛЯ КОНВЕРТЕРА =====
+  const handleFileSelect = (file) => {
+    if (!file) return;
+    
+    // Проверяем расширение
+    const ext = file.name.split('.').pop().toLowerCase();
+    const validExtensions = ['pdf', 'docx', 'jpg', 'jpeg', 'png', 'txt'];
+    
+    if (!validExtensions.includes(ext)) {
+      setMessage('⚠️ Поддерживаются только: PDF, DOCX, JPG, PNG, TXT');
+      setTimeout(() => setMessage(''), 3000);
+      return;
+    }
+
+    // Определяем формат
+    let format = ext;
+    if (ext === 'jpeg') format = 'jpg';
+    
+    setSelectedFile(file);
+    setConvertFrom(format);
+    
+    // Создаем превью
+    const preview = {
+      name: file.name,
+      size: file.size,
+      type: file.type,
+      format: format,
+      lastModified: file.lastModified,
+    };
+    setFilePreview(preview);
+    
+    // Автоматически выбираем формат для конвертации
+    const availableFormats = formats[format] || ['txt'];
+    if (availableFormats.length > 0) {
+      setConvertTo(availableFormats[0]);
+    }
+    
+    setMessage(`✅ Файл "${file.name}" загружен`);
+    setTimeout(() => setMessage(''), 3000);
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    setIsDragging(false);
+    
+    const file = e.dataTransfer.files[0];
+    handleFileSelect(file);
+  };
+
+  const handleFileInput = (e) => {
+    const file = e.target.files[0];
+    handleFileSelect(file);
+  };
+
+  const handleConvert = () => {
+    if (!selectedFile) {
+      setMessage('⚠️ Сначала загрузите файл!');
+      setTimeout(() => setMessage(''), 3000);
+      return;
+    }
+    
+    setMessage(`🔄 Конвертация ${selectedFile.name} из ${convertFrom.toUpperCase()} в ${convertTo.toUpperCase()}... (заглушка)`);
+    setTimeout(() => {
+      setMessage(`✅ Конвертация завершена! (UI-заглушка, логику добавит другой разработчик)`);
+    }, 2000);
+  };
+
+  const formatFileSize = (bytes) => {
+    if (bytes < 1024) return bytes + ' Б';
+    if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' КБ';
+    return (bytes / 1048576).toFixed(1) + ' МБ';
+  };
+
+  const getFileIcon = (format) => {
+    const icons = {
+      pdf: '📄',
+      docx: '📝',
+      jpg: '🖼️',
+      png: '🖼️',
+      txt: '📃'
+    };
+    return icons[format] || '📎';
+  };
+
+  const getFileColor = (format) => {
+    const colors = {
+      pdf: '#e74c3c',
+      docx: '#2980b9',
+      jpg: '#27ae60',
+      png: '#27ae60',
+      txt: '#7f8c8d'
+    };
+    return colors[format] || '#666';
+  };
+
+  // ===== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ =====
   const getTimeAgo = (date) => {
     const diff = Date.now() - new Date(date).getTime();
     const minutes = Math.floor(diff / 60000);
@@ -340,6 +483,20 @@ function App() {
           📦 Doc<span>Bridge</span>
         </div>
         <div className="header-actions">
+          <nav className="nav-menu">
+            <button 
+              className={`nav-btn ${currentPage === 'pastes' ? 'active' : ''}`}
+              onClick={() => setCurrentPage('pastes')}
+            >
+              📝 Пасты
+            </button>
+            <button 
+              className={`nav-btn ${currentPage === 'converter' ? 'active' : ''}`}
+              onClick={() => setCurrentPage('converter')}
+            >
+              🔄 Конвертер
+            </button>
+          </nav>
           <span className={`server-status ${serverStatus.includes('✅') ? 'online' : 'offline'}`}>
             {serverStatus}
           </span>
@@ -435,148 +592,287 @@ function App() {
         </div>
       )}
 
-      <div className="container">
-        <div className="create-paste">
-          <h2>📝 Новая паста</h2>
-          <form onSubmit={submitPaste}>
-            <div className="form-group">
-              <label>Заголовок</label>
-              <input
-                type="text"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder="Название пасты..."
-                maxLength={100}
-              />
-            </div>
-
-            <div className="form-group">
-              <label>Содержимое</label>
-              <textarea
-                value={content}
-                onChange={(e) => setContent(e.target.value)}
-                placeholder="Введите текст или код..."
-                rows={10}
-                required
-              />
-            </div>
-
-            <div className="form-row">
+      {/* ============================================================ */}
+      {/* ===== СТРАНИЦА С ПАСТАМИ ===== */}
+      {/* ============================================================ */}
+      {currentPage === 'pastes' && (
+        <div className="container">
+          <div className="create-paste">
+            <h2>📝 Новая паста</h2>
+            <form onSubmit={submitPaste}>
               <div className="form-group">
-                <label>Тип пасты</label>
-                <select value={category} onChange={(e) => setCategory(e.target.value)}>
-                  {categories.map(cat => (
-                    <option key={cat.id} value={cat.id}>{cat.name}</option>
-                  ))}
-                </select>
-              </div>
-              <div className="form-group">
-                <label>Подсветка</label>
-                <select value={language} onChange={(e) => setLanguage(e.target.value)}>
-                  <option value="javascript">🟨 JavaScript</option>
-                  <option value="python">🐍 Python</option>
-                  <option value="cpp">⚡ C++</option>
-                  <option value="java">☕ Java</option>
-                  <option value="html">🌐 HTML</option>
-                  <option value="css">🎨 CSS</option>
-                  <option value="php">🐘 PHP</option>
-                  <option value="ruby">💎 Ruby</option>
-                  <option value="go">🐹 Go</option>
-                  <option value="rust">🦀 Rust</option>
-                  <option value="sql">🗄️ SQL</option>
-                  <option value="text">📝 Текст</option>
-                </select>
-              </div>
-            </div>
-
-            <div className="form-group">
-              <label>Теги</label>
-              <div className="tags-input">
-                {tags.map((tag, i) => (
-                  <span key={i} className="tag">
-                    #{tag}
-                    <span className="remove" onClick={() => removeTag(i)}>×</span>
-                  </span>
-                ))}
+                <label>Заголовок</label>
                 <input
                   type="text"
-                  value={tagInput}
-                  onChange={(e) => setTagInput(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addTag())}
-                  placeholder="Тег и Enter"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  placeholder="Название пасты..."
+                  maxLength={100}
                 />
               </div>
-            </div>
 
-            {message && <div className={`message ${message.includes('✅') ? 'success' : 'error'}`}>{message}</div>}
+              <div className="form-group">
+                <label>Содержимое</label>
+                <textarea
+                  value={content}
+                  onChange={(e) => setContent(e.target.value)}
+                  placeholder="Введите текст или код..."
+                  rows={10}
+                  required
+                />
+              </div>
 
-            <button type="submit" className="submit-btn" disabled={loading}>
-              {loading ? '⏳ Создание...' : '🚀 Создать пасту'}
-            </button>
-          </form>
-        </div>
-
-        <div className="public-pastes">
-          <h3>
-            📋 Все пасты
-            <span className="count">{pastes.length}</span>
-          </h3>
-          {pastes.length === 0 ? (
-            <div className="empty-state">
-              <span className="icon">📭</span>
-              <p>Нет паст</p>
-              <p style={{ fontSize: '13px', marginTop: '8px' }}>Создайте первую!</p>
-            </div>
-          ) : (
-            pastes.map((paste) => (
-              <div key={paste.id} className="paste-item" onClick={() => openPaste(paste)}>
-                <div className="paste-header">
-                  <div className="paste-title">
-                    <span className="category-icon">{getCategoryIcon(paste.category)}</span>
-                    {paste.title}
-                  </div>
-                  <button 
-                    className="delete-btn" 
-                    onClick={(e) => deletePaste(paste.code, e)}
-                    title="Удалить пасту"
-                  >
-                    🗑️
-                  </button>
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Тип пасты</label>
+                  <select value={category} onChange={(e) => setCategory(e.target.value)}>
+                    {categories.map(cat => (
+                      <option key={cat.id} value={cat.id}>{cat.name}</option>
+                    ))}
+                  </select>
                 </div>
-                <div className="paste-meta">
-                  <span className="lang">{getLanguageIcon(paste.language)} {getLanguageName(paste.language)}</span>
-                  <span className="category">{getCategoryIcon(paste.category)} {getCategoryName(paste.category)}</span>
-                  <span className="user">👤 {paste.username || 'Гость'}</span>
-                  <span className="time">{getTimeAgo(paste.createdAt)}</span>
-                  <span className="size">{formatSize(paste.size)}</span>
-                  {paste.tags.map((t, i) => (
-                    <span key={i} className="tag-badge">#{t}</span>
-                  ))}
-                </div>
-                <div className="paste-preview">
-                  <SyntaxHighlighter
-                    language={paste.language === 'text' ? 'text' : paste.language}
-                    style={atomOneDark}
-                    customStyle={{
-                      fontSize: '12px',
-                      maxHeight: '80px',
-                      margin: 0,
-                      padding: '10px',
-                      borderRadius: '4px',
-                      background: '#1a1a1a',
-                      overflow: 'hidden'
-                    }}
-                    wrapLines={true}
-                  >
-                    {paste.content.slice(0, 300) + (paste.content.length > 300 ? '...' : '')}
-                  </SyntaxHighlighter>
+                <div className="form-group">
+                  <label>Подсветка</label>
+                  <select value={language} onChange={(e) => setLanguage(e.target.value)}>
+                    <option value="javascript">🟨 JavaScript</option>
+                    <option value="python">🐍 Python</option>
+                    <option value="cpp">⚡ C++</option>
+                    <option value="java">☕ Java</option>
+                    <option value="html">🌐 HTML</option>
+                    <option value="css">🎨 CSS</option>
+                    <option value="php">🐘 PHP</option>
+                    <option value="ruby">💎 Ruby</option>
+                    <option value="go">🐹 Go</option>
+                    <option value="rust">🦀 Rust</option>
+                    <option value="sql">🗄️ SQL</option>
+                    <option value="text">📝 Текст</option>
+                  </select>
                 </div>
               </div>
-            ))
-          )}
-        </div>
-      </div>
 
+              <div className="form-group">
+                <label>Теги</label>
+                <div className="tags-input">
+                  {tags.map((tag, i) => (
+                    <span key={i} className="tag">
+                      #{tag}
+                      <span className="remove" onClick={() => removeTag(i)}>×</span>
+                    </span>
+                  ))}
+                  <input
+                    type="text"
+                    value={tagInput}
+                    onChange={(e) => setTagInput(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addTag())}
+                    placeholder="Тег и Enter"
+                  />
+                </div>
+              </div>
+
+              {message && <div className={`message ${message.includes('✅') ? 'success' : 'error'}`}>{message}</div>}
+
+              <button type="submit" className="submit-btn" disabled={loading}>
+                {loading ? '⏳ Создание...' : '🚀 Создать пасту'}
+              </button>
+            </form>
+          </div>
+
+          <div className="public-pastes">
+            <h3>
+              📋 Все пасты
+              <span className="count">{pastes.length}</span>
+            </h3>
+            {pastes.length === 0 ? (
+              <div className="empty-state">
+                <span className="icon">📭</span>
+                <p>Нет паст</p>
+                <p style={{ fontSize: '13px', marginTop: '8px' }}>Создайте первую!</p>
+              </div>
+            ) : (
+              pastes.map((paste) => (
+                <div key={paste.id} className="paste-item" onClick={() => openPaste(paste)}>
+                  <div className="paste-header">
+                    <div className="paste-title">
+                      <span className="category-icon">{getCategoryIcon(paste.category)}</span>
+                      {paste.title}
+                    </div>
+                    <button 
+                      className="delete-btn" 
+                      onClick={(e) => deletePaste(paste.code, e)}
+                      title="Удалить пасту"
+                    >
+                      🗑️
+                    </button>
+                  </div>
+                  <div className="paste-meta">
+                    <span className="lang">{getLanguageIcon(paste.language)} {getLanguageName(paste.language)}</span>
+                    <span className="category">{getCategoryIcon(paste.category)} {getCategoryName(paste.category)}</span>
+                    <span className="user">👤 {paste.username || 'Гость'}</span>
+                    <span className="time">{getTimeAgo(paste.createdAt)}</span>
+                    <span className="size">{formatSize(paste.size)}</span>
+                    {paste.tags.map((t, i) => (
+                      <span key={i} className="tag-badge">#{t}</span>
+                    ))}
+                  </div>
+                  <div className="paste-preview">
+                    <SyntaxHighlighter
+                      language={paste.language === 'text' ? 'text' : paste.language}
+                      style={atomOneDark}
+                      customStyle={{
+                        fontSize: '12px',
+                        maxHeight: '80px',
+                        margin: 0,
+                        padding: '10px',
+                        borderRadius: '4px',
+                        background: '#1a1a1a',
+                        overflow: 'hidden'
+                      }}
+                      wrapLines={true}
+                    >
+                      {paste.content.slice(0, 300) + (paste.content.length > 300 ? '...' : '')}
+                    </SyntaxHighlighter>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ============================================================ */}
+      {/* ===== СТРАНИЦА С КОНВЕРТЕРОМ ===== */}
+      {/* ============================================================ */}
+      {currentPage === 'converter' && (
+        <div className="container converter-container">
+          <div className="converter-section">
+            <h2>🔄 Конвертер файлов</h2>
+            <p className="converter-subtitle">Загрузите файл и выберите формат для конвертации</p>
+
+            {/* DRAG-AND-DROP ЗОНА */}
+            <div 
+              className={`drop-zone ${isDragging ? 'dragging' : ''} ${selectedFile ? 'has-file' : ''}`}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+              onClick={() => document.getElementById('fileInput').click()}
+            >
+              <input
+                type="file"
+                id="fileInput"
+                style={{ display: 'none' }}
+                onChange={handleFileInput}
+                accept=".pdf,.docx,.jpg,.jpeg,.png,.txt"
+              />
+              
+              {!selectedFile ? (
+                <>
+                  <div className="drop-zone-icon">📤</div>
+                  <h3>Перетащите файл сюда</h3>
+                  <p>или нажмите для выбора</p>
+                  <div className="supported-formats">
+                    Поддерживаемые форматы: PDF, DOCX, JPG, PNG, TXT
+                  </div>
+                </>
+              ) : (
+                <div className="file-preview">
+                  <div className="file-icon" style={{ color: getFileColor(filePreview?.format) }}>
+                    {getFileIcon(filePreview?.format)}
+                  </div>
+                  <div className="file-info">
+                    <div className="file-name">{filePreview?.name}</div>
+                    <div className="file-details">
+                      <span className="file-format">{filePreview?.format?.toUpperCase()}</span>
+                      <span className="file-size">{formatFileSize(filePreview?.size)}</span>
+                    </div>
+                  </div>
+                  <button 
+                    className="file-remove"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedFile(null);
+                      setFilePreview(null);
+                    }}
+                  >
+                    ✕
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* ВЫБОР ФОРМАТОВ */}
+            {selectedFile && (
+              <div className="converter-options">
+                <div className="converter-row">
+                  <div className="converter-field">
+                    <label>Исходный формат</label>
+                    <div className="format-badge from">
+                      {getFileIcon(convertFrom)} {convertFrom.toUpperCase()}
+                    </div>
+                  </div>
+
+                  <div className="converter-arrow">➜</div>
+
+                  <div className="converter-field">
+                    <label>Формат для конвертации</label>
+                    <select 
+                      value={convertTo} 
+                      onChange={(e) => setConvertTo(e.target.value)}
+                      className="format-select"
+                    >
+                      {formats[convertFrom]?.map((fmt) => (
+                        <option key={fmt} value={fmt}>
+                          {getFileIcon(fmt)} {fmt.toUpperCase()}
+                        </option>
+                      ))}
+                      {(!formats[convertFrom] || formats[convertFrom].length === 0) && (
+                        <option value="txt">📃 TXT</option>
+                      )}
+                    </select>
+                  </div>
+                </div>
+
+                <button className="convert-btn" onClick={handleConvert}>
+                  🔄 Конвертировать
+                </button>
+              </div>
+            )}
+
+            {message && <div className={`message ${message.includes('✅') ? 'success' : 'error'}`}>{message}</div>}
+          </div>
+
+          {/* ИНФОРМАЦИОННАЯ КАРТОЧКА */}
+          <div className="converter-info">
+            <h3>📋 Поддерживаемые форматы</h3>
+            <div className="format-list">
+              <div className="format-item">
+                <span>📄 PDF</span>
+                <span>→ DOCX, TXT, JPG, PNG</span>
+              </div>
+              <div className="format-item">
+                <span>📝 DOCX</span>
+                <span>→ PDF, TXT</span>
+              </div>
+              <div className="format-item">
+                <span>🖼️ JPG</span>
+                <span>→ PNG, PDF</span>
+              </div>
+              <div className="format-item">
+                <span>🖼️ PNG</span>
+                <span>→ JPG, PDF</span>
+              </div>
+              <div className="format-item">
+                <span>📃 TXT</span>
+                <span>→ PDF, DOCX</span>
+              </div>
+            </div>
+            <p className="info-note">
+              ⚠️ Конвертация пока в разработке — интерфейс готов!
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Модальное окно просмотра пасты */}
       {selectedPaste && (
         <div className="modal-overlay" onClick={closePaste}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
