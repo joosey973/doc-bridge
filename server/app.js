@@ -11,13 +11,17 @@ app.use(express.json());
 
 const JWT_SECRET = 'docbridge_secret_2026';
 
-// Хранилища
+// ============================================================
+// ХРАНИЛИЩА
+// ============================================================
 let users = [];
 let pastes = [];
 let idCounter = 1;
 let userIdCounter = 1;
 
-// Категории
+// ============================================================
+// КАТЕГОРИИ (для паст)
+// ============================================================
 const categories = [
     { id: 'work', name: '💼 Работа' },
     { id: 'personal', name: '👤 Личная жизнь' },
@@ -29,7 +33,9 @@ const categories = [
     { id: 'other', name: '📌 Другое' },
 ];
 
-// Языки
+// ============================================================
+// ЯЗЫКИ (для паст)
+// ============================================================
 const languages = [
     { id: 'text', name: 'Без подсветки', icon: '📝' },
     { id: 'python', name: 'Python', icon: '🐍' },
@@ -45,7 +51,9 @@ const languages = [
     { id: 'sql', name: 'SQL', icon: '🗄️' },
 ];
 
-// Вспомогательные функции
+// ============================================================
+// ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ
+// ============================================================
 function generateCode() {
     const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
     let result = '';
@@ -55,19 +63,9 @@ function generateCode() {
     return result;
 }
 
-function getTimeAgo(date) {
-    const diff = Date.now() - new Date(date).getTime();
-    const minutes = Math.floor(diff / 60000);
-    const hours = Math.floor(diff / 3600000);
-    const days = Math.floor(diff / 86400000);
-    if (minutes < 1) return 'только что';
-    if (minutes < 60) return minutes + ' мин назад';
-    if (hours < 24) return hours + ' ч назад';
-    if (days < 7) return days + ' дн назад';
-    return Math.floor(days / 7) + ' нед назад';
-}
-
-// ============ АВТОРИЗАЦИЯ ============
+// ============================================================
+// МАРШРУТЫ АВТОРИЗАЦИИ
+// ============================================================
 
 // РЕГИСТРАЦИЯ
 app.post('/api/auth/register', async (req, res) => {
@@ -143,7 +141,7 @@ app.post('/api/auth/login', async (req, res) => {
     }
 });
 
-// ПРОФИЛЬ
+// ПРОФИЛЬ (получить данные пользователя по токену)
 app.get('/api/auth/me', (req, res) => {
     try {
         const token = req.headers.authorization?.split(' ')[1];
@@ -164,21 +162,13 @@ app.get('/api/auth/me', (req, res) => {
     }
 });
 
-// ============ ПАСТЫ ============
+// ============================================================
+// МАРШРУТЫ ПАСТ
+// ============================================================
 
-// ПОЛУЧИТЬ ВСЕ ПАСТЫ
+// ПОЛУЧИТЬ ВСЕ ПАСТЫ (для страницы "Пасты")
 app.get('/api/pastes', (req, res) => {
     res.json(pastes.slice(0, 30));
-});
-
-// ПОЛУЧИТЬ ПАСТУ ПО КОДУ
-app.get('/api/pastes/:code', (req, res) => {
-    const paste = pastes.find(p => p.code === req.params.code);
-    if (!paste) {
-        return res.status(404).json({ error: 'Паста не найдена' });
-    }
-    paste.views = (paste.views || 0) + 1;
-    res.json(paste);
 });
 
 // СОЗДАТЬ ПАСТУ
@@ -190,7 +180,6 @@ app.post('/api/pastes', (req, res) => {
             return res.status(400).json({ error: 'Содержимое обязательно' });
         }
         
-        // Определяем автора
         let username = 'Гость';
         const token = req.headers.authorization?.split(' ')[1];
         if (token) {
@@ -240,7 +229,6 @@ app.delete('/api/pastes/:code', (req, res) => {
         const paste = pastes[index];
         const user = users.find(u => u.id === decoded.userId);
         
-        // Только автор или админ может удалить
         if (paste.username !== 'Гость' && paste.username !== user?.username) {
             return res.status(403).json({ error: 'Нет прав на удаление' });
         }
@@ -252,20 +240,26 @@ app.delete('/api/pastes/:code', (req, res) => {
     }
 });
 
-// ============ ДРУГИЕ МАРШРУТЫ ============
+// ============================================================
+// ДРУГИЕ МАРШРУТЫ
+// ============================================================
 
+// ПРОВЕРКА СЕРВЕРА
 app.get('/api/message', (req, res) => {
     res.json({ message: '🚀 DocBridge API работает!' });
 });
 
+// КАТЕГОРИИ (для формы создания пасты)
 app.get('/api/categories', (req, res) => {
     res.json(categories);
 });
 
+// ЯЗЫКИ (для формы создания пасты)
 app.get('/api/languages', (req, res) => {
     res.json(languages);
 });
 
+// ОБРАТНАЯ СВЯЗЬ
 app.post('/api/feedback', (req, res) => {
     const { text } = req.body;
     if (!text) {
@@ -275,9 +269,34 @@ app.post('/api/feedback', (req, res) => {
     res.json({ success: true, message: 'Спасибо!' });
 });
 
-// ============ ЗАПУСК ============
+// ============================================================
+// ЗАПУСК
+// ============================================================
 app.listen(PORT, () => {
     console.log(`🚀 DocBridge API запущен на http://localhost:${PORT}`);
     console.log(`👤 Пользователей: ${users.length}`);
     console.log(`📝 Паст: ${pastes.length}`);
+});
+// ============================================================
+// ПОЛУЧИТЬ ПАСТЫ ПОЛЬЗОВАТЕЛЯ (ДЛЯ ЛИЧНОГО КАБИНЕТА)
+// ============================================================
+app.get('/api/pastes/user', (req, res) => {
+    try {
+        const token = req.headers.authorization?.split(' ')[1];
+        if (!token) {
+            return res.status(401).json({ error: 'Не авторизован' });
+        }
+        
+        const decoded = jwt.verify(token, JWT_SECRET);
+        const user = users.find(u => u.id === decoded.userId);
+        
+        if (!user) {
+            return res.status(404).json({ error: 'Пользователь не найден' });
+        }
+        
+        const userPastes = pastes.filter(p => p.username === user.username);
+        res.json(userPastes);
+    } catch (error) {
+        res.status(401).json({ error: 'Недействительный токен' });
+    }
 });

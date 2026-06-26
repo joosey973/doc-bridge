@@ -26,6 +26,32 @@ function Navbar({ currentPage, setCurrentPage, user, logout, serverStatus, setSh
         >
           📤 DropMeFiles
         </button>
+        <button
+            className={`nav-btn ${currentPage === 'pastes' ? 'active' : ''}`}
+            onClick={() => setCurrentPage('pastes')}
+        >
+          📝 Пасты
+        </button>
+
+        <button 
+          className={`nav-btn ${currentPage === 'about' ? 'active' : ''}`}
+          onClick={() => setCurrentPage('about')}
+        >
+          ℹ️ О нас
+        </button>
+        {/* ===== ЛИЧНЫЙ КАБИНЕТ ВСЕГДА В МЕНЮ ===== */}
+        <button 
+          className={`nav-btn ${currentPage === 'profile' ? 'active' : ''}`}
+          onClick={() => {
+            if (user) {
+              setCurrentPage('profile');
+            } else {
+              setShowAuthModal(true);
+            }
+          }}
+        >
+          👤 Личный кабинет
+        </button>
       </nav>
       <div className="header-actions">
         <span className={`server-status ${serverStatus?.includes('✅') ? 'online' : 'offline'}`}>
