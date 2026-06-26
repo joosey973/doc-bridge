@@ -1,0 +1,154 @@
+/* Базовый сброс */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+}
+
+body {
+    background-color: #ffffff;
+    color: #000000;
+    height: 100vh;
+    overflow: hidden;
+}
+
+/* --- КНОПКА БУРГЕРА --- */
+.burger-btn {
+    position: fixed;
+    top: 30px;
+    left: 30px;
+    z-index: 100;
+    background: none;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    width: 25px;
+    height: 16px;
+}
+
+.burger-btn span {
+    display: block;
+    width: 100%;
+    height: 2px;
+    background-color: #000;
+    transition: all 0.3s ease;
+}
+
+/* Анимация превращения бургера в крестик при открытии */
+.burger-btn.open span:nth-child(1) {
+    transform: translateY(7px) rotate(45deg);
+}
+.burger-btn.open span:nth-child(2) {
+    opacity: 0;
+}
+.burger-btn.open span:nth-child(3) {
+    transform: translateY(-7px) rotate(-45deg);
+}
+
+/* --- БОКОВОЕ МЕНЮ СЛЕВА --- */
+.sidebar {
+    position: fixed;
+    top: 0;
+    left: -300px; /* Спрятано слева */
+    width: 300px;
+    height: 100vh;
+    background-color: #000000;
+    padding: 100px 40px;
+    transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+    z-index: 90;
+}
+
+/* Класс, который выдвинет меню */
+.sidebar.active {
+    transform: translateX(300px);
+}
+
+.sidebar ul {
+    list-style: none;
+}
+
+.sidebar ul li {
+    margin-bottom: 25px;
+}
+
+.sidebar ul li a {
+    color: #ffffff;
+    text-decoration: none;
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    transition: opacity 0.3s;
+}
+
+.sidebar ul li a:hover {
+    opacity: 0.5;
+}
+
+/* --- КНОПКИ НА ВЕСЬ ЭКРАН (СЕТКА 2х2) --- */
+.main-content {
+    width: 100%;
+    height: 100vh;
+}
+
+.buttons-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    grid-template-rows: repeat(2, 1fr);
+    width: 100%;
+    height: 100%;
+}
+
+.menu-item-btn {
+    background: #ffffff;
+    color: #000000;
+    border: 0.5px solid #ebeebe; /* Тонкие аккуратные линии */
+    font-size: 13px;
+    font-weight: 400;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    cursor: pointer;
+    position: relative;
+    transition: color 0.4s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Премиальный эффект заливки черным цветом при наведении */
+.menu-item-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: #000000;
+    transform: scaleY(0);
+    transform-origin: bottom;
+    transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+    z-index: 1;
+}
+
+.menu-item-btn:hover::before {
+    transform: scaleY(1);
+}
+
+.menu-item-btn span {
+    position: relative;
+    z-index: 2;
+}
+
+.menu-item-btn:hover {
+    color: #ffffff;
+}
+
+/* Адаптив под мобилки: выстраиваем 4 кнопки в один ряд в высоту */
+@media (max-width: 768px) {
+    .buttons-grid {
+        grid-template-columns: 1fr;
+        grid-template-rows: repeat(4, 1fr);
+    }
+}
