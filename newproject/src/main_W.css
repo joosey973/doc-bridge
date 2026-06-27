@@ -278,3 +278,18 @@
   66% { clip: rect(80px, 9999px, 120px, 0); }
   100% { clip: rect(45px, 9999px, 65px, 0); }
 }
+.modal-overlay {
+  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex; justify-content: center; align-items: center;
+  z-index: 1000; padding: 20px;
+}
+.modal-content {
+  background: #ffffff; border-radius: 12px;
+  max-width: 400px; width: 100%; padding: 30px;
+  border: 1px solid #000000;
+}
+.modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+.auth-switch { margin-top: 15px; text-align: center; color: #000000; font-size: 14px; }
+.auth-switch span { color: #000000; cursor: pointer; font-weight: 500; }
+.auth-switch span:hover { text-decoration: underline; }
