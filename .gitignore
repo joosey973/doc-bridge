@@ -1,3 +1,4 @@
+*/node_modules/
 # pyproject.toml
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -92,6 +93,8 @@ celerybeat-schedule
 # virtualenv
 .venv
 venv/
+/venv/
+__pycache__/
 ENV/
 .vscode
 '.vscode/

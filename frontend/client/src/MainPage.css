@@ -1,0 +1,290 @@
+html, body {
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+}
+
+.app-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  width: 100vw;
+  position: relative;
+  background-color: #ffffff;
+  overflow-x: hidden;
+}
+
+/* Сайдбар — убираем transform, используем только left */
+.sidebar {
+  position: fixed;
+  top: 0;
+  left: -300px;        /* скрыт за экраном */
+  width: 300px;
+  height: 100vh;
+  background-color: #ffffff;
+  padding: 100px 40px;
+  transition: left 0.4s cubic-bezier(0.25, 1, 0.5, 1);  /* анимируем left */
+  z-index: 90;
+  box-shadow: 10px 0 30px rgba(0, 0, 0, 0.05);
+  border-right: 1px solid #e2e2e2;
+}
+
+.sidebar.active {
+  left: 0;             /* выезжает — никакого transform */
+}
+
+.glitch-bg-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ОВЕРЛЕЙ ДЛЯ РАЗМЫТИЯ ФОНА */
+.background-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(255, 255, 255, 0.153); 
+  backdrop-filter: blur(8px);                 
+  -webkit-backdrop-filter: blur(8px);         
+  z-index: 80;                                
+  cursor: pointer;                             
+  transition: opacity 0.3s ease;
+}
+
+/* --- КНОПКА БУРГЕРА --- */
+.burger-btn {
+  position: fixed;
+  top: 30px;
+  left: 30px;
+  z-index: 100; 
+  background: none;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  width: 25px;
+  height: 15px;
+}
+
+.burger-btn span {
+  display: block;
+  width:90%;
+  height: 2px;
+  background-color: #000000; 
+  transition: all 0.3s ease;
+}
+
+.burger-btn.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+.burger-btn.open span:nth-child(2) { opacity: 0; }
+.burger-btn.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+
+.sidebar ul { list-style: none; }
+.sidebar ul li { margin-bottom: 25px; }
+.sidebar ul li a {
+  color: #000000; 
+  text-decoration: none;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  font-weight: 500;
+  transition: opacity 0.3s;
+}
+
+.sidebar ul li a:hover { opacity: 0.5; }
+
+/* --- ВЕРХНЯЯ ПАНЕЛЬ (ШАПКА) --- */
+.top-header {
+  min-height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between; 
+  padding: 0 30px;                
+  border-bottom: 0.5px solid #e2e2e2;
+  background-color: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(10px);
+  z-index: 10;
+}
+
+.header-left { width: 150px; }
+
+.logo {
+  margin: 0;
+  font-family: 'Syncopate', sans-serif;
+  font-weight: 700;
+  font-size: 24px;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  flex: 1;
+  text-align: center; 
+  color: #000000; 
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 20px;         
+  width: 150px;      
+  justify-content: flex-end; 
+}
+
+.icon-btn {
+  background: none;
+  border: none;
+  font-size: 40px;
+  cursor: pointer;
+  position: relative;
+  transition: opacity 0.3s;
+  color: #000000;
+}
+
+.notification-badge {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  width: 6px;
+  height: 6px;
+  background-color: #000000; 
+  border-radius: 50%;
+}
+
+.auth-btn {
+  background: none;
+  border: 1px solid #000000; 
+  color: #000000;
+  padding: 8px 16px;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.auth-btn:hover {
+  background-color: #000000;
+  color: #ffffff;
+}
+
+/* --- ОСНОВНОЙ КОНТЕНТ --- */
+.main-content { 
+  height: calc(100vh - 80px); /* Высота ровно в экран минус шапка */
+  width: 100%; 
+  z-index: 1;
+  flex-shrink: 0; /* Чтобы футер не сжимал контентную сетку */
+}
+
+.buttons-grid { 
+  display: grid; 
+  grid-template-columns: repeat(2, 1fr); 
+  grid-template-rows: repeat(2, 1fr); 
+  width: 100%; 
+  height: 100%; 
+}
+
+.menu-item-btn {
+  background: rgba(255, 255, 255, 0.179); 
+  backdrop-filter: blur(2px); 
+  color: #000000; 
+  border: 0.5px solid #c4c4c4; 
+  font-size: 20px;
+  font-weight: 500; 
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  cursor: pointer;
+  position: relative;
+  transition: background 0.3s ease, border-color 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.menu-item-btn span { 
+  position: relative; 
+  z-index: 2; 
+}
+
+.menu-item-btn:hover span::before,
+.menu-item-btn:hover span::after {
+  content: attr(data-text);
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: #ffffff; 
+}
+
+.menu-item-btn:hover span::before {
+  left: -2px;
+  color: #8e8e93;
+  clip: rect(10px, 450px, 30px, 0);
+  animation: glitch-anim 2s infinite steps(2) alternate-reverse; 
+}
+
+.menu-item-btn:hover span::after {
+  left: 2px;
+  color: #000000;
+  clip: rect(40px, 450px, 80px, 0);
+  animation: glitch-anim2 2s infinite steps(2) alternate-reverse;
+}
+
+.menu-item-btn:hover { 
+  background: rgba(0, 0, 0, 0.02); 
+  border-color: #000000;
+}
+
+.bottom-footer { 
+  height: 100px; 
+  display: flex; 
+  align-items: center; 
+  justify-content: center; 
+  border-top: 0.5px solid #e2e2e2; 
+  background-color: #ffffff;
+  z-index: 10;
+  flex-shrink: 0; /* Защита от сжатия */
+}
+
+.footer-buttons { display: flex; gap: 20px; }
+.footer-btn { 
+  background: none; 
+  border: none; 
+  font-size: 12px; 
+  cursor: pointer; 
+  letter-spacing: 2px; 
+  color: #000000; 
+  padding: 5px 10px; 
+  transition: opacity 0.3s; 
+}
+.footer-btn:hover { opacity: 0.5; }
+
+@media (max-width: 768px) {
+  .main-content { height: auto; }
+  .buttons-grid { grid-template-columns: 1fr; grid-template-rows: repeat(4, 1fr); }
+  .logo { font-size: 24px; letter-spacing: 3px; }
+  .menu-item-btn { font-size: 16px; } /* На мобилках делаем чуть меньше, чтоб не ломало строки */
+}
+
+
+
+/* АНИМАЦИИ ГЛИТЧА */
+@keyframes glitch-anim {
+  0% { clip: rect(12px, 9999px, 50px, 0); }
+  25% { clip: rect(70px, 9999px, 85px, 0); }
+  50% { clip: rect(5px, 9999px, 25px, 0); }
+  75% { clip: rect(88px, 9999px, 110px, 0); }
+  100% { clip: rect(30px, 9999px, 75px, 0); }
+}
+
+@keyframes glitch-anim2 {
+  0% { clip: rect(60px, 9999px, 95px, 0); }
+  33% { clip: rect(15px, 9999px, 40px, 0); }
+  66% { clip: rect(80px, 9999px, 120px, 0); }
+  100% { clip: rect(45px, 9999px, 65px, 0); }
+}
