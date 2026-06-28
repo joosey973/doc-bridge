@@ -1,6 +1,6 @@
 from rest_framework import status
 from rest_framework.response import Response
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.views import APIView
 from django.shortcuts import get_object_or_404
@@ -14,6 +14,37 @@ import pastes.utils
 User = django.contrib.auth.get_user_model()
 
 
+class PasteEditDelete(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, paste_code):
+        paste_obj = get_object_or_404(Pastes, code=paste_code)
+        paste_user_obj = get_object_or_404(User, username=paste_obj.user)
+        user_obj = get_object_or_404(User, username=request.user)
+        paste = PasteSerializer(paste_obj).data
+        paste_user = UserSerializer(paste_user_obj).data
+        user = UserSerializer(user_obj).data
+        return Response(
+            {'paste_user': paste_user, 'paste': paste, 'user': user}, status=status.HTTP_200_OK)
+    
+    def put(self, request, paste_code):
+        data = request.data
+        
+        paste = get_object_or_404(Pastes, code=paste_code)
+        paste.category = data['category']
+        paste.tags = data['tags']
+        paste.text = data['text']
+        paste.title = data['title']
+        paste.save()
+        return Response({'success': True}, status=status.HTTP_200_OK)
+
+
+    def delete(self, request, paste_code):
+        paste = get_object_or_404(Pastes, code=paste_code)
+        paste.delete() 
+        return Response({'success': True}, status=status.HTTP_200_OK)
+
+
 class IncrementView(APIView):
     permission_classes = [AllowAny]
     authentication_classes = [JWTAuthentication]
@@ -21,9 +52,10 @@ class IncrementView(APIView):
     def post(self, request, paste_id):
         try:
             paste = get_object_or_404(Pastes, id=paste_id)
-            
-            paste.views = (paste.views or 0) + 1
-            paste.save(update_fields=['views'])
+            print(request.user, paste.user)
+            if request.user != paste.user:
+                paste.views = (paste.views or 0) + 1
+                paste.save(update_fields=['views'])
             
             return Response({
                 'views': paste.views,

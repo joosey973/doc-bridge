@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import './Pages.css';
 import '../MainPage.css';
 
 const API_URL = 'http://localhost:8000/api';
 
 function ProfilePage({ changePage }) {
+  const navigate = useNavigate();
   const [profileData, setProfileData] = useState(null);
   const [statsData, setStatsData] = useState(null);
   const [profileLoading, setProfileLoading] = useState(true);
@@ -35,6 +36,58 @@ function ProfilePage({ changePage }) {
   const isAuthenticated = !!user && !!token;
 
   const closeMenu = () => setIsOpen(false);
+
+  const fetchPastes = async () => {
+    try {
+      const response = await fetch(`${API_URL}/pastes/`, {
+        headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setPastes(data.pastes || data);
+        
+        if (data.user && data.user.username) {
+          setProfileData(data.user);
+        }
+      }
+    } catch (error) {
+      console.error('Ошибка загрузки:', error);
+    }
+  };
+  
+  const deletePaste = async (code, event) => {
+    event.stopPropagation();
+    
+    if (!token) {
+      setMessage('⚠️ Авторизуйтесь, чтобы удалять пасты');
+      setTimeout(() => setMessage(''), 3000);
+      return;
+    }
+    
+    if (!confirm(`🗑️ Удалить пасту "${code}"?`)) {
+      return;
+    }
+    
+    try {
+      const response = await fetch(`${API_URL}/pastes/delete/${code}/`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+      
+      const data = await response.json();
+      
+      console.log(data)
+      if (data.success) {
+        setMessage('✅ Паста удалена');
+        fetchPastes();
+        setTimeout(() => setMessage(''), 3000);
+      } else {
+        setMessage(`❌ ${data.error || 'Ошибка удаления'}`);
+      }
+    } catch (error) {
+      setMessage('❌ Ошибка удаления');
+    }
+  };
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -1167,35 +1220,75 @@ function ProfilePage({ changePage }) {
             </div>
 
             <div className="profile-pastes" style={{ marginTop: '40px' }}>
-              <h3 style={{ borderBottom: '1px solid rgba(0,0,0,0.08)', paddingBottom: '10px', color: '#111' }}>Мои пасты</h3>
-              {loading ? (
-                <p style={{ color: '#666' }}>Загрузка...</p>
-              ) : statsData?.pastes?.length === 0 ? (
-                <div className="empty-state">
-                  <p style={{ margin: 0, fontWeight: '600' }}>У вас пока нет паст</p>
-                  <p style={{ fontSize: '13px', color: '#888', marginTop: '4px' }}>Создайте первую пасту в разделе "Заметки"</p>
-                </div>
-              ) : (
-                <div className="pastes-list">
-                  {statsData?.pastes?.map((paste) => (
-                    <div key={paste.id} className="paste-item">
-                      <div className="paste-title">
-                        {getCategoryIcon(paste.category)} {paste.title || 'Без названия'}
-                      </div>
-                      <div className="paste-meta">
-                        <span>{getLanguageIcon(paste.language)} {getLanguageName(paste.language)}</span>
-                        <span>{getCategoryIcon(paste.category)} {getCategoryName(paste.category)}</span>
-                        <span>🕐 {getTimeAgo(paste.created_at || paste.createdAt)}</span>
-                        <span>📦 {formatSize(paste.size)}</span>
-                        {paste.tags && paste.tags.map((t, i) => (
-                          <span key={i} className="tag-badge">#{t}</span>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
+  <h3 style={{ borderBottom: '1px solid rgba(0,0,0,0.08)', paddingBottom: '10px', color: '#111' }}>Мои пасты</h3>
+  {loading ? (
+    <p style={{ color: '#666' }}>Загрузка...</p>
+  ) : statsData?.pastes?.length === 0 ? (
+    <div className="empty-state">
+      <p style={{ margin: 0, fontWeight: '600' }}>У вас пока нет паст</p>
+      <p style={{ fontSize: '13px', color: '#888', marginTop: '4px' }}>Создайте первую пасту в разделе "Заметки"</p>
+    </div>
+  ) : (
+    <div className="pastes-list">
+      {statsData?.pastes?.map((paste) => (
+        <div key={paste.id} className="paste-item">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div className="paste-title">
+              {getCategoryIcon(paste.category)} {paste.title || 'Без названия'}
             </div>
+            <div style={{ display: 'flex', gap: '4px' }}>
+              <button
+                onClick={() => navigate(`/api/pastes/edit/${paste.code}/`, {state: {from: 'profile'}})}
+                title="Редактировать"
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontSize: '16px',
+                  padding: '4px 8px',
+                  borderRadius: '4px',
+                  transition: 'all 0.2s ease',
+                  color: '#667eea'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(102, 126, 234, 0.1)'}
+                onMouseLeave={(e) => e.currentTarget.style.background = 'none'}
+              >
+                ✏️
+              </button>
+              <button
+                onClick={(e) => deletePaste(paste.code, e)}
+                title="Удалить"
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontSize: '16px',
+                  padding: '4px 8px',
+                  borderRadius: '4px',
+                  transition: 'all 0.2s ease',
+                  color: '#dc3545'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(220, 53, 69, 0.1)'}
+                onMouseLeave={(e) => e.currentTarget.style.background = 'none'}
+              >
+                🗑️
+              </button>
+            </div>
+          </div>
+          <div className="paste-meta">
+            <span>{getLanguageIcon(paste.language)} {getLanguageName(paste.language)}</span>
+            <span>{getCategoryIcon(paste.category)} {getCategoryName(paste.category)}</span>
+            <span>🕐 {getTimeAgo(paste.created_at || paste.createdAt)}</span>
+            <span>📦 {formatSize(paste.size)}</span>
+            {paste.tags && paste.tags.map((t, i) => (
+              <span key={i} className="tag-badge">#{t}</span>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  )}
+</div>
 
             {message && <div className={`message ${message.includes('✅') ? 'success' : 'error'}`} style={{ marginTop: '20px' }}>{message}</div>}
           </div>

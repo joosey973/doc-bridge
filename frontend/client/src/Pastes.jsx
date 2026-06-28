@@ -1,13 +1,15 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useState, useEffect, useRef } from 'react';
 import './Pastes.css';
 import './MainPage.css';
+import { handleEditPaste } from './editPasteUtils';
 import { Light as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { atomOneDark } from 'react-syntax-highlighter/dist/esm/styles/hljs';
 
 const API_URL = 'http://localhost:8000/api';
 
 function Pastes() {
+  const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
   const [profileData, setProfileData] = useState(null);
   const [pastes, setPastes] = useState([]);
@@ -22,6 +24,10 @@ function Pastes() {
   const [serverStatus, setServerStatus] = useState('⏳ Проверка...');
   const [selectedPaste, setSelectedPaste] = useState(null);
   const [loadingAuth, setLoadingAuth] = useState(true);
+  
+  // Состояния для редактирования
+  const [editingPaste, setEditingPaste] = useState(null);
+  const [showEditModal, setShowEditModal] = useState(false);
   
   const canvasRef = useRef(null);
   const [isHovered, setIsHovered] = useState(false);
@@ -125,6 +131,14 @@ function Pastes() {
     { id: 'other', name: '📌 Другое' },
   ];
 
+  const openEditModal = (pasteCode) => {
+    if (!token) {
+    setMessage('⚠️ Авторизуйтесь, чтобы редактировать пасты');
+    setTimeout(() => setMessage(''), 3000);
+    return;
+  }
+  navigate(`/api/pastes/edit/${pasteCode}/`);
+  };
   useEffect(() => {
     const checkAuth = async () => {
       const savedToken = localStorage.getItem('token');
@@ -318,6 +332,7 @@ function Pastes() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...(token && { 'Authorization': `Bearer ${token}` })
         }
       });
       
@@ -357,13 +372,14 @@ function Pastes() {
     }
     
     try {
-      const response = await fetch(`${API_URL}/pastes/${code}/`, {
+      const response = await fetch(`${API_URL}/pastes/delete/${code}/`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` },
       });
       
       const data = await response.json();
       
+      console.log(data)
       if (data.success) {
         setMessage('✅ Паста удалена');
         fetchPastes();
@@ -433,6 +449,7 @@ function Pastes() {
         } else if (data.message) {
             errorMessage = data.message;
         }
+        setMessage(`❌ ${errorMessage}`);
       }
     } catch (error) {
       setMessage('❌ Ошибка подключения к серверу');
@@ -703,7 +720,8 @@ function Pastes() {
             </form>
           </div>
           
-          <div className="public-pastes">
+
+<div className="public-pastes">
   <h3>
     📋 Все пасты
     <span className="count">{pastes.length}</span>
@@ -749,44 +767,91 @@ function Pastes() {
         <p style={{ fontSize: '13px', marginTop: '8px' }}>Создайте первую!</p>
       </div>
     ) : (
-      pastes.map((paste) => (
-        <div key={paste.id} className="paste-item" onClick={() => openPaste(paste)}>
-          <div className="paste-header">
-            <div className="paste-title">
-              <span className="category-icon">{getCategoryIcon(paste.category)}</span>
-              {paste.title}
+      <div className="paste-list"> {/* Добавлен контейнер со скроллом */}
+        {pastes.map((paste) => {
+          const isOwner = user && paste.user === user.username;
+          return (
+            <div key={paste.id} className="paste-item" onClick={() => openPaste(paste)}>
+              <div className="paste-header">
+                <div className="paste-title">
+                  <span className="category-icon">{getCategoryIcon(paste.category)}</span>
+                  {paste.title}
+                </div>
+                <div className="paste-actions">
+                  {isOwner && (
+                    <>
+                      <button 
+                        className="edit-btn"
+                        onClick={(e) => startEdit(paste, e)}
+                        title="Редактировать"
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          cursor: 'pointer',
+                          fontSize: '16px',
+                          padding: '4px 8px',
+                          borderRadius: '4px',
+                          transition: 'all 0.2s ease'
+                        }}
+                        onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(0,0,0,0.1)'}
+                        onMouseLeave={(e) => e.currentTarget.style.background = 'none'}
+                      >
+                        ✏️
+                      </button>
+                      <button 
+                        className="delete-btn"
+                        onClick={(e) => deletePaste(paste.code, e)}
+                        title="Удалить"
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          cursor: 'pointer',
+                          fontSize: '16px',
+                          padding: '4px 8px',
+                          borderRadius: '4px',
+                          transition: 'all 0.2s ease'
+                        }}
+                        onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,0,0,0.1)'}
+                        onMouseLeave={(e) => e.currentTarget.style.background = 'none'}
+                      >
+                        🗑️
+                      </button>
+                    </>
+                  )}
+                </div>
+              </div>
+              <div className="paste-meta">
+                <span className="lang">{getLanguageIcon(paste.language)} {getLanguageName(paste.language)}</span>
+                <span className="category">{getCategoryIcon(paste.category)} {getCategoryName(paste.category)}</span>
+                <span className="user">👤 {paste.user || 'Гость'}</span>
+                <span className="time">{getTimeAgo(paste.created_at)}</span>
+                <span className="size">{formatSize(paste.size)}</span>
+                {paste.tags && paste.tags.map((t, i) => (
+                  <span key={i} className="tag-badge">#{t}</span>
+                ))}
+              </div>
+              <div className="paste-preview">
+                <SyntaxHighlighter
+                  language={paste.language === 'text' ? 'text' : paste.language}
+                  style={atomOneDark}
+                  customStyle={{
+                    fontSize: '12px',
+                    maxHeight: '80px',
+                    margin: 0,
+                    padding: '10px',
+                    borderRadius: '4px',
+                    background: '#1a1a1a',
+                    overflow: 'hidden'
+                  }}
+                  wrapLines={true}
+                >
+                  {paste.text ? paste.text.slice(0, 300) + (paste.text.length > 300 ? '...' : '') : ''}
+                </SyntaxHighlighter>
+              </div>
             </div>
-          </div>
-          <div className="paste-meta">
-            <span className="lang">{getLanguageIcon(paste.language)} {getLanguageName(paste.language)}</span>
-            <span className="category">{getCategoryIcon(paste.category)} {getCategoryName(paste.category)}</span>
-            <span className="user">👤 {paste.user || 'Гость'}</span>
-            <span className="time">{getTimeAgo(paste.created_at)}</span>
-            <span className="size">{formatSize(paste.size)}</span>
-            {paste.tags && paste.tags.map((t, i) => (
-              <span key={i} className="tag-badge">#{t}</span>
-            ))}
-          </div>
-          <div className="paste-preview">
-            <SyntaxHighlighter
-              language={paste.language === 'text' ? 'text' : paste.language}
-              style={atomOneDark}
-              customStyle={{
-                fontSize: '12px',
-                maxHeight: '80px',
-                margin: 0,
-                padding: '10px',
-                borderRadius: '4px',
-                background: '#1a1a1a',
-                overflow: 'hidden'
-              }}
-              wrapLines={true}
-            >
-              {paste.text ? paste.text.slice(0, 300) + (paste.text.length > 300 ? '...' : '') : ''}
-            </SyntaxHighlighter>
-          </div>
-        </div>
-      ))
+          );
+        })}
+      </div>
     )
   )}
 </div>
@@ -801,83 +866,6 @@ function Pastes() {
         </div>
       </footer>
       
-      {showAuthModal && (
-        <div className="modal-overlay" onClick={() => setShowAuthModal(false)} style={{ zIndex: 200 }}>
-          <div className="modal-content auth-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h2>{authMode === 'login' ? '🔑 Вход' : '📝 Регистрация'}</h2>
-              <button className="modal-close" onClick={() => setShowAuthModal(false)}>✕</button>
-            </div>
-            <form onSubmit={handleAuth}>
-              <div className="form-group">
-                <label>Имя пользователя</label>
-                <input
-                  type="text"
-                  value={authUsername}
-                  onChange={(e) => setAuthUsername(e.target.value)}
-                  placeholder="Введите имя"
-                  required
-                />
-              </div>
-
-              {authMode === 'register' && (
-                <div className="form-group">
-                  <label>Email</label>
-                  <input
-                    type="email"
-                    value={authEmail}
-                    onChange={(e) => setAuthEmail(e.target.value)}
-                    placeholder="Введите email"
-                  />
-                </div>
-              )}
-
-              <div className="form-group">
-                <label>Пароль</label>
-                <input
-                  type="password"
-                  value={authPassword}
-                  onChange={(e) => setAuthPassword(e.target.value)}
-                  placeholder="Введите пароль"
-                  required
-                />
-              </div>
-
-              {authMode === 'register' && (
-                <div className="form-group">
-                  <label>Подтверждение пароля</label>
-                  <input
-                    type="password"
-                    value={authPasswordConfirm}
-                    onChange={(e) => setAuthPasswordConfirm(e.target.value)}
-                    placeholder="Повторите пароль"
-                    required
-                  />
-                </div>
-              )}
-
-              {authError && <div className="message error">{authError}</div>}
-            
-              <button type="submit" className="submit-btn">
-                {authMode === 'login' ? 'Войти' : 'Зарегистрироваться'}
-              </button>
-            </form>
-            <div className="auth-switch">
-              {authMode === 'login' ? (
-                <p>Нет аккаунта? <span onClick={() => {
-                  setAuthMode('register');
-                  setAuthError('');
-                }}>Зарегистрироваться</span></p>
-              ) : (
-                <p>Уже есть аккаунт? <span onClick={() => {
-                  setAuthMode('login');
-                  setAuthError('');
-                }}>Войти</span></p>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
       
       {selectedPaste && (
         <div className="modal-overlay" onClick={closePaste} style={{ zIndex: 200 }}>
@@ -920,8 +908,118 @@ function Pastes() {
             </div>
             <div className="modal-footer">
               <span className="paste-code">Код: {selectedPaste.code}</span>
+              <div>
+              {profileData?.username === selectedPaste?.user && (
+                <button className="modal-close-btn" onClick={() => openEditModal(selectedPaste.code)} style={{marginRight: '12px'}}>Редактировать</button>
+              )}
               <button className="modal-close-btn" onClick={closePaste}>Закрыть</button>
+              </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Модальное окно для редактирования */}
+      {showEditModal && (
+        <EditPasteModal
+          paste={editingPaste}
+          onClose={() => {
+            setShowEditModal(false);
+            setEditingPaste(null);
+          }}
+          onSave={() => {
+            fetchPastes();
+            setMessage('✅ Паста обновлена!');
+            setTimeout(() => setMessage(''), 3000);
+          }}
+          token={token}
+          user={user}
+          categories={categories}
+          setMessage={setMessage}
+        />
+      )}
+
+      {/* Модальное окно авторизации */}
+      {showAuthModal && (
+        <div className="modal-overlay" onClick={() => setShowAuthModal(false)} style={{ zIndex: 300 }}>
+          <div className="modal-content auth-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>{authMode === 'login' ? '🔐 Вход' : '📝 Регистрация'}</h2>
+              <button className="modal-close" onClick={() => setShowAuthModal(false)}>✕</button>
+            </div>
+            <form onSubmit={handleAuth}>
+              <div className="modal-body">
+                {authError && <div className="message error">{authError}</div>}
+                
+                <div className="form-group">
+                  <label>Имя пользователя</label>
+                  <input
+                    type="text"
+                    value={authUsername}
+                    onChange={(e) => setAuthUsername(e.target.value)}
+                    placeholder="Введите username"
+                    required
+                  />
+                </div>
+
+                {authMode === 'register' && (
+                  <div className="form-group">
+                    <label>Email</label>
+                    <input
+                      type="email"
+                      value={authEmail}
+                      onChange={(e) => setAuthEmail(e.target.value)}
+                      placeholder="Введите email"
+                      required={authMode === 'register'}
+                    />
+                  </div>
+                )}
+
+                <div className="form-group">
+                  <label>Пароль</label>
+                  <input
+                    type="password"
+                    value={authPassword}
+                    onChange={(e) => setAuthPassword(e.target.value)}
+                    placeholder="Введите пароль"
+                    required
+                  />
+                </div>
+
+                {authMode === 'register' && (
+                  <div className="form-group">
+                    <label>Подтверждение пароля</label>
+                    <input
+                      type="password"
+                      value={authPasswordConfirm}
+                      onChange={(e) => setAuthPasswordConfirm(e.target.value)}
+                      placeholder="Повторите пароль"
+                      required
+                    />
+                  </div>
+                )}
+
+                <div className="auth-switch">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAuthMode(authMode === 'login' ? 'register' : 'login');
+                      setAuthError('');
+                    }}
+                    className="switch-btn"
+                  >
+                    {authMode === 'login' 
+                      ? 'Нет аккаунта? Зарегистрироваться' 
+                      : 'Уже есть аккаунт? Войти'}
+                  </button>
+                </div>
+              </div>
+              <div className="modal-footer">
+                <button type="submit" className="submit-btn">
+                  {authMode === 'login' ? 'Войти' : 'Зарегистрироваться'}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
