@@ -3,7 +3,7 @@ import django.contrib.auth
 from django.db.models import Q
 
 
-User = django.contrib.auth.get_user_model()
+User = django.contrib.auth.get_user_model()        
 
 
 class EmailOrUsernameBackend(django.contrib.auth.backends.ModelBackend):

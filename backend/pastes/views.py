@@ -1,45 +1,108 @@
-from rest_framework import generics, status, permissions
+from rest_framework import status
 from rest_framework.response import Response
-from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny
-from .models import Paste
-from pastes.serializers import PasteSerializer, PasteCreateSerializer
+from rest_framework_simplejwt.authentication import JWTAuthentication
+from rest_framework.views import APIView
+from django.shortcuts import get_object_or_404
+import django.contrib.auth
 
-class PasteListView(generics.ListCreateAPIView):
-    queryset = Paste.objects.all().order_by('-created_at')
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
-    
-    def get_serializer_class(self):
-        if self.request.method == 'POST':
-            return PasteCreateSerializer
-        return PasteSerializer
-    
-    def perform_create(self, serializer):
-        serializer.save(user=self.request.user if self.request.user.is_authenticated else None)
+from pastes.serializers import PasteSerializer
+from users.serializers import UserSerializer
+from pastes.models import Pastes
+import pastes.utils
 
-class PasteDetailView(generics.RetrieveUpdateDestroyAPIView):
-    queryset = Paste.objects.all()
-    lookup_field = 'code'
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+User = django.contrib.auth.get_user_model()
+
+
+class IncrementView(APIView):
+    permission_classes = [AllowAny]
+    authentication_classes = [JWTAuthentication]
     
-    def get_serializer_class(self):
-        if self.request.method in ['PUT', 'PATCH']:
-            return PasteCreateSerializer
-        return PasteSerializer
+    def post(self, request, paste_id):
+        try:
+            paste = get_object_or_404(Pastes, id=paste_id)
+            
+            paste.views = (paste.views or 0) + 1
+            paste.save(update_fields=['views'])
+            
+            return Response({
+                'views': paste.views,
+                'success': True
+            }, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            return Response({
+                'error': str(e),
+                'success': False
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class PasteView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        pastes = Pastes.objects.filter(user__isnull=False).order_by('-created_at')
+        
+        serializer = PasteSerializer(pastes, many=True)
+        data = serializer.data
+        if request.user.is_authenticated:
+            user = User.objects.get(username=request.user)
+            user_data = UserSerializer(user).data
+        else:
+            user_data = {}
+        
+        for i in range(len(data)):
+            data[i]['user'] = User.objects.get(id=data[i]['user']).username
+        return Response({
+            'success': True,
+            'pastes': serializer.data,
+            'user': user_data,
+            'count': pastes.count()
+        }, status=status.HTTP_200_OK)
     
-    def retrieve(self, request, *args, **kwargs):
-        instance = self.get_object()
-        instance.views += 1
-        instance.save()
-        serializer = self.get_serializer(instance)
-        return Response(serializer.data)
-    
-    def destroy(self, request, *args, **kwargs):
-        instance = self.get_object()
-        if instance.user and instance.user != request.user:
-            return Response(
-                {'error': 'Вы не можете удалить эту пасту'}, 
-                status=status.HTTP_403_FORBIDDEN
-            )
-        self.perform_destroy(instance)
-        return Response({'success': True, 'message': 'Паста удалена'})
+    def post(self, request):
+        required_fields = ['text']
+        missing_fields = [field for field in required_fields if field not in request.data]
+
+        if missing_fields:
+            return Response({
+                'success': False,
+                'error': f'Отсутствуют обязательные поля: {", ".join(missing_fields)}'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        code = pastes.utils.generate_code()
+        while Pastes.objects.filter(code=code).exists():
+            code = pastes.utils.generate_code()
+        data = request.data
+        data['code'] = code
+        if request.user.id:
+            data['user'] = request.user.id
+        serializer = PasteSerializer(data=data)
+        if serializer.is_valid():
+            try:
+                paste = serializer.save()
+                data = PasteSerializer(paste).data
+                if data['user']:
+                    data['user'] = User.objects.get(id=data['user']).username
+                return Response({
+                    'success': True,
+                    'message': 'Заметка успешно создана',
+                    'paste': PasteSerializer(paste).data,
+                }, status=status.HTTP_201_CREATED)
+            except Exception as e:
+                return Response({
+                    'success': False,
+                    'error': str(e)
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+        errors = {}
+        for field, field_errors in serializer.errors.items():
+            if isinstance(field_errors, list):
+                errors[field] = field_errors[0]
+            else:
+                errors[field] = field_errors
+        return Response({
+            'success': False,
+            'errors': errors,
+            'message': 'Ошибка валидации данных'
+        }, status=status.HTTP_400_BAD_REQUEST)
