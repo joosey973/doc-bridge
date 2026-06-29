@@ -268,82 +268,86 @@ function ProfilePage({ changePage }) {
   };
 
   useEffect(() => {
-    const canvas = canvasRef.current;
+  const canvas = canvasRef.current;
+  console.log(canvas);
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  
+  let animationFrameId;
+  let width = (canvas.width = window.innerWidth);
+  let height = (canvas.height = window.innerHeight);
+
+  const numDigits = 80; 
+  const digits = [];
+
+  for (let i = 0; i < numDigits; i++) {
+    digits.push({
+      x: Math.random() * width,
+      y: Math.random() * height,
+      char: Math.random() > 0.5 ? '1' : '0',
+      size: Math.floor(Math.random() * 8) + 14,
+      speedX: (Math.random() - 0.5) * 0.8,
+      speedY: (Math.random() - 0.5) * 0.8,
+      opacity: Math.random() * 0.5 + 0.3,
+      tick: 0,
+      tickMax: Math.floor(Math.random() * 60) + 30
+    });
+  }
+
+  const handleResize = () => {
     if (!canvas) return;
-    const ctx = canvas.getContext('2d');
+    width = canvas.width = window.innerWidth;
+    height = canvas.height = window.innerHeight;
+  };
+  window.addEventListener('resize', handleResize);
+
+  const animate = () => {
+    // Прозрачный фон для эффекта трейлов
+    ctx.clearRect(0, 0, width, height);
+    // Небольшой белый фон, чтобы цифры были видны
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.05)';
+    ctx.fillRect(0, 0, width, height);
     
-    let animationFrameId;
-    let width = (canvas.width = window.innerWidth);
-    let height = (canvas.height = window.innerHeight);
+    digits.forEach((d) => {
+      d.x += d.speedX;
+      d.y += d.speedY;
 
-    const numDigits = 70;
-    const digits = [];
+      d.tick++;
+      if (d.tick >= d.tickMax) {
+        d.speedX = (Math.random() - 0.5) * 1.2;
+        d.speedY = (Math.random() - 0.5) * 1.2;
+        d.char = Math.random() > 0.5 ? '1' : '0';
+        d.tick = 0;
+        d.tickMax = Math.floor(Math.random() * 60) + 30;
+        d.opacity = Math.random() * 0.5 + 0.3;
+      }
 
-    for (let i = 0; i < numDigits; i++) {
-      digits.push({
-        x: Math.random() * width,
-        y: Math.random() * height,
-        char: Math.random() > 0.5 ? '1' : '0',
-        size: Math.floor(Math.random() * 6) + 12,
-        glitchX: (Math.random() - 0.5) * 20,
-        glitchY: (Math.random() - 0.5) * 20,
-        tick: 0,
-        tickMax: Math.floor(Math.random() * 15) + 5
-      });
-    }
+      // Отражение от стен
+      if (d.x < 0 || d.x > width) d.speedX *= -1;
+      if (d.y < 0 || d.y > height) d.speedY *= -1;
 
-    const handleResize = () => {
-      if (!canvas) return;
-      width = canvas.width = window.innerWidth;
-      height = canvas.height = window.innerHeight;
-    };
-    window.addEventListener('resize', handleResize);
+      // Рисуем цифры с черным цветом и прозрачностью
+      ctx.fillStyle = `rgba(0, 0, 0, ${d.opacity})`;
+      ctx.font = `700 ${d.size}px monospace`;
+      ctx.fillText(d.char, d.x, d.y);
+      
+      // Эффект тени для читаемости
+      ctx.shadowColor = 'rgba(255, 255, 255, 0.5)';
+      ctx.shadowBlur = 10;
+      ctx.fillText(d.char, d.x, d.y);
+      ctx.shadowBlur = 0;
+    });
 
-    const animate = () => {
-      ctx.clearRect(0, 0, width, height);
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.56)';
-      digits.forEach((d, idx) => {
-        ctx.font = `700 ${d.size}px monospace`;
-        if (isHovered) {
-          const rows = 8;
-          const targetY = (idx % rows) * (height / rows) + (height / (rows * 2));
-          d.y = targetY;
-          d.tick++;
-          if (d.tick > 5) {
-            d.x += 15;
-            if (Math.random() > 0.85) d.char = d.char === '1' ? '0' : '1';
-            d.tick = 0;
-          }
-          if (idx % 8 === 0) {
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.03)';
-            ctx.fillRect(0, targetY + 2, width, 1);
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.22)';
-          }
-        } else {
-          d.tick++;
-          if (d.tick >= d.tickMax) {
-            d.x += (Math.random() - 0.5) * 60;
-            d.y += (Math.random() - 0.5) * 60;
-            if (Math.random() > 0.5) d.char = Math.random() > 0.5 ? '1' : '0';
-            d.tick = 0;
-            d.tickMax = Math.floor(Math.random() * 20) + 10;
-          }
-        }
-        if (d.x < 0) d.x = width;
-        if (d.x > width) d.x = 0;
-        if (d.y < 0) d.y = height;
-        if (d.y > height) d.y = 0;
-        ctx.fillText(d.char, d.x, d.y);
-      });
-      animationFrameId = requestAnimationFrame(animate);
-    };
-    animate();
+    animationFrameId = requestAnimationFrame(animate);
+  };
 
-    return () => {
-      window.removeEventListener('resize', handleResize);
-      cancelAnimationFrame(animationFrameId);
-    };
-  }, [isHovered]);
+  animate();
+
+  return () => {
+    window.removeEventListener('resize', handleResize);
+    cancelAnimationFrame(animationFrameId);
+  };
+}, []);
 
   const stats = {
     pastesCount: userPastes.length,
