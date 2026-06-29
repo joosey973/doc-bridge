@@ -153,7 +153,7 @@ function MainPage({ changePage }) {
         glitchY: (Math.random() - 0.5) * 20,
         tick: 0,
         tickMax: Math.floor(Math.random() * 15) + 5,
-        speedX: (Math.random() - 0.5) * 2, // Базовая скорость для хаотичного движения
+        speedX: (Math.random() - 0.5) * 2,
         speedY: (Math.random() - 0.5) * 2
       });
     }
