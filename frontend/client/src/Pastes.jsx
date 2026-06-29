@@ -31,6 +31,11 @@ function Pastes() {
   
   const canvasRef = useRef(null);
   const [isHovered, setIsHovered] = useState(false);
+    const isHoveredRef = useRef(isHovered);
+    useEffect(() => {
+      isHoveredRef.current = isHovered;
+    }, [isHovered]);
+    
   const openPasteView = (paste) => {
   setTimeout(() => {
     navigate(`/api/pastes/view/${paste.code}/`, { 
@@ -40,82 +45,102 @@ function Pastes() {
 };
   
   useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    
-    let animationFrameId;
-    let width = (canvas.width = window.innerWidth);
-    let height = (canvas.height = window.innerHeight);
-
-    const numDigits = 100;
-    const digits = [];
-
-    for (let i = 0; i < numDigits; i++) {
-      digits.push({
-        x: Math.random() * width,
-        y: Math.random() * height,
-        char: Math.random() > 0.5 ? '1' : '0',
-        size: Math.floor(Math.random() * 6) + 12,
-        glitchX: (Math.random() - 0.5) * 20,
-        glitchY: (Math.random() - 0.5) * 20,
-        tick: 0,
-        tickMax: Math.floor(Math.random() * 15) + 5
-      });
-    }
-
-    const handleResize = () => {
+      const canvas = canvasRef.current;
       if (!canvas) return;
-      width = canvas.width = window.innerWidth;
-      height = canvas.height = window.innerHeight;
-    };
-    window.addEventListener('resize', handleResize);
-
-    const animate = () => {
-      ctx.clearRect(0, 0, width, height);
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.56)';
-      digits.forEach((d, idx) => {
-        ctx.font = `700 ${d.size}px monospace`;
-        if (isHovered) {
-          const rows = 8;
-          const targetY = (idx % rows) * (height / rows) + (height / (rows * 2));
-          d.y = targetY;
-          d.tick++;
-          if (d.tick > 5) {
-            d.x += 15;
-            if (Math.random() > 0.85) d.char = d.char === '1' ? '0' : '1';
-            d.tick = 0;
+      const ctx = canvas.getContext('2d');
+      
+      let animationFrameId;
+      let width = (canvas.width = window.innerWidth);
+      let height = (canvas.height = window.innerHeight);
+  
+      const numDigits = 100; 
+      const digits = [];
+  
+      for (let i = 0; i < numDigits; i++) {
+        digits.push({
+          x: Math.random() * width,
+          y: Math.random() * height,
+          char: Math.random() > 0.5 ? '1' : '0',
+          size: Math.floor(Math.random() * 6) + 12, 
+          glitchX: (Math.random() - 0.5) * 20,
+          glitchY: (Math.random() - 0.5) * 20,
+          tick: 0,
+          tickMax: Math.floor(Math.random() * 15) + 5,
+          speedX: (Math.random() - 0.5) * 2,
+          speedY: (Math.random() - 0.5) * 2
+        });
+      }
+  
+      const handleResize = () => {
+        if (!canvas) return;
+        width = canvas.width = window.innerWidth;
+        height = canvas.height = window.innerHeight;
+      };
+      window.addEventListener('resize', handleResize);
+  
+      const animate = () => {
+        ctx.clearRect(0, 0, width, height);
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.56)'; 
+        
+        const hovered = isHoveredRef.current;
+  
+        digits.forEach((d, idx) => {
+          ctx.font = `700 ${d.size}px monospace`; 
+          
+          if (hovered) {
+            const rows = 8; 
+            const targetY = (idx % rows) * (height / rows) + (height / (rows * 2));
+            
+            // Плавное притягивание к линиям сетки вместо резкого прыжка
+            d.y += (targetY - d.y) * 0.1;
+            
+            d.tick++;
+            if (d.tick > 5) {
+              d.x += 12; // Движение вбок в режиме ховера
+              if (Math.random() > 0.85) d.char = d.char === '1' ? '0' : '1';
+              d.tick = 0;
+            }
+  
+            if (idx % rows === 0) {
+              ctx.fillStyle = 'rgba(0, 0, 0, 0.03)';
+              ctx.fillRect(0, targetY + 2, width, 1);
+              ctx.fillStyle = 'rgba(0, 0, 0, 0.22)'; 
+            }
+          } else {
+            // Стандартное хаотичное движение (без телепортаций)
+            d.x += d.speedX;
+            d.y += d.speedY;
+  
+            d.tick++;
+            if (d.tick >= d.tickMax) {
+              // Слегка меняем вектор движения время от времени
+              d.speedX = (Math.random() - 0.5) * 2;
+              d.speedY = (Math.random() - 0.5) * 2;
+              if (Math.random() > 0.5) d.char = Math.random() > 0.5 ? '1' : '0';
+              d.tick = 0;
+              d.tickMax = Math.floor(Math.random() * 40) + 20;
+            }
           }
-          if (idx % 8 === 0) {
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.03)';
-            ctx.fillRect(0, targetY + 2, width, 1);
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.22)';
-          }
-        } else {
-          d.tick++;
-          if (d.tick >= d.tickMax) {
-            d.x += (Math.random() - 0.5) * 60;
-            d.y += (Math.random() - 0.5) * 60;
-            if (Math.random() > 0.5) d.char = Math.random() > 0.5 ? '1' : '0';
-            d.tick = 0;
-            d.tickMax = Math.floor(Math.random() * 20) + 10;
-          }
-        }
-        if (d.x < 0) d.x = width;
-        if (d.x > width) d.x = 0;
-        if (d.y < 0) d.y = height;
-        if (d.y > height) d.y = 0;
-        ctx.fillText(d.char, d.x, d.y);
-      });
-      animationFrameId = requestAnimationFrame(animate);
-    };
-    animate();
-
-    return () => {
-      window.removeEventListener('resize', handleResize);
-      cancelAnimationFrame(animationFrameId);
-    };
-  }, [isHovered]);
+  
+          // Границы экрана
+          if (d.x < 0) d.x = width;
+          if (d.x > width) d.x = 0;
+          if (d.y < 0) d.y = height;
+          if (d.y > height) d.y = 0;
+  
+          ctx.fillText(d.char, d.x, d.y);
+        });
+  
+        animationFrameId = requestAnimationFrame(animate);
+      };
+  
+      animate();
+  
+      return () => {
+        window.removeEventListener('resize', handleResize);
+        cancelAnimationFrame(animationFrameId);
+      };
+    }, []);
 
   const [token, setToken] = useState(localStorage.getItem('token') || '');
   const [user, setUser] = useState(null);

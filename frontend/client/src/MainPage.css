@@ -104,6 +104,7 @@ html, body {
 /* --- ВЕРХНЯЯ ПАНЕЛЬ (ШАПКА) --- */
 .top-header {
   min-height: 80px;
+  width: 100vw;
   display: flex;
   align-items: center;
   justify-content: space-between; 
