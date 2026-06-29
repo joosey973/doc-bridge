@@ -8,6 +8,7 @@ import CompressPage from "./pages/CompressPage";
 import DropPage from "./pages/DropPage";
 import EditPastePage from "./pages/EditPastePage";
 import ViewPastePage from "./pages/ViewPaste";
+import AboutPage from "./pages/AboutPage";
 
 function App(){
   return (
@@ -22,6 +23,7 @@ function App(){
       <Route path="/api/droppage/" element={<DropPage/>}/>
       <Route path="/api/pastes/edit/:pasteCode/" element={<EditPastePage/>}/>
       <Route path="/api/pastes/view/:pasteCode/" element={<ViewPastePage/>}/>
+      <Route path="/api/about/" element={<AboutPage/>}/>
     </Routes>
     </Router>
   );

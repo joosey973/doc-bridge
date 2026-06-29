@@ -9,6 +9,12 @@ function MainPage({ changePage }) {
   const canvasRef = useRef(null);
   const [isHovered, setIsHovered] = useState(false);
   
+  // Используем реф для ховера, чтобы анимация видела актуальное значение без перезапуска эффекта
+  const isHoveredRef = useRef(isHovered);
+  useEffect(() => {
+    isHoveredRef.current = isHovered;
+  }, [isHovered]);
+
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
@@ -23,16 +29,15 @@ function MainPage({ changePage }) {
   const [authError, setAuthError] = useState('');
   const [loadingAuth, setLoadingAuth] = useState(true);
 
+  // Проверка авторизации при монтировании
   useEffect(() => {
     const checkAuth = async () => {
       const savedToken = localStorage.getItem('token');
-      
       if (savedToken) {
         try {
           const response = await fetch(`${API_URL}/auth/me/`, {
             headers: { 'Authorization': `Bearer ${savedToken}` }
           });
-          
           if (response.ok) {
             const data = await response.json();
             setIsAuthenticated(true);
@@ -41,24 +46,15 @@ function MainPage({ changePage }) {
           } else {
             localStorage.removeItem('token');
             localStorage.removeItem('userData');
-            setIsAuthenticated(false);
-            setUser(null);
           }
         } catch (error) {
           console.error('❌ Ошибка проверки авторизации:', error);
           localStorage.removeItem('token');
           localStorage.removeItem('userData');
-          setIsAuthenticated(false);
-          setUser(null);
         }
-      } else {
-        setIsAuthenticated(false);
-        setUser(null);
       }
-      
       setLoadingAuth(false);
     };
-    
     checkAuth();
   }, []);
 
@@ -75,16 +71,11 @@ function MainPage({ changePage }) {
   const handleLogin = async (e) => {
     e.preventDefault();
     setAuthError('');
-    
     try {
       const isEmail = authForm.login.includes('@');
       const loginData = { password: authForm.password };
-      
-      if (isEmail) {
-        loginData.email = authForm.login;
-      } else {
-        loginData.username = authForm.login;
-      }
+      if (isEmail) loginData.email = authForm.login;
+      else loginData.username = authForm.login;
       
       const response = await fetch(`${API_URL}/auth/login/`, {
         method: 'POST',
@@ -96,18 +87,12 @@ function MainPage({ changePage }) {
         const data = await response.json();
         localStorage.setItem('token', data.token);
         localStorage.setItem('userData', JSON.stringify(data.user));
-        setIsAuthenticated(true);
-        setUser(data.user);
-        setShowAuthModal(false);
-        setAuthForm({ login: '', password: '', passwordConfirm: '', username: '', email: '' });
         window.location.reload();
       } else {
         const error = await response.json();
-        console.log(error);
         setAuthError(error.message || 'Неверный логин или пароль');
       }
     } catch (error) {
-      console.error('Ошибка входа:', error);
       setAuthError('Ошибка при входе');
     }
   };
@@ -115,12 +100,10 @@ function MainPage({ changePage }) {
   const handleRegister = async (e) => {
     e.preventDefault();
     setAuthError('');
-
     if (authForm.password !== authForm.passwordConfirm) {
       setAuthError('❌ Пароли не совпадают!');
       return;
     }
-
     try {
       const response = await fetch(`${API_URL}/auth/register/`, {
         method: 'POST',
@@ -132,15 +115,10 @@ function MainPage({ changePage }) {
           password_confirm: authForm.passwordConfirm 
         })
       });
-      
       if (response.ok) {
         const data = await response.json();
         localStorage.setItem('token', data.token);
         localStorage.setItem('userData', JSON.stringify(data.user));
-        setIsAuthenticated(true);
-        setUser(data.user);
-        setShowAuthModal(false);
-        setAuthForm({ login: '', password: '', passwordConfirm: '', username: '', email: '' });
         window.location.reload();
       } else {
         const error = await response.json();
@@ -148,11 +126,11 @@ function MainPage({ changePage }) {
         setAuthError(errorMessages || 'Ошибка регистрации');
       }
     } catch (error) {
-      console.error('Ошибка регистрации:', error);
       setAuthError('Ошибка при регистрации');
     }
   };
 
+  // Оптимизированный Canvas фон (срабатывает ОДИН раз при монтировании)
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -174,7 +152,9 @@ function MainPage({ changePage }) {
         glitchX: (Math.random() - 0.5) * 20,
         glitchY: (Math.random() - 0.5) * 20,
         tick: 0,
-        tickMax: Math.floor(Math.random() * 15) + 5
+        tickMax: Math.floor(Math.random() * 15) + 5,
+        speedX: (Math.random() - 0.5) * 2, // Базовая скорость для хаотичного движения
+        speedY: (Math.random() - 0.5) * 2
       });
     }
 
@@ -187,43 +167,49 @@ function MainPage({ changePage }) {
 
     const animate = () => {
       ctx.clearRect(0, 0, width, height);
-      
       ctx.fillStyle = 'rgba(0, 0, 0, 0.56)'; 
       
+      const hovered = isHoveredRef.current;
+
       digits.forEach((d, idx) => {
         ctx.font = `700 ${d.size}px monospace`; 
-        if (isHovered) {
+        
+        if (hovered) {
           const rows = 8; 
           const targetY = (idx % rows) * (height / rows) + (height / (rows * 2));
           
-          d.y = targetY;
+          // Плавное притягивание к линиям сетки вместо резкого прыжка
+          d.y += (targetY - d.y) * 0.1;
           
           d.tick++;
           if (d.tick > 5) {
-            d.x += 15; 
+            d.x += 12; // Движение вбок в режиме ховера
             if (Math.random() > 0.85) d.char = d.char === '1' ? '0' : '1';
             d.tick = 0;
           }
 
-          if (idx % 8 === 0) {
+          if (idx % rows === 0) {
             ctx.fillStyle = 'rgba(0, 0, 0, 0.03)';
             ctx.fillRect(0, targetY + 2, width, 1);
             ctx.fillStyle = 'rgba(0, 0, 0, 0.22)'; 
           }
-
         } else {
+          // Стандартное хаотичное движение (без телепортаций)
+          d.x += d.speedX;
+          d.y += d.speedY;
+
           d.tick++;
           if (d.tick >= d.tickMax) {
-            d.x += (Math.random() - 0.5) * 60;
-            d.y += (Math.random() - 0.5) * 60;
-            
+            // Слегка меняем вектор движения время от времени
+            d.speedX = (Math.random() - 0.5) * 2;
+            d.speedY = (Math.random() - 0.5) * 2;
             if (Math.random() > 0.5) d.char = Math.random() > 0.5 ? '1' : '0';
-            
             d.tick = 0;
-            d.tickMax = Math.floor(Math.random() * 20) + 10;
+            d.tickMax = Math.floor(Math.random() * 40) + 20;
           }
         }
 
+        // Границы экрана
         if (d.x < 0) d.x = width;
         if (d.x > width) d.x = 0;
         if (d.y < 0) d.y = height;
@@ -241,7 +227,7 @@ function MainPage({ changePage }) {
       window.removeEventListener('resize', handleResize);
       cancelAnimationFrame(animationFrameId);
     };
-  }, [isHovered]);
+  }, []); // Пустой массив зависимостей гарантирует стабильный FPS
 
   if (loadingAuth) {
     return (
@@ -276,8 +262,7 @@ function MainPage({ changePage }) {
           <li><Link to="/api/compress/" onClick={closeMenu}>Сжатие</Link></li>
           <li><Link to="/api/pastes/" onClick={closeMenu}>Заметки</Link></li>
           <li><Link to="/api/droppage/" onClick={closeMenu}>Файлообменник</Link></li>
-          <li><a href="#" onClick={(e) => { e.preventDefault(); closeMenu(); }}>Хранилище</a></li>
-          <li><a href="#" onClick={(e) => { e.preventDefault(); closeMenu(); }}>О нас</a></li>
+          <li><Link to="/api/about/" onClick={closeMenu}>О нас</Link></li>
         </ul>
       </nav>
 
@@ -289,16 +274,7 @@ function MainPage({ changePage }) {
             <span className="notification-badge"></span>
             ➤
           </button>
-          <button 
-            className="auth-btn"
-            onClick={() => {
-              if (isAuthenticated) {
-                handleLogout();
-              } else {
-                setShowAuthModal(true);
-              }
-            }}
-          >
+          <button className="auth-btn" onClick={isAuthenticated ? handleLogout : () => setShowAuthModal(true)}>
             {isAuthenticated ? 'Выйти' : 'Войти'}
           </button>
         </div>
@@ -306,56 +282,41 @@ function MainPage({ changePage }) {
 
       <main className="main-content">
         <div className="buttons-grid">
+          {/* Исправлено: Ссылки теперь сами выступают в роли интерактивных кнопок */}
           <Link 
             to="/api/converter/" 
             className="menu-item-btn"
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
           >
-            <button 
-              className="menu-item-btn"
-              onMouseEnter={() => setIsHovered(true)}
-              onMouseLeave={() => setIsHovered(false)}
-            >
-              <span data-text="Конвертер">Конвертер</span>
-            </button>
+            <span data-text="Конвертер">Конвертер</span>
           </Link>
           
           <Link 
             to="/api/compress/" 
             className="menu-item-btn"
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
           >
-            <button 
-              className="menu-item-btn"
-              onMouseEnter={() => setIsHovered(true)}
-              onMouseLeave={() => setIsHovered(false)}
-            >
-              <span data-text="Сжатие">Сжатие</span>
-            </button>
+            <span data-text="Сжатие">Сжатие</span>
           </Link>
           
           <Link 
             to="/api/pastes/" 
             className="menu-item-btn"
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
           >
-            <button 
-              className="menu-item-btn"
-              onMouseEnter={() => setIsHovered(true)}
-              onMouseLeave={() => setIsHovered(false)}
-            >
-              <span data-text="Заметки">Заметки</span>
-            </button>
+            <span data-text="Заметки">Заметки</span>
           </Link>
           
           <Link 
             to="/api/droppage/" 
             className="menu-item-btn"
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
           >
-            <button 
-              className="menu-item-btn"
-              onMouseEnter={() => setIsHovered(true)}
-              onMouseLeave={() => setIsHovered(false)}
-            >
-              <span data-text="Файлообменник">Файлообменник</span>
-            </button>
+            <span data-text="Файлообменник">Файлообменник</span>
           </Link>
         </div>
       </main>
