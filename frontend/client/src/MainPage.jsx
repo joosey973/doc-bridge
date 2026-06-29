@@ -7,13 +7,7 @@ const API_URL = 'http://localhost:8000/api';
 function MainPage({ changePage }) {
   const [isOpen, setIsOpen] = useState(false);
   const canvasRef = useRef(null);
-  const [isHovered, setIsHovered] = useState(false);
-  
-  // Используем реф для ховера, чтобы анимация видела актуальное значение без перезапуска эффекта
-  const isHoveredRef = useRef(isHovered);
-  useEffect(() => {
-    isHoveredRef.current = isHovered;
-  }, [isHovered]);
+  const [isHovered, setIsHovered] = useState(false); // Оставляем чистый стейт, как во 2-м файле
 
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState(null);
@@ -130,7 +124,7 @@ function MainPage({ changePage }) {
     }
   };
 
-  // Оптимизированный Canvas фон (срабатывает ОДИН раз при монтировании)
+  // Интегрированная анимация из второго файла
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -140,7 +134,7 @@ function MainPage({ changePage }) {
     let width = (canvas.width = window.innerWidth);
     let height = (canvas.height = window.innerHeight);
 
-    const numDigits = 100;
+    const numDigits = 70; // Как во втором файле для лучшей производительности
     const digits = [];
 
     for (let i = 0; i < numDigits; i++) {
@@ -150,9 +144,7 @@ function MainPage({ changePage }) {
         char: Math.random() > 0.5 ? '1' : '0',
         size: Math.floor(Math.random() * 6) + 12,
         tick: 0,
-        tickMax: Math.floor(Math.random() * 15) + 5,
-        speedX: (Math.random() - 0.5) * 2, // Базовая скорость для хаотичного движения
-        speedY: (Math.random() - 0.5) * 2
+        tickMax: Math.floor(Math.random() * 15) + 5
       });
     }
 
@@ -167,47 +159,40 @@ function MainPage({ changePage }) {
       ctx.clearRect(0, 0, width, height);
       ctx.fillStyle = 'rgba(0, 0, 0, 0.56)'; 
       
-      const hovered = isHoveredRef.current;
-
       digits.forEach((d, idx) => {
         ctx.font = `700 ${d.size}px monospace`; 
         
-        if (hovered) {
+        if (isHovered) {
+          // Четкое построение в ряды при ховере
           const rows = 8; 
           const targetY = (idx % rows) * (height / rows) + (height / (rows * 2));
-          
-          // Плавное притягивание к линиям сетки вместо резкого прыжка
-          d.y += (targetY - d.y) * 0.1;
+          d.y = targetY;
           
           d.tick++;
           if (d.tick > 5) {
-            d.x += 12; // Движение вбок в режиме ховера
+            d.x += 15; 
             if (Math.random() > 0.85) d.char = d.char === '1' ? '0' : '1';
             d.tick = 0;
           }
 
-          if (idx % rows === 0) {
+          if (idx % 8 === 0) {
             ctx.fillStyle = 'rgba(0, 0, 0, 0.03)';
             ctx.fillRect(0, targetY + 2, width, 1);
             ctx.fillStyle = 'rgba(0, 0, 0, 0.22)'; 
           }
         } else {
-          // Стандартное хаотичное движение (без телепортаций)
-          d.x += d.speedX;
-          d.y += d.speedY;
-
+          // Хаотичное "глитч" перемещение в пространстве при отсутствии ховера
           d.tick++;
           if (d.tick >= d.tickMax) {
-            // Слегка меняем вектор движения время от времени
-            d.speedX = (Math.random() - 0.5) * 2;
-            d.speedY = (Math.random() - 0.5) * 2;
+            d.x += (Math.random() - 0.5) * 60;
+            d.y += (Math.random() - 0.5) * 60;
             if (Math.random() > 0.5) d.char = Math.random() > 0.5 ? '1' : '0';
             d.tick = 0;
-            d.tickMax = Math.floor(Math.random() * 40) + 20;
+            d.tickMax = Math.floor(Math.random() * 20) + 10;
           }
         }
 
-        // Границы экрана
+        // Зацикливание по краям экрана
         if (d.x < 0) d.x = width;
         if (d.x > width) d.x = 0;
         if (d.y < 0) d.y = height;
@@ -225,7 +210,7 @@ function MainPage({ changePage }) {
       window.removeEventListener('resize', handleResize);
       cancelAnimationFrame(animationFrameId);
     };
-  }, []); // Пустой массив зависимостей гарантирует стабильный FPS
+  }, [isHovered]); // Перезапускаем эффект при изменении ховера, чтобы мгновенно переключать режимы движения
 
   if (loadingAuth) {
     return (
@@ -248,9 +233,7 @@ function MainPage({ changePage }) {
         className={`burger-btn ${isOpen ? 'open' : ''}`} 
         onClick={() => setIsOpen(!isOpen)}
       >
-        <span></span>
-        <span></span>
-        <span></span>
+        <span></span><span></span><span></span>
       </button>
 
       <nav className={`sidebar ${isOpen ? 'active' : ''}`}>
@@ -280,7 +263,6 @@ function MainPage({ changePage }) {
 
       <main className="main-content">
         <div className="buttons-grid">
-          {/* Исправлено: Ссылки теперь сами выступают в роли интерактивных кнопок */}
           <Link 
             to="/api/converter/" 
             className="menu-item-btn"
@@ -422,8 +404,19 @@ function MainPage({ changePage }) {
           </div>
         </div>
       )}
+
+      <footer className="bottom-footer">
+        <div className="footer-buttons">
+          <button className="footer-btn">Политика</button>
+          <button className="footer-btn">Условия</button>
+          <Link to="/api/policy/" className="footer-btn">Политика</Link>
+          <Link to="/api/termsofservice/" className="footer-btn">Условия</Link>
+        </div>
+      </footer>
     </div>
   );
 }
+
+
 
 export default MainPage;
