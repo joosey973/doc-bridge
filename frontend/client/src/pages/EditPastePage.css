@@ -338,4 +338,17 @@
   z-index: 1;
 }
 
-/* Остальные стили остаются без изменений */
+
+.link-container {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  border: none;
+  align-self: center;
+}
+
+.link-container a {
+  font-weight: 600;
+  font-size: 14px;
+  color: #373737;
+}

@@ -537,14 +537,7 @@ function ProfilePage({ changePage }) {
           <span></span>
         </button>
 
-        <nav className={`sidebar ${isOpen ? 'active' : ''}`}>
-          <ul>
-            <li><Link to="/" onClick={closeMenu}>Главная</Link></li>
-            <li><a href="#" onClick={(e) => { e.preventDefault(); closeMenu(); }}>О нас</a></li>
-            <li><Link to="/api/pastes/" onClick={closeMenu}>Заметки</Link></li>
-            <li><a href="#" onClick={(e) => { e.preventDefault(); closeMenu(); }}>Хранилище</a></li>
-          </ul>
-        </nav>
+       
 
         <header className="top-header">
           <div className="header-left"></div>
@@ -703,9 +696,12 @@ function ProfilePage({ changePage }) {
       <nav className={`sidebar ${isOpen ? 'active' : ''}`}>
         <ul>
           <li><Link to="/" onClick={closeMenu}>Главная</Link></li>
-          <li><a href="#" onClick={(e) => { e.preventDefault(); closeMenu(); }}>О нас</a></li>
+          <li><Link to="/api/converter/" onClick={closeMenu}>Конвертер</Link></li>
+          <li><Link to="/api/compress/" onClick={closeMenu}>Сжатие</Link></li>
           <li><Link to="/api/pastes/" onClick={closeMenu}>Заметки</Link></li>
+          <li><Link to="/api/droppage/" onClick={closeMenu}>Файлообменник</Link></li>
           <li><a href="#" onClick={(e) => { e.preventDefault(); closeMenu(); }}>Хранилище</a></li>
+          <li><a href="#" onClick={(e) => { e.preventDefault(); closeMenu(); }}>О нас</a></li>
         </ul>
       </nav>
 

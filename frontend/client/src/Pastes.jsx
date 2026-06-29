@@ -32,7 +32,6 @@ function Pastes() {
   const canvasRef = useRef(null);
   const [isHovered, setIsHovered] = useState(false);
   const openPasteView = (paste) => {
-  
   setTimeout(() => {
     navigate(`/api/pastes/view/${paste.code}/`, { 
       state: { from: 'pastes' } 
@@ -49,7 +48,7 @@ function Pastes() {
     let width = (canvas.width = window.innerWidth);
     let height = (canvas.height = window.innerHeight);
 
-    const numDigits = 70;
+    const numDigits = 100;
     const digits = [];
 
     for (let i = 0; i < numDigits; i++) {
@@ -593,9 +592,12 @@ function Pastes() {
       <nav className={`sidebar ${isOpen ? 'active' : ''}`}>
         <ul>
           <li><Link to="/api/profile/" onClick={closeMenu}>Личный кабинет</Link></li>
-          <li><a href="#" onClick={(e) => { e.preventDefault(); closeMenu(); }}>О нас</a></li>
-          <li><Link to="/api/pastes/" onClick={closeMenu}>Заметки</Link></li>
+          <li><Link to="/" onClick={closeMenu}>Главная</Link></li>
+          <li><Link to="/api/converter/" onClick={closeMenu}>Конвертер</Link></li>
+          <li><Link to="/api/compress/" onClick={closeMenu}>Сжатие</Link></li>
+          <li><Link to="/api/droppage/" onClick={closeMenu}>Файлообменник</Link></li>
           <li><a href="#" onClick={(e) => { e.preventDefault(); closeMenu(); }}>Хранилище</a></li>
+          <li><a href="#" onClick={(e) => { e.preventDefault(); closeMenu(); }}>О нас</a></li>
         </ul>
       </nav>
 

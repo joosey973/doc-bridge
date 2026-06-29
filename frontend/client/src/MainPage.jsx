@@ -162,7 +162,7 @@ function MainPage({ changePage }) {
     let width = (canvas.width = window.innerWidth);
     let height = (canvas.height = window.innerHeight);
 
-    const numDigits = 70; 
+    const numDigits = 100;
     const digits = [];
 
     for (let i = 0; i < numDigits; i++) {
@@ -170,7 +170,7 @@ function MainPage({ changePage }) {
         x: Math.random() * width,
         y: Math.random() * height,
         char: Math.random() > 0.5 ? '1' : '0',
-        size: Math.floor(Math.random() * 6) + 12, 
+        size: Math.floor(Math.random() * 6) + 12,
         glitchX: (Math.random() - 0.5) * 20,
         glitchY: (Math.random() - 0.5) * 20,
         tick: 0,
@@ -272,9 +272,12 @@ function MainPage({ changePage }) {
       <nav className={`sidebar ${isOpen ? 'active' : ''}`}>
         <ul>
           <li><Link to="/api/profile/" onClick={closeMenu}>Личный кабинет</Link></li>
-          <li><a href="#" onClick={(e) => { e.preventDefault(); closeMenu(); }}>О нас</a></li>
+          <li><Link to="/api/converter/" onClick={closeMenu}>Конвертер</Link></li>
+          <li><Link to="/api/compress/" onClick={closeMenu}>Сжатие</Link></li>
           <li><Link to="/api/pastes/" onClick={closeMenu}>Заметки</Link></li>
+          <li><Link to="/api/droppage/" onClick={closeMenu}>Файлообменник</Link></li>
           <li><a href="#" onClick={(e) => { e.preventDefault(); closeMenu(); }}>Хранилище</a></li>
+          <li><a href="#" onClick={(e) => { e.preventDefault(); closeMenu(); }}>О нас</a></li>
         </ul>
       </nav>
 

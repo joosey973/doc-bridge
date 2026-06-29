@@ -18,12 +18,16 @@ class PasteEditDelete(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, paste_code):
-        paste_obj = get_object_or_404(Pastes, code=paste_code)
-        paste_user_obj = get_object_or_404(User, username=paste_obj.user)
-        user_obj = get_object_or_404(User, username=request.user)
+        paste_obj = Pastes.objects.filter(code=paste_code).first()
+        paste_user_obj = User.objects.filter(username=paste_obj.user)
+        user_obj = User.objects.filter(username=request.user)
         paste = PasteSerializer(paste_obj).data
-        paste_user = UserSerializer(paste_user_obj).data
-        user = UserSerializer(user_obj).data
+        if not (paste_obj and user_obj):
+            paste_user = {}
+            user = {}
+        else:
+            paste_user = UserSerializer(paste_user_obj.first()).data
+            user = UserSerializer(user_obj.first()).data
         return Response(
             {'paste_user': paste_user, 'paste': paste, 'user': user}, status=status.HTTP_200_OK)
     
@@ -43,6 +47,17 @@ class PasteEditDelete(APIView):
         paste = get_object_or_404(Pastes, code=paste_code)
         paste.delete() 
         return Response({'success': True}, status=status.HTTP_200_OK)
+
+
+class PasteViewPaste(PasteEditDelete, APIView):
+    permission_classes = [AllowAny]
+
+    def put(self, request):
+        pass
+
+    def delete(self, request):
+        pass
+
 
 
 class IncrementView(APIView):

@@ -15,13 +15,13 @@ function App(){
     <Routes>
         
       <Route path="" element={<MainPage/>}/>
-      <Route path="/api/profile" element={<ProfilePage/>}/>
-      <Route path="/api/pastes" element={<Pastes/>}/>
-      <Route path="/api/converter" element={<ConverterPage/>}/>
-      <Route path="/api/compress" element={<CompressPage/>}/>
-      <Route path="/api/droppage" element={<DropPage/>}/>
-      <Route path="/api/pastes/edit/:pasteCode" element={<EditPastePage/>}/>
-      <Route path="/api/pastes/view/:pasteCode" element={<ViewPastePage/>}/>
+      <Route path="/api/profile/" element={<ProfilePage/>}/>
+      <Route path="/api/pastes/" element={<Pastes/>}/>
+      <Route path="/api/converter/" element={<ConverterPage/>}/>
+      <Route path="/api/compress/" element={<CompressPage/>}/>
+      <Route path="/api/droppage/" element={<DropPage/>}/>
+      <Route path="/api/pastes/edit/:pasteCode/" element={<EditPastePage/>}/>
+      <Route path="/api/pastes/view/:pasteCode/" element={<ViewPastePage/>}/>
     </Routes>
     </Router>
   );

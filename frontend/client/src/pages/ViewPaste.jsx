@@ -1,4 +1,4 @@
-import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { useParams, useNavigate, useLocation, Link } from 'react-router-dom';
 import { useState, useEffect, useRef } from 'react';
 import './EditPastePage.css';
 
@@ -16,6 +16,7 @@ const ViewPastePage = () => {
             navigate('/')
           }
     };
+  
   
   const canvasRef = useRef(null);
   const [isHovered, setIsHovered] = useState(false);
@@ -51,7 +52,11 @@ const ViewPastePage = () => {
     { id: 'other', name: '📌 Другое' },
   ];
 
-  // Эффект для фона с цифрами (как в MainPage)
+  const copyToClipboard = async () => {
+    const link = `${window.location.origin}/api/pastes/view/${pasteCode}`;
+    await navigator.clipboard.writeText(link);
+  };
+
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -163,43 +168,39 @@ const ViewPastePage = () => {
   };
 
   // Загрузка данных пасты
-  useEffect(() => {
-    const fetchPaste = async () => {
-      if (!token) {
-        navigate('/api/pastes');
-        return;
-      }
-
-      try {
-        const response = await fetch(`${API_URL}/pastes/edit/${pasteCode}/`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          }
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          fetchProfileData();
-          setTitle(data.paste.title || '');
-          setContent(data.paste.text || '');
-          setLanguage(data.paste.language || 'javascript');
-          setCategory(data.paste.category || 'other');
-          setTags(data.paste.tags || []);
-        } else {
-          setError('❌ Паста не найдена');
-          setTimeout(() => navigate('/api/pastes'), 2000);
+  // Загрузка данных пасты
+useEffect(() => {
+  const fetchPaste = async () => {
+    try {
+      // Используем эндпоинт для просмотра, а не для редактирования!
+      const response = await fetch(`${API_URL}/pastes/view/${pasteCode}/`, {
+        headers: {
+          'Content-Type': 'application/json',
         }
-      } catch (err) {
-        setError('❌ Ошибка загрузки пасты');
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    };
+      });
 
-    fetchPaste();
-  }, [pasteCode, token, user, navigate]);
+      if (response.ok) {
+        const data = await response.json();
+        setTitle(data.paste.title || '');
+        setContent(data.paste.text || '');
+        setLanguage(data.paste.language || 'javascript');
+        setCategory(data.paste.category || 'other');
+        setTags(data.paste.tags || []);
+        setProfileData(data.paste_user || 'Аноним');
+      } else {
+        setError('❌ Паста не найдена');
+        setTimeout(() => navigate('/api/pastes'), 20000);
+      }
+    } catch (err) {
+      setError('❌ Ошибка загрузки пасты');
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  fetchPaste();
+}, [pasteCode, navigate]);
 
   const addTag = () => {
     const trimmed = tagInput.trim();
@@ -310,7 +311,11 @@ const ViewPastePage = () => {
       
       <div className="edit-page-content">
         <div className="edit-page-header">
+          <div className='link-container'>
             <h1>Просмотр заметки</h1>
+            <div onClick={() => copyToClipboard()} style={{cursor: 'pointer'}}>Скопировать ссылку на заметку</div>
+          </div>
+            
           <button onClick={() => handleBack()} className="back-btn">
             ← Назад
           </button>
