@@ -247,9 +247,7 @@ function MainPage({ changePage }) {
         className={`burger-btn ${isOpen ? 'open' : ''}`} 
         onClick={() => setIsOpen(!isOpen)}
       >
-        <span></span>
-        <span></span>
-        <span></span>
+        <span></span><span></span><span></span>
       </button>
 
       <nav className={`sidebar ${isOpen ? 'active' : ''}`}>
@@ -279,7 +277,6 @@ function MainPage({ changePage }) {
 
       <main className="main-content">
         <div className="buttons-grid">
-          {/* Исправлено: Ссылки теперь сами выступают в роли интерактивных кнопок */}
           <Link 
             to="/api/converter/" 
             className="menu-item-btn"
@@ -423,8 +420,19 @@ function MainPage({ changePage }) {
           </div>
         </div>
       )}
+
+      <footer className="bottom-footer">
+        <div className="footer-buttons">
+          <button className="footer-btn">Политика</button>
+          <button className="footer-btn">Условия</button>
+          <Link to="/api/policy/" className="footer-btn">Политика</Link>
+          <Link to="/api/termsofservice/" className="footer-btn">Условия</Link>
+        </div>
+      </footer>
     </div>
   );
 }
+
+
 
 export default MainPage;
