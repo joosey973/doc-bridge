@@ -1,5 +1,14 @@
 import React, { useState } from 'react';
 import './Pages.css';
+import { 
+  FaFileAlt, 
+  FaCloudUploadAlt, 
+  FaRegCheckCircle 
+} from "react-icons/fa";
+import { 
+  MdClose, 
+  MdInfoOutline 
+} from "react-icons/md";
 
 function DropPage() {
   const [selectedFile, setSelectedFile] = useState(null);
@@ -18,7 +27,7 @@ function DropPage() {
     const ext = file.name.split('.').pop().toLowerCase();
 
     if (!validExtensions.includes(ext)) {
-      setMessage('⚠️ Неподдерживаемый формат файла');
+      setMessage('Неподдерживаемый формат файла');
       setTimeout(() => setMessage(''), 3000);
       return;
     }
@@ -29,7 +38,7 @@ function DropPage() {
       size: file.size,
       format: ext,
     });
-    setMessage(`✅ Файл "${file.name}" загружен`);
+    setMessage(`Файл "${file.name}" успешно загружен`);
     setTimeout(() => setMessage(''), 3000);
   };
 
@@ -56,43 +65,33 @@ function DropPage() {
   };
 
   const handleUpload = () => {
-    if (!selectedFile) {
-      setMessage('⚠️ Сначала загрузите файл!');
-      setTimeout(() => setMessage(''), 3000);
-      return;
-    }
-
+    if (!selectedFile) return;
     setUploading(true);
-    setMessage('⏳ Загрузка файла... (заглушка)');
+    setMessage('Загрузка файла на сервер...');
 
     setTimeout(() => {
-      const link = `https://docbridge.io/d/${Math.random().toString(36).substring(2, 10)}`;
-      setFileLink(link);
       setUploading(false);
-      setMessage(`✅ Файл загружен! Ссылка создана.`);
-      setTimeout(() => setMessage(''), 3000);
+      setFileLink(`https://dropfile.io/d/${Math.random().toString(36).substr(2, 9)}`);
+      setMessage('Файл успешно загружен! Ссылка сгенерирована.');
     }, 2000);
   };
 
   const handleSendEmail = () => {
     if (!recipient) {
-      setMessage('⚠️ Укажите получателя!');
+      setMessage('Укажите получателя!');
       setTimeout(() => setMessage(''), 3000);
       return;
     }
 
-    setMessage(`📧 Отправка "${selectedFile?.name}" на ${recipient}... (заглушка)`);
+    setMessage(`Ссылка успешно отправлена на ${recipient}`);
     setTimeout(() => {
-      setMessage(`✅ Ссылка отправлена на ${recipient}!`);
-    }, 2000);
-  };
-
-  const copyLink = () => {
-    if (fileLink) {
-      navigator.clipboard.writeText(fileLink);
-      setMessage('✅ Ссылка скопирована в буфер обмена!');
-      setTimeout(() => setMessage(''), 3000);
-    }
+      setMessage('');
+      setSelectedFile(null);
+      setFilePreview(null);
+      setFileLink(null);
+      setRecipient('');
+      setSender('');
+    }, 3000);
   };
 
   const formatFileSize = (bytes) => {
@@ -105,8 +104,8 @@ function DropPage() {
     <div className="page-container drop-container">
       <div className="page-card drop-card">
         <div className="page-header">
-          <h2>📤 DropMeFiles</h2>
-          <p className="page-subtitle">Загрузите файл и получите ссылку для отправки</p>
+          <h2><FaCloudUploadAlt size={24} style={{ marginRight: '8px', verticalAlign: 'middle' }} /> Обмен файлами</h2>
+          <p className="page-subtitle">Загрузите большой файл и отправьте ссылку другу</p>
         </div>
 
         {/* DRAG-AND-DROP ЗОНА */}
@@ -115,7 +114,7 @@ function DropPage() {
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}
-          onClick={() => document.getElementById('dropFileInput').click()}
+          onClick={() => !fileLink && document.getElementById('dropFileInput').click()}
         >
           <input
             type="file"
@@ -126,16 +125,16 @@ function DropPage() {
           
           {!selectedFile ? (
             <>
-              <div className="drop-zone-icon">📤</div>
+              <div className="drop-zone-icon"><FaCloudUploadAlt size={48} style={{ color: '#667eea' }} /></div>
               <h3>Перетащите файл сюда</h3>
               <p>или нажмите для выбора</p>
               <div className="supported-formats">
-                PDF, DOCX, JPG, PNG, ZIP и другие
+                Максимальный размер: 2 ГБ. Любые форматы.
               </div>
             </>
           ) : (
             <div className="file-preview">
-              <div className="file-icon">📄</div>
+              <div className="file-icon"><FaFileAlt size={32} /></div>
               <div className="file-info">
                 <div className="file-name">{filePreview?.name}</div>
                 <div className="file-details">
@@ -143,89 +142,88 @@ function DropPage() {
                   <span className="file-size">{formatFileSize(filePreview?.size)}</span>
                 </div>
               </div>
-              <button 
-                className="file-remove"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setSelectedFile(null);
-                  setFilePreview(null);
-                  setFileLink(null);
-                }}
-              >
-                ✕
-              </button>
+              {!fileLink && (
+                <button 
+                  className="file-remove"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSelectedFile(null);
+                    setFilePreview(null);
+                  }}
+                >
+                  <MdClose size={18} />
+                </button>
+              )}
             </div>
           )}
         </div>
 
-        {/* КНОПКА ЗАГРУЗКИ */}
-        <button 
-          className="upload-btn" 
-          onClick={handleUpload}
-          disabled={!selectedFile || uploading}
-        >
-          {uploading ? '⏳ Загрузка...' : '🚀 Загрузить файл'}
-        </button>
-
-        {/* ССЫЛКА */}
-        {fileLink && (
-          <div className="link-container">
-            <div className="link-box">
-              <span className="link-label">Ссылка на файл:</span>
-              <input 
-                type="text" 
-                className="link-input" 
-                value={fileLink} 
-                readOnly 
-              />
-              <button className="copy-btn" onClick={copyLink}>
-                📋 Копировать
-              </button>
-            </div>
-          </div>
+        {/* ССЫЛКА И ОТПРАВКА */}
+        {selectedFile && !fileLink && (
+          <button 
+            className="upload-btn" 
+            onClick={handleUpload}
+            disabled={uploading}
+          >
+            {uploading ? 'Загрузка...' : 'Получить ссылку'}
+          </button>
         )}
 
-        {/* ФОРМА ОТПРАВКИ НА ПОЧТУ */}
-        <div className="email-form">
-          <h4>📧 Отправить ссылку по почте</h4>
-          
-          <div className="form-group">
-            <label>КОМУ:</label>
-            <input
-              type="text"
-              className="form-input"
-              value={recipient}
-              onChange={(e) => setRecipient(e.target.value)}
-              placeholder="E-mail или SMS-номер"
-            />
-          </div>
+        {fileLink && (
+          <div className="link-section">
+            <div className="link-label">Ваша ссылка готова:</div>
+            <div className="link-copy-box">
+              <input type="text" className="link-input" value={fileLink} readOnly />
+              <button 
+                className="copy-btn"
+                onClick={() => {
+                  navigator.clipboard.writeText(fileLink);
+                  setMessage('Ссылка успешно скопирована!');
+                  setTimeout(() => setMessage(''), 2000);
+                }}
+              >
+                Копировать
+              </button>
+            </div>
 
-          <div className="form-group">
-            <label>ОТ КОГО:</label>
-            <input
-              type="text"
-              className="form-input"
-              value={sender}
-              onChange={(e) => setSender(e.target.value)}
-              placeholder="Имя или E-mail"
-            />
-          </div>
+            <div className="form-group" style={{ marginTop: '20px' }}>
+              <label>КОМУ ОТПРАВИТЬ:</label>
+              <input
+                type="text"
+                className="form-input"
+                value={recipient}
+                onChange={(e) => setRecipient(e.target.value)}
+                placeholder="E-mail или SMS-номер"
+              />
+            </div>
+
+            <div className="form-group">
+              <label>ОТ КОГО:</label>
+              <input
+                type="text"
+                className="form-input"
+                value={sender}
+                onChange={(e) => setSender(e.target.value)}
+                placeholder="Имя или E-mail"
+              />
+            </div>
 
           <button 
             className="send-btn" 
             onClick={handleSendEmail}
             disabled={!selectedFile || !recipient}
           >
-            📤 Отправить ссылку
+            Отправить ссылку
           </button>
         </div>
+        )}
 
-        {message && <div className={`message ${message.includes('✅') ? 'success' : 'error'}`}>{message}</div>}
+        {message && <div className={`message ${message.includes('успешно') || message.includes('загружен') ? 'success' : 'error'}`}>{message}</div>}
       </div>
 
       {/* ИНФОРМАЦИОННАЯ КАРТОЧКА */}
       <div className="info-card">
-        <h3>📋 Информация</h3>
+        <h3><MdInfoOutline size={18} style={{ marginRight: '6px', verticalAlign: 'middle' }} /> Информация</h3>
         <div className="info-list">
           <div className="info-item">
             <span>Максимальный размер</span>
@@ -241,7 +239,7 @@ function DropPage() {
           </div>
         </div>
         <p className="info-note">
-          ⚠️ Отправка пока в разработке — интерфейс готов!
+          Отправка пока в разработке — интерфейс готов!
         </p>
       </div>
     </div>

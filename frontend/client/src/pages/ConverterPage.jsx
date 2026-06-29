@@ -1,5 +1,18 @@
 import React, { useState } from 'react';
 import './Pages.css';
+import { 
+  FaFilePdf, 
+  FaFileWord, 
+  FaFileAlt, 
+  FaFileImage,
+  FaFileInvoice
+} from "react-icons/fa";
+import { 
+  MdCloudUpload, 
+  MdArrowForward, 
+  MdClose,
+  MdAutorenew
+} from "react-icons/md";
 
 function ConverterPage() {
   const [selectedFile, setSelectedFile] = useState(null);
@@ -18,22 +31,6 @@ function ConverterPage() {
     txt: ['pdf', 'docx'],
   };
 
-  const formatNames = {
-    pdf: '📄 PDF',
-    docx: '📝 DOCX',
-    jpg: '🖼️ JPG',
-    png: '🖼️ PNG',
-    txt: '📃 TXT',
-  };
-
-  const formatExtensions = {
-    pdf: '.pdf',
-    docx: '.docx',
-    jpg: '.jpg',
-    png: '.png',
-    txt: '.txt',
-  };
-
   const handleFileSelect = (file) => {
     if (!file) return;
 
@@ -41,7 +38,7 @@ function ConverterPage() {
     const ext = file.name.split('.').pop().toLowerCase();
 
     if (!validExtensions.includes(ext)) {
-      setMessage('⚠️ Поддерживаются только: PDF, DOCX, JPG, PNG, TXT');
+      setMessage('Ошибка: Поддерживаются только форматы PDF, DOCX, JPG, PNG, TXT');
       setTimeout(() => setMessage(''), 3000);
       return;
     }
@@ -65,7 +62,7 @@ function ConverterPage() {
       setConvertTo(availableFormats[0]);
     }
 
-    setMessage(`✅ Файл "${file.name}" загружен`);
+    setMessage(`Файл "${file.name}" успешно загружен`);
     setTimeout(() => setMessage(''), 3000);
   };
 
@@ -93,14 +90,14 @@ function ConverterPage() {
 
   const handleConvert = () => {
     if (!selectedFile) {
-      setMessage('⚠️ Сначала загрузите файл!');
+      setMessage('Ошибка: Сначала загрузите файл!');
       setTimeout(() => setMessage(''), 3000);
       return;
     }
 
-    setMessage(`🔄 Конвертация ${selectedFile.name} из ${convertFrom.toUpperCase()} в ${convertTo.toUpperCase()}... (заглушка)`);
+    setMessage(`Конвертация ${selectedFile.name} из ${convertFrom.toUpperCase()} в ${convertTo.toUpperCase()}... (заглушка)`);
     setTimeout(() => {
-      setMessage(`✅ Конвертация завершена! (UI-заглушка, логику добавит другой разработчик)`);
+      setMessage(`Конвертация завершена! (UI-заглушка, логику добавит другой разработчик)`);
     }, 2000);
   };
 
@@ -110,22 +107,33 @@ function ConverterPage() {
     return (bytes / 1048576).toFixed(1) + ' МБ';
   };
 
-  const getFileIcon = (format) => {
+  const getFileIcon = (format, size = 16) => {
     const icons = {
-      pdf: '📄',
-      docx: '📝',
-      jpg: '🖼️',
-      png: '🖼️',
-      txt: '📃'
+      pdf: <FaFilePdf size={size} style={{ color: '#e04444' }} />,
+      docx: <FaFileWord size={size} style={{ color: '#1b5cbd' }} />,
+      jpg: <FaFileImage size={size} style={{ color: '#e09b23' }} />,
+      png: <FaFileImage size={size} style={{ color: '#23a1e0' }} />,
+      txt: <FaFileAlt size={size} style={{ color: '#6c757d' }} />
     };
-    return icons[format] || '📎';
+    return icons[format] || <FaFileInvoice size={size} />;
+  };
+
+  const getFormatLabel = (format) => {
+    const labels = {
+      pdf: 'PDF',
+      docx: 'DOCX',
+      jpg: 'JPG',
+      png: 'PNG',
+      txt: 'TXT'
+    };
+    return labels[format] || format.toUpperCase();
   };
 
   return (
     <div className="page-container converter-container">
       <div className="page-card converter-card">
         <div className="page-header">
-          <h2>🔄 Конвертер файлов</h2>
+          <h2><MdAutorenew size={24} style={{ marginRight: '8px', verticalAlign: 'middle' }} /> Конвертер файлов</h2>
           <p className="page-subtitle">Загрузите файл и выберите формат для конвертации</p>
         </div>
 
@@ -147,7 +155,7 @@ function ConverterPage() {
           
           {!selectedFile ? (
             <>
-              <div className="drop-zone-icon">📤</div>
+              <div className="drop-zone-icon"><MdCloudUpload size={48} style={{ color: '#667eea' }} /></div>
               <h3>Перетащите файл сюда</h3>
               <p>или нажмите для выбора</p>
               <div className="supported-formats">
@@ -156,8 +164,8 @@ function ConverterPage() {
             </>
           ) : (
             <div className="file-preview">
-              <div className="file-icon" style={{ color: '#666' }}>
-                {getFileIcon(filePreview?.format)}
+              <div className="file-icon">
+                {getFileIcon(filePreview?.format, 32)}
               </div>
               <div className="file-info">
                 <div className="file-name">{filePreview?.name}</div>
@@ -173,8 +181,9 @@ function ConverterPage() {
                   setSelectedFile(null);
                   setFilePreview(null);
                 }}
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
               >
-                ✕
+                <MdClose size={18} />
               </button>
             </div>
           )}
@@ -186,12 +195,14 @@ function ConverterPage() {
             <div className="converter-row">
               <div className="converter-field">
                 <label>Исходный формат</label>
-                <div className="format-badge from">
-                  {getFileIcon(convertFrom)} {convertFrom.toUpperCase()}
+                <div className="format-badge from" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                  {getFileIcon(convertFrom)} {getFormatLabel(convertFrom)}
                 </div>
               </div>
 
-              <div className="converter-arrow">➜</div>
+              <div className="converter-arrow">
+                <MdArrowForward size={20} style={{ color: '#888' }} />
+              </div>
 
               <div className="converter-field">
                 <label>Формат для конвертации</label>
@@ -202,53 +213,45 @@ function ConverterPage() {
                 >
                   {formats[convertFrom]?.map((fmt) => (
                     <option key={fmt} value={fmt}>
-                      {getFileIcon(fmt)} {fmt.toUpperCase()}
+                      {getFormatLabel(fmt)}
                     </option>
                   ))}
                   {(!formats[convertFrom] || formats[convertFrom].length === 0) && (
-                    <option value="txt">📃 TXT</option>
+                    <option value="txt">TXT</option>
                   )}
                 </select>
               </div>
             </div>
 
-            <button className="convert-btn" onClick={handleConvert}>
-              🔄 Конвертировать
+            <button className="convert-btn" onClick={handleConvert} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', margin: '20px auto 0' }}>
+              <MdAutorenew size={18} /> Конвертировать
             </button>
           </div>
         )}
 
-        {message && <div className={`message ${message.includes('✅') ? 'success' : 'error'}`}>{message}</div>}
+        {message && (
+          <div className={`message ${message.toLowerCase().includes('ошибка') ? 'error' : 'success'}`}>
+            {message}
+          </div>
+        )}
       </div>
 
       {/* ИНФОРМАЦИОННАЯ КАРТОЧКА */}
       <div className="info-card">
-        <h3>📋 Поддерживаемые форматы</h3>
+        <h3>Поддерживаемые форматы</h3>
         <div className="format-list">
-          <div className="format-item">
-            <span>📄 PDF</span>
-            <span>→ DOCX, TXT, JPG, PNG</span>
-          </div>
-          <div className="format-item">
-            <span>📝 DOCX</span>
-            <span>→ PDF, TXT</span>
-          </div>
-          <div className="format-item">
-            <span>🖼️ JPG</span>
-            <span>→ PNG, PDF</span>
-          </div>
-          <div className="format-item">
-            <span>🖼️ PNG</span>
-            <span>→ JPG, PDF</span>
-          </div>
-          <div className="format-item">
-            <span>📃 TXT</span>
-            <span>→ PDF, DOCX</span>
-          </div>
+          {Object.keys(formats).map((key) => (
+            <div className="format-item" key={key} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                {getFileIcon(key)} {getFormatLabel(key)}
+              </span>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', color: '#666' }}>
+                <MdArrowForward size={14} /> {formats[key].map(f => f.toUpperCase()).join(', ')}
+              </span>
+            </div>
+          ))}
         </div>
-        <p className="info-note">
-          ⚠️ Конвертация пока в разработке — интерфейс готов!
-        </p>
+
       </div>
     </div>
   );

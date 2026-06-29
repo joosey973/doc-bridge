@@ -1,5 +1,22 @@
 import React, { useState } from 'react';
 import './Pages.css';
+import { 
+  FaFileAlt, 
+  FaFilePdf, 
+  FaFileWord, 
+  FaFileImage, 
+  FaFileArchive, 
+  FaBalanceScale 
+} from "react-icons/fa";
+import { 
+  MdCloudUpload, 
+  MdClose, 
+  MdSpeed, 
+  MdFlashOn, 
+  MdAutorenew, 
+  MdInfoOutline 
+} from "react-icons/md";
+import { BsBarChartSteps } from "react-icons/bs";
 
 function CompressPage() {
   const [selectedFile, setSelectedFile] = useState(null);
@@ -11,9 +28,9 @@ function CompressPage() {
 
   // Степени сжатия
   const compressLevels = [
-    { id: 'low', label: 'Низкое сжатие (быстро)', icon: '🐢', desc: 'Минимальное сжатие, высокая скорость' },
-    { id: 'medium', label: 'Среднее сжатие (рекомендуется)', icon: '⚖️', desc: 'Оптимальный баланс размера и качества' },
-    { id: 'high', label: 'Высокое сжатие (медленно)', icon: '🚀', desc: 'Максимальное сжатие, дольше обработка' },
+    { id: 'low', label: 'Низкое сжатие (быстро)', icon: <MdSpeed size={18} />, desc: 'Минимальное сжатие, высокая скорость' },
+    { id: 'medium', label: 'Среднее сжатие (рекомендуется)', icon: <FaBalanceScale size={18} />, desc: 'Оптимальный баланс размера и качества' },
+    { id: 'high', label: 'Высокое сжатие (медленно)', icon: <MdFlashOn size={18} />, desc: 'Максимальное сжатие, дольше обработка' },
   ];
 
   const handleFileSelect = (file) => {
@@ -23,7 +40,7 @@ function CompressPage() {
     const ext = file.name.split('.').pop().toLowerCase();
 
     if (!validExtensions.includes(ext)) {
-      setMessage('⚠️ Неподдерживаемый формат файла');
+      setMessage('Неподдерживаемый формат файла');
       setTimeout(() => setMessage(''), 3000);
       return;
     }
@@ -34,7 +51,7 @@ function CompressPage() {
       size: file.size,
       format: ext,
     });
-    setMessage(`✅ Файл "${file.name}" загружен`);
+    setMessage(`Файл "${file.name}" успешно загружен`);
     setTimeout(() => setMessage(''), 3000);
   };
 
@@ -62,17 +79,17 @@ function CompressPage() {
 
   const handleCompress = () => {
     if (!selectedFile) {
-      setMessage('⚠️ Сначала загрузите файл!');
+      setMessage('Сначала загрузите файл!');
       setTimeout(() => setMessage(''), 3000);
       return;
     }
 
     setIsCompressing(true);
-    setMessage(`🔄 Сжатие "${selectedFile.name}"... (уровень: ${compressLevel})`);
+    setMessage(`Сжатие "${selectedFile.name}"... (уровень: ${compressLevel})`);
 
     setTimeout(() => {
       setIsCompressing(false);
-      setMessage(`✅ Сжатие завершено! Размер уменьшен на ${Math.floor(Math.random() * 40 + 20)}% (UI-заглушка)`);
+      setMessage(`Сжатие завершено! Размер успешно уменьшен на ${Math.floor(Math.random() * 40 + 20)}% (UI-заглушка)`);
     }, 3000);
   };
 
@@ -97,7 +114,7 @@ function CompressPage() {
     <div className="page-container compress-container">
       <div className="page-card compress-card">
         <div className="page-header">
-          <h2>📦 Сжатие файлов</h2>
+          <h2>Сжатие файлов</h2>
           <p className="page-subtitle">Загрузите файл и выберите степень сжатия</p>
         </div>
 
@@ -118,7 +135,7 @@ function CompressPage() {
           
           {!selectedFile ? (
             <>
-              <div className="drop-zone-icon">📂</div>
+              <div className="drop-zone-icon"><MdCloudUpload size={48} style={{ color: '#667eea' }} /></div>
               <h3>Перетащите файл сюда</h3>
               <p>или нажмите для выбора</p>
               <div className="supported-formats">
@@ -127,7 +144,9 @@ function CompressPage() {
             </>
           ) : (
             <div className="file-preview">
-              <div className="file-icon">📄</div>
+              <div className="file-icon">
+                <FaFileAlt size={32} />
+              </div>
               <div className="file-info">
                 <div className="file-name">{filePreview?.name}</div>
                 <div className="file-details">
@@ -143,7 +162,7 @@ function CompressPage() {
                   setFilePreview(null);
                 }}
               >
-                ✕
+                <MdClose size={18} />
               </button>
             </div>
           )}
@@ -194,20 +213,22 @@ function CompressPage() {
               disabled={isCompressing}
             >
               {isCompressing ? (
-                '⏳ Сжатие...'
+                <>
+                  <MdAutorenew size={18} className="spinner-animation" style={{ marginRight: '8px', verticalAlign: 'middle' }} /> Обработка...
+                </>
               ) : (
-                `📦 Сжать файл (${compressLevels.find(l => l.id === compressLevel)?.icon})`
+                'Сжать файл'
               )}
             </button>
           </div>
         )}
 
-        {message && <div className={`message ${message.includes('✅') ? 'success' : 'error'}`}>{message}</div>}
+        {message && <div className={`message ${message.includes('успешно') || message.includes('завершено') ? 'success' : 'error'}`}>{message}</div>}
       </div>
 
       {/* ИНФОРМАЦИОННАЯ КАРТОЧКА */}
       <div className="info-card">
-        <h3>📋 Информация о сжатии</h3>
+        <h3><MdInfoOutline size={20} style={{ marginRight: '6px', verticalAlign: 'middle' }} /> Информация о сжатии</h3>
         <div className="info-list">
           <div className="info-item">
             <span>Максимальный размер</span>
@@ -224,25 +245,25 @@ function CompressPage() {
         </div>
 
         <h4 style={{ marginTop: '16px', color: '#1a1a1a', fontSize: '14px', fontWeight: '500' }}>
-          📊 Рекомендации:
+           Рекомендации:
         </h4>
         <div className="info-list" style={{ marginTop: '8px' }}>
           <div className="info-item" style={{ fontSize: '12px' }}>
-            <span>🖼️ Изображения</span>
+            <span><FaFileImage size={14} style={{ marginRight: '6px', verticalAlign: 'middle' ,color: "blue"}} /> Изображения (JPG/PNG)</span>
             <span>Среднее или высокое</span>
           </div>
           <div className="info-item" style={{ fontSize: '12px' }}>
-            <span>📄 Документы</span>
+            <span><FaFilePdf size={14} style={{ marginRight: '6px', verticalAlign: 'middle',color: "red" }} /> Документы (PDF/DOCX)</span>
             <span>Низкое или среднее</span>
           </div>
           <div className="info-item" style={{ fontSize: '12px' }}>
-            <span>📦 Архивы</span>
+            <span><FaFileArchive size={14} style={{ marginRight: '6px', verticalAlign: 'middle',color: "orange" }} /> Архивы (ZIP/RAR)</span>
             <span>Низкое сжатие</span>
           </div>
         </div>
 
         <p className="info-note">
-          ⚠️ Сжатие пока в разработке — интерфейс готов!
+          Конвертация пока в разработке — интерфейс готов!
         </p>
       </div>
     </div>

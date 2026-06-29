@@ -2,7 +2,14 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import './Pages.css';
 import '../MainPage.css';
-
+import { 
+  MdAccessTime,
+} from "react-icons/md";
+import {  IoIosStarOutline } from "react-icons/io";
+import { GoPencil } from "react-icons/go";
+import { IoTrashOutline } from "react-icons/io5";
+import { CiInboxIn } from "react-icons/ci";
+import { VscDeviceCamera } from "react-icons/vsc";
 const API_URL = 'http://localhost:8000/api';
 
 function ProfilePage({ changePage }) {
@@ -458,7 +465,7 @@ function ProfilePage({ changePage }) {
         };
         reader.readAsDataURL(file);
         
-        setMessage('✅ Фото обновлено!');
+        setMessage('Фото обновлено!');
         setTimeout(() => setMessage(''), 3000);
         
         if (data.avatar_url) {
@@ -469,11 +476,11 @@ function ProfilePage({ changePage }) {
         }
       } else {
         const error = await response.json();
-        setMessage(`❌ Ошибка: ${error.error || 'Не удалось загрузить фото'}`);
+        setMessage(` Ошибка: ${error.error || 'Не удалось загрузить фото'}`);
         setTimeout(() => setMessage(''), 3000);
       }
     } catch (error) {
-      setMessage('❌ Ошибка при загрузке фото');
+      setMessage(' Ошибка при загрузке фото');
       setTimeout(() => setMessage(''), 3000);
     }
 
@@ -494,7 +501,7 @@ function ProfilePage({ changePage }) {
       if (response.ok) {
         setAvatar(null);
         setAvatarPreview(null);
-        setMessage('✅ Фото удалено');
+        setMessage(' Фото удалено');
         await fetchProfileData();
         setTimeout(() => setMessage(''), 3000);
         
@@ -504,11 +511,11 @@ function ProfilePage({ changePage }) {
         }));
       } else {
         const error = await response.json();
-        setMessage(`❌ Ошибка: ${error.error || 'Не удалось удалить фото'}`);
+        setMessage(` Ошибка: ${error.error || 'Не удалось удалить фото'}`);
         setTimeout(() => setMessage(''), 3000);
       }
     } catch (error) {
-      setMessage('❌ Ошибка при удалении фото');
+      setMessage(' Ошибка при удалении фото');
       setTimeout(() => setMessage(''), 3000);
     }
   };
@@ -562,7 +569,7 @@ function ProfilePage({ changePage }) {
 
         <main className="main-content" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
           <div className="profile-card glass-panel" style={{ textAlign: 'center', padding: '60px 20px', maxWidth: '500px', width: '100%' }}>
-            <div style={{ fontSize: '64px', marginBottom: '20px' }}>🔒</div>
+            <div style={{ fontSize: '64px', marginBottom: '20px' }}><CiLock><CiLock/></CiLock></div>
             <h2 style={{ color: '#1a1a1a', marginBottom: '10px' }}>Войдите в аккаунт</h2>
             <p style={{ color: '#666', marginBottom: '24px' }}>Чтобы просмотреть профиль, необходимо авторизоваться</p>
             <button 
@@ -1152,7 +1159,7 @@ function ProfilePage({ changePage }) {
                   className="avatar-edit-btn"
                   onClick={() => setIsEditingPhoto(!isEditingPhoto)}
                 >
-                  📷
+                  <VscDeviceCamera ></VscDeviceCamera >
                 </button>
 
                 {isEditingPhoto && (
@@ -1266,7 +1273,7 @@ function ProfilePage({ changePage }) {
             onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(102, 126, 234, 0.1)'}
             onMouseLeave={(e) => e.currentTarget.style.background = 'none'}
           >
-            ✏️
+            <GoPencil></GoPencil>
           </button>
           <button
             onClick={(e) => {
@@ -1287,15 +1294,15 @@ function ProfilePage({ changePage }) {
             onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(220, 53, 69, 0.1)'}
             onMouseLeave={(e) => e.currentTarget.style.background = 'none'}
           >
-            🗑️
+            <IoTrashOutline></IoTrashOutline>
           </button>
         </div>
       </div>
       <div className="paste-meta">
         <span>{getLanguageIcon(paste.language)} {getLanguageName(paste.language)}</span>
         <span>{getCategoryIcon(paste.category)} {getCategoryName(paste.category)}</span>
-        <span>🕐 {getTimeAgo(paste.created_at || paste.createdAt)}</span>
-        <span>📦 {formatSize(paste.size)}</span>
+        <span><MdAccessTime> </MdAccessTime> {getTimeAgo(paste.created_at || paste.createdAt)}</span>
+        <span><CiInboxIn ></CiInboxIn > {formatSize(paste.size)}</span>
         {paste.tags && paste.tags.map((t, i) => (
           <span key={i} className="tag-badge">#{t}</span>
         ))}

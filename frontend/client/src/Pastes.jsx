@@ -2,9 +2,43 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useState, useEffect, useRef } from 'react';
 import './Pastes.css';
 import './MainPage.css';
-import { handleEditPaste } from './editPasteUtils';
 import { Light as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { atomOneDark } from 'react-syntax-highlighter/dist/esm/styles/hljs';
+import { SlLock } from "react-icons/sl";
+import { ImFileText2 } from "react-icons/im";
+import { VscFolderLibrary } from "react-icons/vsc";
+import { BsPersonWorkspace } from "react-icons/bs";
+import { MdOutlineFastfood } from "react-icons/md";
+import { PiBookBookmarkThin } from "react-icons/pi";
+import { IoIosAirplane, IoIosStarOutline, IoIosArrowDown } from "react-icons/io";
+import { CiMedicalCross } from "react-icons/ci";
+import { PiFilmSlateLight } from "react-icons/pi";
+import { AiOutlinePython } from "react-icons/ai";
+import { SiCplusplusbuilder, SiRust } from "react-icons/si";
+import { GoPaperAirplane } from "react-icons/go";
+import { 
+  MdOutlineWorkOutline,
+  MdEdit,
+  MdDelete,
+  MdClose,
+  MdLock,
+  MdPersonOutline,
+  MdAccessTime,
+  MdCode,
+  MdLabel,
+  MdCreate,
+  MdVisibility
+} from "react-icons/md";
+import { 
+  DiJavascript1,  
+  DiJava, 
+  DiHtml5, 
+  DiCss3, 
+  DiPhp, 
+  DiRuby, 
+  DiGo} from "react-icons/di";
+import { SiSqlite } from "react-icons/si";
+import { FaFileAlt, FaLock } from "react-icons/fa";
 
 const API_URL = 'http://localhost:8000/api';
 
@@ -21,126 +55,142 @@ function Pastes() {
   const [tagInput, setTagInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
-  const [serverStatus, setServerStatus] = useState('⏳ Проверка...');
+  const [serverStatus, setServerStatus] = useState('Проверка...');
   const [selectedPaste, setSelectedPaste] = useState(null);
   const [loadingAuth, setLoadingAuth] = useState(true);
   
-  // Состояния для редактирования
+  // Состояния для кастомного select
+  const [isCategoryOpen, setIsCategoryOpen] = useState(false);
+  const [isLanguageOpen, setIsLanguageOpen] = useState(false);
+  const categoryRef = useRef(null);
+  const languageRef = useRef(null);
+  
   const [editingPaste, setEditingPaste] = useState(null);
   const [showEditModal, setShowEditModal] = useState(false);
   
   const canvasRef = useRef(null);
   const [isHovered, setIsHovered] = useState(false);
-    const isHoveredRef = useRef(isHovered);
-    useEffect(() => {
-      isHoveredRef.current = isHovered;
-    }, [isHovered]);
-    
-  const openPasteView = (paste) => {
-  setTimeout(() => {
-    navigate(`/api/pastes/view/${paste.code}/`, { 
-      state: { from: 'pastes' } 
-    });
-  }, 2000);
-};
+  const isHoveredRef = useRef(isHovered);
   
   useEffect(() => {
-      const canvas = canvasRef.current;
-      if (!canvas) return;
-      const ctx = canvas.getContext('2d');
-      
-      let animationFrameId;
-      let width = (canvas.width = window.innerWidth);
-      let height = (canvas.height = window.innerHeight);
+    isHoveredRef.current = isHovered;
+  }, [isHovered]);
   
-      const numDigits = 100; 
-      const digits = [];
-  
-      for (let i = 0; i < numDigits; i++) {
-        digits.push({
-          x: Math.random() * width,
-          y: Math.random() * height,
-          char: Math.random() > 0.5 ? '1' : '0',
-          size: Math.floor(Math.random() * 6) + 12, 
-          glitchX: (Math.random() - 0.5) * 20,
-          glitchY: (Math.random() - 0.5) * 20,
-          tick: 0,
-          tickMax: Math.floor(Math.random() * 15) + 5,
-          speedX: (Math.random() - 0.5) * 2,
-          speedY: (Math.random() - 0.5) * 2
-        });
+  // Закрытие кастомных select при клике вне
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (categoryRef.current && !categoryRef.current.contains(event.target)) {
+        setIsCategoryOpen(false);
       }
+      if (languageRef.current && !languageRef.current.contains(event.target)) {
+        setIsLanguageOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+    
+  const openPasteView = (paste) => {
+    setTimeout(() => {
+      navigate(`/api/pastes/view/${paste.code}/`, { 
+        state: { from: 'pastes' } 
+      });
+    }, 2000);
+  };
   
-      const handleResize = () => {
-        if (!canvas) return;
-        width = canvas.width = window.innerWidth;
-        height = canvas.height = window.innerHeight;
-      };
-      window.addEventListener('resize', handleResize);
-  
-      const animate = () => {
-        ctx.clearRect(0, 0, width, height);
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.56)'; 
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    
+    let animationFrameId;
+    let width = (canvas.width = window.innerWidth);
+    let height = (canvas.height = window.innerHeight);
+
+    const numDigits = 100; 
+    const digits = [];
+
+    for (let i = 0; i < numDigits; i++) {
+      digits.push({
+        x: Math.random() * width,
+        y: Math.random() * height,
+        char: Math.random() > 0.5 ? '1' : '0',
+        size: Math.floor(Math.random() * 6) + 12, 
+        glitchX: (Math.random() - 0.5) * 20,
+        glitchY: (Math.random() - 0.5) * 20,
+        tick: 0,
+        tickMax: Math.floor(Math.random() * 15) + 5,
+        speedX: (Math.random() - 0.5) * 2,
+        speedY: (Math.random() - 0.5) * 2
+      });
+    }
+
+    const handleResize = () => {
+      if (!canvas) return;
+      width = canvas.width = window.innerWidth;
+      height = canvas.height = window.innerHeight;
+    };
+    window.addEventListener('resize', handleResize);
+
+    const animate = () => {
+      ctx.clearRect(0, 0, width, height);
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.56)'; 
+      
+      const hovered = isHoveredRef.current;
+
+      digits.forEach((d, idx) => {
+        ctx.font = `700 ${d.size}px monospace`; 
         
-        const hovered = isHoveredRef.current;
-  
-        digits.forEach((d, idx) => {
-          ctx.font = `700 ${d.size}px monospace`; 
+        if (hovered) {
+          const rows = 8; 
+          const targetY = (idx % rows) * (height / rows) + (height / (rows * 2));
           
-          if (hovered) {
-            const rows = 8; 
-            const targetY = (idx % rows) * (height / rows) + (height / (rows * 2));
-            
-            // Плавное притягивание к линиям сетки вместо резкого прыжка
-            d.y += (targetY - d.y) * 0.1;
-            
-            d.tick++;
-            if (d.tick > 5) {
-              d.x += 12; // Движение вбок в режиме ховера
-              if (Math.random() > 0.85) d.char = d.char === '1' ? '0' : '1';
-              d.tick = 0;
-            }
-  
-            if (idx % rows === 0) {
-              ctx.fillStyle = 'rgba(0, 0, 0, 0.03)';
-              ctx.fillRect(0, targetY + 2, width, 1);
-              ctx.fillStyle = 'rgba(0, 0, 0, 0.22)'; 
-            }
-          } else {
-            // Стандартное хаотичное движение (без телепортаций)
-            d.x += d.speedX;
-            d.y += d.speedY;
-  
-            d.tick++;
-            if (d.tick >= d.tickMax) {
-              // Слегка меняем вектор движения время от времени
-              d.speedX = (Math.random() - 0.5) * 2;
-              d.speedY = (Math.random() - 0.5) * 2;
-              if (Math.random() > 0.5) d.char = Math.random() > 0.5 ? '1' : '0';
-              d.tick = 0;
-              d.tickMax = Math.floor(Math.random() * 40) + 20;
-            }
+          d.y += (targetY - d.y) * 0.1;
+          
+          d.tick++;
+          if (d.tick > 5) {
+            d.x += 12;
+            if (Math.random() > 0.85) d.char = d.char === '1' ? '0' : '1';
+            d.tick = 0;
           }
-  
-          // Границы экрана
-          if (d.x < 0) d.x = width;
-          if (d.x > width) d.x = 0;
-          if (d.y < 0) d.y = height;
-          if (d.y > height) d.y = 0;
-  
-          ctx.fillText(d.char, d.x, d.y);
-        });
-  
-        animationFrameId = requestAnimationFrame(animate);
-      };
-  
-      animate();
-  
-      return () => {
-        window.removeEventListener('resize', handleResize);
-        cancelAnimationFrame(animationFrameId);
-      };
-    }, []);
+
+          if (idx % rows === 0) {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.03)';
+            ctx.fillRect(0, targetY + 2, width, 1);
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.22)'; 
+          }
+        } else {
+          d.x += d.speedX;
+          d.y += d.speedY;
+
+          d.tick++;
+          if (d.tick >= d.tickMax) {
+            d.speedX = (Math.random() - 0.5) * 2;
+            d.speedY = (Math.random() - 0.5) * 2;
+            if (Math.random() > 0.5) d.char = Math.random() > 0.5 ? '1' : '0';
+            d.tick = 0;
+            d.tickMax = Math.floor(Math.random() * 40) + 20;
+          }
+        }
+
+        if (d.x < 0) d.x = width;
+        if (d.x > width) d.x = 0;
+        if (d.y < 0) d.y = height;
+        if (d.y > height) d.y = 0;
+
+        ctx.fillText(d.char, d.x, d.y);
+      });
+
+      animationFrameId = requestAnimationFrame(animate);
+    };
+
+    animate();
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      cancelAnimationFrame(animationFrameId);
+    };
+  }, []);
 
   const [token, setToken] = useState(localStorage.getItem('token') || '');
   const [user, setUser] = useState(null);
@@ -153,24 +203,40 @@ function Pastes() {
   const [authError, setAuthError] = useState('');
 
   const categories = [
-    { id: 'work', name: '💼 Работа' },
-    { id: 'personal', name: '👤 Личная жизнь' },
-    { id: 'food', name: '🍕 Еда' },
-    { id: 'study', name: '📚 Учеба' },
-    { id: 'travel', name: '✈️ Путешествия' },
-    { id: 'health', name: '💪 Здоровье' },
-    { id: 'entertainment', name: '🎬 Развлечения' },
-    { id: 'other', name: '📌 Другое' },
+    { id: 'work', name: 'Работа', icon: <MdOutlineWorkOutline size={16} /> },
+    { id: 'personal', name: 'Личная жизнь', icon: <BsPersonWorkspace size={16} /> },
+    { id: 'food', name: 'Еда', icon: <MdOutlineFastfood size={16} /> },
+    { id: 'study', name: 'Учеба', icon: <PiBookBookmarkThin size={16} /> },
+    { id: 'travel', name: 'Путешествия', icon: <IoIosAirplane size={16} /> },
+    { id: 'health', name: 'Здоровье', icon: <CiMedicalCross size={16} /> },
+    { id: 'entertainment', name: 'Развлечения', icon: <PiFilmSlateLight size={16} /> },
+    { id: 'other', name: 'Другое', icon: <IoIosStarOutline size={16} /> },
+  ];
+
+  const languageOptions = [
+    { value: 'javascript', label: 'JavaScript', icon: <DiJavascript1 size={16} /> },
+    { value: 'python', label: 'Python', icon: <AiOutlinePython size={16} /> },
+    { value: 'cpp', label: 'C++', icon: <SiCplusplusbuilder size={16} /> },
+    { value: 'java', label: 'Java', icon: <DiJava size={16} /> },
+    { value: 'html', label: 'HTML', icon: <DiHtml5 size={16} /> },
+    { value: 'css', label: 'CSS', icon: <DiCss3 size={16} /> },
+    { value: 'php', label: 'PHP', icon: <DiPhp size={16} /> },
+    { value: 'ruby', label: 'Ruby', icon: <DiRuby size={14} /> },
+    { value: 'go', label: 'Go', icon: <DiGo size={25} /> },
+    { value: 'rust', label: 'Rust', icon: <SiRust size={16} /> },
+    { value: 'sql', label: 'SQL', icon: <SiSqlite size={16} /> },
+    { value: 'text', label: 'Текст', icon: <FaFileAlt size={16} /> },
   ];
 
   const openEditModal = (pasteCode) => {
     if (!token) {
-    setMessage('⚠️ Авторизуйтесь, чтобы редактировать пасты');
-    setTimeout(() => setMessage(''), 3000);
-    return;
-  }
-  navigate(`/api/pastes/edit/${pasteCode}/`);
+      setMessage('Авторизуйтесь, чтобы редактировать пасты');
+      setTimeout(() => setMessage(''), 3000);
+      return;
+    }
+    navigate(`/api/pastes/edit/${pasteCode}/`);
   };
+
   useEffect(() => {
     const checkAuth = async () => {
       const savedToken = localStorage.getItem('token');
@@ -193,7 +259,7 @@ function Pastes() {
             setProfileData(null);
           }
         } catch (error) {
-          console.error('❌ Ошибка проверки:', error);
+          console.error('Ошибка проверки:', error);
           localStorage.removeItem('token');
           setToken('');
           setUser(null);
@@ -213,38 +279,12 @@ function Pastes() {
     }
   }, [token]);
 
-  const fetchUserProfile = async () => {
-    if (!token) return;
-    
-    try {
-      const response = await fetch(`${API_URL}/auth/me/`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      if (response.ok) {
-        const data = await response.json();
-        setUser(data.user);
-        setProfileData(data.user);
-      } else {
-        setToken('');
-        localStorage.removeItem('token');
-        setUser(null);
-        setProfileData(null);
-      }
-    } catch (error) {
-      console.error('❌ Ошибка профиля:', error);
-      setToken('');
-      localStorage.removeItem('token');
-      setUser(null);
-      setProfileData(null);
-    }
-  };
-
   const handleAuth = async (e) => {
     e.preventDefault();
     setAuthError('');
 
     if (authMode === 'register' && authPassword !== authPasswordConfirm) {
-      setAuthError('❌ Пароли не совпадают!');
+      setAuthError('Пароли не совпадают!');
       return;
     }
 
@@ -272,7 +312,7 @@ function Pastes() {
         const newToken = String(data.token || '');
         
         if (!newToken || newToken === 'undefined' || newToken === 'null') {
-          setAuthError('❌ Ошибка: не получен токен');
+          setAuthError('Ошибка: не получен токен');
           return;
         }
         
@@ -286,19 +326,19 @@ function Pastes() {
         setAuthPassword('');
         setAuthPasswordConfirm('');
         setAuthEmail('');
-        setMessage(`✅ ${authMode === 'login' ? 'Вход' : 'Регистрация'} выполнен!`);
+        setMessage(`${authMode === 'login' ? 'Вход' : 'Регистрация'} выполнен!`);
         setTimeout(() => setMessage(''), 3000);
       } else {
         if (data.errors) {
           const errorMessages = Object.values(data.errors).join(' ');
-          setAuthError(`❌ ${errorMessages}`);
+          setAuthError(`${errorMessages}`);
         } else {
           setAuthError(data.error || 'Ошибка авторизации');
         }
       }
     } catch (error) {
-      console.error('❌ Auth error:', error);
-      setAuthError('❌ Ошибка подключения к серверу');
+      console.error('Auth error:', error);
+      setAuthError('Ошибка подключения к серверу');
     }
   };
 
@@ -307,7 +347,7 @@ function Pastes() {
     setUser(null);
     setProfileData(null);
     localStorage.removeItem('token');
-    setMessage('👋 Вы вышли');
+    setMessage('Вы вышли');
     setTimeout(() => setMessage(''), 3000);
   };
 
@@ -316,12 +356,12 @@ function Pastes() {
       try {
         const response = await fetch(`${API_URL}/pastes/`);
         if (response.ok) {
-          setServerStatus('✅ Сервер работает');
+          setServerStatus('Сервер работает');
         } else {
-          setServerStatus('❌ Сервер недоступен');
+          setServerStatus('Сервер недоступен');
         }
       } catch {
-        setServerStatus('❌ Сервер не запущен');
+        setServerStatus('Сервер не запущен');
       }
     };
     checkServer();
@@ -394,12 +434,12 @@ function Pastes() {
     event.stopPropagation();
     
     if (!token) {
-      setMessage('⚠️ Авторизуйтесь, чтобы удалять пасты');
+      setMessage('Авторизуйтесь, чтобы удалять пасты');
       setTimeout(() => setMessage(''), 3000);
       return;
     }
     
-    if (!confirm(`🗑️ Удалить пасту "${code}"?`)) {
+    if (!confirm(`Удалить пасту "${code}"?`)) {
       return;
     }
     
@@ -413,14 +453,14 @@ function Pastes() {
       
       console.log(data)
       if (data.success) {
-        setMessage('✅ Паста удалена');
+        setMessage('Паста удалена');
         fetchPastes();
         setTimeout(() => setMessage(''), 3000);
       } else {
-        setMessage(`❌ ${data.error || 'Ошибка удаления'}`);
+        setMessage(`${data.error || 'Ошибка удаления'}`);
       }
     } catch (error) {
-      setMessage('❌ Ошибка удаления');
+      setMessage('Ошибка удаления');
     }
   };
 
@@ -440,7 +480,7 @@ function Pastes() {
     e.preventDefault();
     
     if (!content.trim()) {
-      setMessage('⚠️ Введите содержимое');
+      setMessage('Введите содержимое');
       return;
     }
 
@@ -465,7 +505,7 @@ function Pastes() {
 
       const data = await response.json();
       if (data.success) {
-        setMessage(`✅ Паста создана! Код: ${data.paste.code}`);
+        setMessage(`Паста создана! Код: ${data.paste.code}`);
         openPasteView(data.paste);
         setTitle('');
         setContent('');
@@ -476,16 +516,16 @@ function Pastes() {
         let errorMessage = 'Ошибка создания';
         if (data.errors) {
           const errorMessages = Object.values(data.errors).join(', ');
-          setMessage(`❌ ${errorMessages}`);
+          setMessage(`${errorMessages}`);
         } else if (data.error) {
             errorMessage = data.error;
         } else if (data.message) {
             errorMessage = data.message;
         }
-        setMessage(`❌ ${errorMessage}`);
+        setMessage(`${errorMessage}`);
       }
     } catch (error) {
-      setMessage('❌ Ошибка подключения к серверу');
+      setMessage('Ошибка подключения к серверу');
     } finally {
       setLoading(false);
     }
@@ -532,20 +572,20 @@ function Pastes() {
 
   const getLanguageIcon = (langId) => {
     const icons = {
-      javascript: '🟨',
-      python: '🐍',
-      cpp: '⚡',
-      java: '☕',
-      html: '🌐',
-      css: '🎨',
-      php: '🐘',
-      ruby: '💎',
-      go: '🐹',
-      rust: '🦀',
-      sql: '🗄️',
-      text: '📝'
+      javascript: <DiJavascript1 size={16} />,
+      python: <AiOutlinePython size={16} />,
+      cpp: <SiCplusplusbuilder size={16} />,
+      java: <DiJava size={16} />,
+      html: <DiHtml5 size={16} />,
+      css: <DiCss3 size={16} />,
+      php: <DiPhp size={16} />,
+      ruby: <DiRuby size={16} />,
+      go: <DiGo size={30} />,
+      rust: <SiRust size={16} />,
+      sql: <SiSqlite size={16} />,
+      text: <FaFileAlt size={16} />
     };
-    return icons[langId] || '📝';
+    return icons[langId] || <FaFileAlt size={16} />;
   };
 
   const openPaste = (paste) => {
@@ -559,16 +599,16 @@ function Pastes() {
 
   const getCategoryIcon = (catId) => {
     const icons = {
-      work: '💼',
-      personal: '👤',
-      food: '🍕',
-      study: '📚',
-      travel: '✈️',
-      health: '💪',
-      entertainment: '🎬',
-      other: '📌'
+      work: <MdOutlineWorkOutline size={16} />,
+      personal: <BsPersonWorkspace size={16} />,
+      food: <MdOutlineFastfood size={16} />,
+      study: <PiBookBookmarkThin size={16} />,
+      travel: <IoIosAirplane size={16} />,
+      health: <CiMedicalCross size={16} />,
+      entertainment: <PiFilmSlateLight size={16} />,
+      other: <IoIosStarOutline size={16} />
     };
-    return icons[catId] || '📌';
+    return icons[catId] || <IoIosStarOutline size={16} />;
   };
 
   const getCategoryName = (catId) => {
@@ -633,7 +673,7 @@ function Pastes() {
         <div className="header-right">
           <button className="icon-btn" title="Уведомления">
             <span className="notification-badge"></span>
-            ➤
+            <GoPaperAirplane size={20} />
           </button>
           <Link to="/api/profile/" style={{ textDecoration: 'none', color: 'inherit' }}>
           {user ? (
@@ -676,7 +716,7 @@ function Pastes() {
       <div className="main-content" style={{ height: 'auto', minHeight: 'calc(100vh - 80px)', padding: '40px 20px', overflowY: 'auto' }}>
         <div className="container" style={{ maxWidth: '1200px', margin: '0 auto' }}>
           <div className="create-paste">
-            <h2>📝 Новая паста</h2>
+            <h2><ImFileText2 size={20} style={{ marginRight: '8px' }} /> Новая паста</h2>
             <form onSubmit={submitPaste}>
               <div className="form-group">
                 <label>Заголовок</label>
@@ -703,28 +743,66 @@ function Pastes() {
               <div className="form-row">
                 <div className="form-group">
                   <label>Тип пасты</label>
-                  <select value={category} onChange={(e) => setCategory(e.target.value)}>
-                    {categories.map(cat => (
-                      <option key={cat.id} value={cat.id}>{cat.name}</option>
-                    ))}
-                  </select>
+                  {/* Кастомный select для категорий */}
+                  <div className="custom-select" ref={categoryRef}>
+                    <div 
+                      className="custom-select-trigger"
+                      onClick={() => setIsCategoryOpen(!isCategoryOpen)}
+                    >
+                      <span className="custom-select-value">
+                        {categories.find(c => c.id === category)?.icon} {categories.find(c => c.id === category)?.name}
+                      </span>
+                      <IoIosArrowDown className={`custom-select-arrow ${isCategoryOpen ? 'open' : ''}`} />
+                    </div>
+                    {isCategoryOpen && (
+                      <div className="custom-select-options">
+                        {categories.map(cat => (
+                          <div
+                            key={cat.id}
+                            className={`custom-select-option ${category === cat.id ? 'selected' : ''}`}
+                            onClick={() => {
+                              setCategory(cat.id);
+                              setIsCategoryOpen(false);
+                            }}
+                          >
+                            {cat.icon} {cat.name}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
+
                 <div className="form-group">
                   <label>Подсветка</label>
-                  <select value={language} onChange={(e) => setLanguage(e.target.value)}>
-                    <option value="javascript">🟨 JavaScript</option>
-                    <option value="python">🐍 Python</option>
-                    <option value="cpp">⚡ C++</option>
-                    <option value="java">☕ Java</option>
-                    <option value="html">🌐 HTML</option>
-                    <option value="css">🎨 CSS</option>
-                    <option value="php">🐘 PHP</option>
-                    <option value="ruby">💎 Ruby</option>
-                    <option value="go">🐹 Go</option>
-                    <option value="rust">🦀 Rust</option>
-                    <option value="sql">🗄️ SQL</option>
-                    <option value="text">📝 Текст</option>
-                  </select>
+                  {/* Кастомный select для языков */}
+                  <div className="custom-select" ref={languageRef}>
+                    <div 
+                      className="custom-select-trigger"
+                      onClick={() => setIsLanguageOpen(!isLanguageOpen)}
+                    >
+                      <span className="custom-select-value">
+                        {languageOptions.find(l => l.value === language)?.icon} {languageOptions.find(l => l.value === language)?.label}
+                      </span>
+                      <IoIosArrowDown className={`custom-select-arrow ${isLanguageOpen ? 'open' : ''}`} />
+                    </div>
+                    {isLanguageOpen && (
+                      <div className="custom-select-options">
+                        {languageOptions.map(lang => (
+                          <div
+                            key={lang.value}
+                            className={`custom-select-option ${language === lang.value ? 'selected' : ''}`}
+                            onClick={() => {
+                              setLanguage(lang.value);
+                              setIsLanguageOpen(false);
+                            }}
+                          >
+                            {lang.icon} {lang.label}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
 
@@ -733,7 +811,8 @@ function Pastes() {
                 <div className="tags-input">
                   {tags.map((tag, i) => (
                     <span key={i} className="tag">
-                      #{tag}
+                      <MdLabel size={12} style={{ marginRight: '4px' }} />
+                      {tag}
                       <span className="remove" onClick={() => removeTag(i)}>×</span>
                     </span>
                   ))}
@@ -747,149 +826,157 @@ function Pastes() {
                 </div>
               </div>
 
-              {message && <div className={`message ${message.includes('✅') ? 'success' : 'error'}`}>{message}</div>}
+              {message && <div className={`message ${message.includes('выполнен') || message.includes('создана') || message.includes('удалена') ? 'success' : 'error'}`}>{message}</div>}
 
               <button type="submit" className="submit-btn" disabled={loading}>
-                {loading ? '⏳ Создание...' : 'Создать пасту'}
+                {loading ? 'Создание...' : 'Создать пасту'}
               </button>
             </form>
           </div>
           
-
-<div className="public-pastes">
-  <h3>
-    📋 Все пасты
-    <span className="count">{pastes.length}</span>
-  </h3>
-  
-  {!user ? (
-    <div className="empty-state" style={{ 
-      textAlign: 'center', 
-      padding: '60px 20px',
-      background: 'rgba(255,255,255,0.5)',
-      borderRadius: '16px'
-    }}>
-      <div style={{ fontSize: '64px', marginBottom: '20px' }}>🔒</div>
-      <h2 style={{ color: '#1a1a1a', marginBottom: '10px', fontSize: '24px' }}>
-        Войдите в аккаунт
-      </h2>
-      <p style={{ color: '#666', marginBottom: '24px', fontSize: '16px' }}>
-        Чтобы просмотреть пасты, необходимо авторизоваться
-      </p>
-      <button 
-        className="submit-btn"
-        onClick={() => setShowAuthModal(true)}
-        style={{ 
-          padding: '12px 40px',
-          background: '#000000',
-          color: 'white',
-          border: 'none',
-          borderRadius: '8px',
-          fontSize: '16px',
-          fontWeight: '600',
-          cursor: 'pointer',
-          transition: 'all 0.3s ease'
-        }}
-      >
-        Войти
-      </button>
-    </div>
-  ) : (
-    pastes.length === 0 ? (
-      <div className="empty-state">
-        <span className="icon">📭</span>
-        <p>Нет паст</p>
-        <p style={{ fontSize: '13px', marginTop: '8px' }}>Создайте первую!</p>
-      </div>
-    ) : (
-      <div className="paste-list"> {/* Добавлен контейнер со скроллом */}
-        {pastes.map((paste) => {
-          const isOwner = user && paste.user === user.username;
-          return (
-            <div key={paste.id} className="paste-item" onClick={() => openPaste(paste)}>
-              <div className="paste-header">
-                <div className="paste-title">
-                  <span className="category-icon">{getCategoryIcon(paste.category)}</span>
-                  {paste.title}
-                </div>
-                <div className="paste-actions">
-                  {isOwner && (
-                    <>
-                      <button 
-                        className="edit-btn"
-                        onClick={(e) => startEdit(paste, e)}
-                        title="Редактировать"
-                        style={{
-                          background: 'none',
-                          border: 'none',
-                          cursor: 'pointer',
-                          fontSize: '16px',
-                          padding: '4px 8px',
-                          borderRadius: '4px',
-                          transition: 'all 0.2s ease'
-                        }}
-                        onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(0,0,0,0.1)'}
-                        onMouseLeave={(e) => e.currentTarget.style.background = 'none'}
-                      >
-                        ✏️
-                      </button>
-                      <button 
-                        className="delete-btn"
-                        onClick={(e) => deletePaste(paste.code, e)}
-                        title="Удалить"
-                        style={{
-                          background: 'none',
-                          border: 'none',
-                          cursor: 'pointer',
-                          fontSize: '16px',
-                          padding: '4px 8px',
-                          borderRadius: '4px',
-                          transition: 'all 0.2s ease'
-                        }}
-                        onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,0,0,0.1)'}
-                        onMouseLeave={(e) => e.currentTarget.style.background = 'none'}
-                      >
-                        🗑️
-                      </button>
-                    </>
-                  )}
-                </div>
-              </div>
-              <div className="paste-meta">
-                <span className="lang">{getLanguageIcon(paste.language)} {getLanguageName(paste.language)}</span>
-                <span className="category">{getCategoryIcon(paste.category)} {getCategoryName(paste.category)}</span>
-                <span className="user">👤 {paste.user || 'Гость'}</span>
-                <span className="time">{getTimeAgo(paste.created_at)}</span>
-                <span className="size">{formatSize(paste.size)}</span>
-                {paste.tags && paste.tags.map((t, i) => (
-                  <span key={i} className="tag-badge">#{t}</span>
-                ))}
-              </div>
-              <div className="paste-preview">
-                <SyntaxHighlighter
-                  language={paste.language === 'text' ? 'text' : paste.language}
-                  style={atomOneDark}
-                  customStyle={{
-                    fontSize: '12px',
-                    maxHeight: '80px',
-                    margin: 0,
-                    padding: '10px',
-                    borderRadius: '4px',
-                    background: '#1a1a1a',
-                    overflow: 'hidden'
+          <div className="public-pastes">
+            <h3>
+              <VscFolderLibrary size={20} style={{ marginRight: '8px' }} /> Все пасты
+              <span className="count">{pastes.length}</span>
+            </h3>
+            
+            {!user ? (
+              <div className="empty-state" style={{ 
+                textAlign: 'center', 
+                padding: '60px 20px',
+                background: 'rgba(255,255,255,0.5)',
+                borderRadius: '16px'
+              }}>
+                <div style={{ fontSize: '64px', marginBottom: '20px' }}><FaLock size={64} /></div>
+                <h2 style={{ color: '#1a1a1a', marginBottom: '10px', fontSize: '24px' }}>
+                  Войдите в аккаунт
+                </h2>
+                <p style={{ color: '#666', marginBottom: '24px', fontSize: '16px' }}>
+                  Чтобы просмотреть пасты, необходимо авторизоваться
+                </p>
+                <button 
+                  className="submit-btn"
+                  onClick={() => setShowAuthModal(true)}
+                  style={{ 
+                    padding: '12px 40px',
+                    background: '#000000',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '8px',
+                    fontSize: '16px',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                    transition: 'all 0.3s ease'
                   }}
-                  wrapLines={true}
                 >
-                  {paste.text ? paste.text.slice(0, 300) + (paste.text.length > 300 ? '...' : '') : ''}
-                </SyntaxHighlighter>
+                  Войти
+                </button>
               </div>
-            </div>
-          );
-        })}
-      </div>
-    )
-  )}
-</div>
+            ) : (
+              pastes.length === 0 ? (
+                <div className="empty-state">
+                  <FaFileAlt size={48} style={{ color: '#ccc' }} />
+                  <p>Нет паст</p>
+                  <p style={{ fontSize: '13px', marginTop: '8px' }}>Создайте первую!</p>
+                </div>
+              ) : (
+                <div className="paste-list">
+                  {pastes.map((paste) => {
+                    const isOwner = user && paste.user === user.username;
+                    return (
+                      <div key={paste.id} className="paste-item" onClick={() => openPaste(paste)}>
+                        <div className="paste-header">
+                          <div className="paste-title">
+                            <span className="category-icon">{getCategoryIcon(paste.category)}</span>
+                            {paste.title}
+                          </div>
+                          <div className="paste-actions">
+                            {isOwner && (
+                              <>
+                                <button 
+                                  className="edit-btn"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    openEditModal(paste.code);
+                                  }}
+                                  title="Редактировать"
+                                  style={{
+                                    background: 'none',
+                                    border: 'none',
+                                    cursor: 'pointer',
+                                    padding: '4px 8px',
+                                    borderRadius: '4px',
+                                    transition: 'all 0.2s ease',
+                                    color: '#667eea'
+                                  }}
+                                  onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(102, 126, 234, 0.1)'}
+                                  onMouseLeave={(e) => e.currentTarget.style.background = 'none'}
+                                >
+                                  <MdEdit size={18} />
+                                </button>
+                                <button 
+                                  className="delete-btn"
+                                  onClick={(e) => deletePaste(paste.code, e)}
+                                  title="Удалить"
+                                  style={{
+                                    background: 'none',
+                                    border: 'none',
+                                    cursor: 'pointer',
+                                    padding: '4px 8px',
+                                    borderRadius: '4px',
+                                    transition: 'all 0.2s ease',
+                                    color: '#dc3545'
+                                  }}
+                                  onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(220, 53, 69, 0.1)'}
+                                  onMouseLeave={(e) => e.currentTarget.style.background = 'none'}
+                                >
+                                  <MdDelete size={18} />
+                                </button>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                        <div className="paste-meta">
+                          <span className="lang">
+                            {getLanguageIcon(paste.language)} {getLanguageName(paste.language)}
+                          </span>
+                          <span className="category">
+                            {getCategoryIcon(paste.category)} {getCategoryName(paste.category)}
+                          </span>
+                          <span className="user"><MdPersonOutline size={12} style={{ marginRight: '4px' }} /> {paste.user || 'Гость'}</span>
+                          <span className="time"><MdAccessTime size={12} style={{ marginRight: '4px' }} /> {getTimeAgo(paste.created_at)}</span>
+                          <span className="size"><MdCode size={12} style={{ marginRight: '4px' }} /> {formatSize(paste.size)}</span>
+                          {paste.tags && paste.tags.map((t, i) => (
+                            <span key={i} className="tag-badge">
+                              <MdLabel size={10} style={{ marginRight: '4px' }} /> {t}
+                            </span>
+                          ))}
+                        </div>
+                        <div className="paste-preview">
+                          <SyntaxHighlighter
+                            language={paste.language === 'text' ? 'text' : paste.language}
+                            style={atomOneDark}
+                            customStyle={{
+                              fontSize: '12px',
+                              maxHeight: '80px',
+                              margin: 0,
+                              padding: '10px',
+                              borderRadius: '4px',
+                              background: '#1a1a1a',
+                              overflow: 'hidden'
+                            }}
+                            wrapLines={true}
+                          >
+                            {paste.text ? paste.text.slice(0, 300) + (paste.text.length > 300 ? '...' : '') : ''}
+                          </SyntaxHighlighter>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )
+            )}
+          </div>
         </div>
       </div>
 
@@ -901,7 +988,6 @@ function Pastes() {
         </div>
       </footer>
       
-      
       {selectedPaste && (
         <div className="modal-overlay" onClick={closePaste} style={{ zIndex: 200 }}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
@@ -910,17 +996,19 @@ function Pastes() {
                 <span className="category-icon">{getCategoryIcon(selectedPaste.category)}</span>
                 {selectedPaste.title}
               </h2>
-              <button className="modal-close" onClick={closePaste}>✕</button>
+              <button className="modal-close" onClick={closePaste}><MdClose size={24} /></button>
             </div>
             <div className="modal-meta">
               <span>{getLanguageIcon(selectedPaste.language)} {getLanguageName(selectedPaste.language)}</span>
               <span>• {getCategoryIcon(selectedPaste.category)} {getCategoryName(selectedPaste.category)}</span>
-              <span>• 👤 {selectedPaste.user || 'Гость'}</span>
-              <span>• {getTimeAgo(selectedPaste.created_at)}</span>
-              <span>• {formatSize(selectedPaste.size)}</span>
-              <span>• 👁️ {selectedPaste.views || 0} просмотров</span>
+              <span>• <MdPersonOutline size={12} style={{ marginRight: '4px' }} /> {selectedPaste.user || 'Гость'}</span>
+              <span>• <MdAccessTime size={12} style={{ marginRight: '4px' }} /> {getTimeAgo(selectedPaste.created_at)}</span>
+              <span>• <MdCode size={12} style={{ marginRight: '4px' }} /> {formatSize(selectedPaste.size)}</span>
+              <span>• <MdVisibility size={12} style={{ marginRight: '4px' }} /> {selectedPaste.views || 0} просмотров</span>
               {selectedPaste.tags && selectedPaste.tags.map((t, i) => (
-                <span key={i} className="tag-badge">#{t}</span>
+                <span key={i} className="tag-badge">
+                  <MdLabel size={10} style={{ marginRight: '4px' }} /> {t}
+                </span>
               ))}
             </div>
             <div className="modal-body">
@@ -945,33 +1033,17 @@ function Pastes() {
               <span className="paste-code">Код: {selectedPaste.code}</span>
               <div>
               {profileData?.username === selectedPaste?.user && (
-                <button className="modal-close-btn" onClick={() => openEditModal(selectedPaste.code)} style={{marginRight: '12px'}}>Редактировать</button>
+                <button className="modal-close-btn" onClick={() => openEditModal(selectedPaste.code)} style={{marginRight: '12px'}}>
+                  <MdCreate size={16} style={{ marginRight: '4px' }} /> Редактировать
+                </button>
               )}
-              <button className="modal-close-btn" onClick={closePaste}>Закрыть</button>
+              <button className="modal-close-btn" onClick={closePaste}>
+                <MdClose size={16} style={{ marginRight: '4px' }} /> Закрыть
+              </button>
               </div>
             </div>
           </div>
         </div>
-      )}
-
-      {/* Модальное окно для редактирования */}
-      {showEditModal && (
-        <EditPasteModal
-          paste={editingPaste}
-          onClose={() => {
-            setShowEditModal(false);
-            setEditingPaste(null);
-          }}
-          onSave={() => {
-            fetchPastes();
-            setMessage('✅ Паста обновлена!');
-            setTimeout(() => setMessage(''), 3000);
-          }}
-          token={token}
-          user={user}
-          categories={categories}
-          setMessage={setMessage}
-        />
       )}
 
       {/* Модальное окно авторизации */}
@@ -979,8 +1051,14 @@ function Pastes() {
         <div className="modal-overlay" onClick={() => setShowAuthModal(false)} style={{ zIndex: 300 }}>
           <div className="modal-content auth-modal" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
-              <h2>{authMode === 'login' ? '🔐 Вход' : '📝 Регистрация'}</h2>
-              <button className="modal-close" onClick={() => setShowAuthModal(false)}>✕</button>
+              <h2>
+                {authMode === 'login' ? (
+                  <><MdLock size={20} style={{ marginRight: '8px' }} /> Вход</>
+                ) : (
+                  <><MdCreate size={20} style={{ marginRight: '8px' }} /> Регистрация</>
+                )}
+              </h2>
+              <button className="modal-close" onClick={() => setShowAuthModal(false)}><MdClose size={24} /></button>
             </div>
             <form onSubmit={handleAuth}>
               <div className="modal-body">
@@ -1058,6 +1136,69 @@ function Pastes() {
           </div>
         </div>
       )}
+      
+<style>{`
+        .custom-select {
+          position: relative;
+          width: 100%;
+        }
+        .custom-select-trigger {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 8px 12px;
+          border: 1px solid #ddd;
+          border-radius: 8px;
+          background: #fff;
+          cursor: pointer;
+          font-size: 13px;
+          min-height: 38px;
+          box-sizing: border-box;
+        }
+        .custom-select-trigger:hover { border-color: #000; }
+        
+        .custom-select-value {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+        }
+        .custom-select-arrow {
+          transition: transform 0.2s;
+          font-size: 16px;
+        }
+        .custom-select-arrow.open { transform: rotate(180deg); }
+        
+        .custom-select-options {
+          position: absolute;
+          top: calc(100% + 4px);
+          left: 0; right: 0;
+          background: #fff;
+          border: 1px solid #ddd;
+          border-radius: 8px;
+          height: 180px;
+          overflow-y: scroll;
+          z-index: 999;
+          box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+        }
+        
+        .custom-select-options::-webkit-scrollbar { width: 6px; }
+        .custom-select-options::-webkit-scrollbar-thumb { background: #ccc; border-radius: 4px; }
+        .custom-select-options::-webkit-scrollbar-track { background: #f1f1f1; }
+
+        .custom-select-option {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          padding: 8px 12px;
+          cursor: pointer;
+          font-size: 13px;
+          transition: background 0.15s;
+        }
+        .custom-select-option:hover { background: #f5f5f5; }
+        .custom-select-option.selected { background: #e8e8e8; font-weight: 600; }
+        
+        .form-row, .form-group, .create-paste, .main-content { overflow: visible !important; }
+      `}</style>
     </div>
   );
 }

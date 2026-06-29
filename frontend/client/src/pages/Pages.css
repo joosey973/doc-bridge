@@ -531,8 +531,8 @@
   width: 34px;
   height: 34px;
   border-radius: 50%;
-  background: #1a1a1a;
-  color: white;
+  background: #ffffff;
+  color: rgb(0, 0, 0);
   border: 2px solid #ffffff;
   cursor: pointer;
   font-size: 16px;
@@ -543,7 +543,7 @@
 }
 
 .avatar-edit-btn:hover {
-  background: #333333;
+  background: #a7a6a6;
   transform: scale(1.05);
 }
 
@@ -791,7 +791,7 @@
 }
 
 .status-badge {
-  color: #2e7d32;
+  color: #4188459d;
   font-weight: 600;
 }
 
@@ -807,7 +807,6 @@
   letter-spacing: 0.5px;
 }
 
-/* ===== АДАПТИВНОСТЬ ===== */
 @media (max-width: 768px) {
   .profile-container { grid-template-columns: 1fr; }
   .profile-info-grid { grid-template-columns: 1fr; }
