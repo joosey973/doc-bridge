@@ -9,7 +9,6 @@ import DropPage from "./pages/DropPage";
 import EditPastePage from "./pages/EditPastePage";
 import ViewPastePage from "./pages/ViewPaste";
 import AboutPage from "./pages/AboutPage";
-import termsofservice from './pages/termsofservice';
 
 function App(){
   return (
