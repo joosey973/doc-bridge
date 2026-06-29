@@ -1,15 +1,17 @@
+from datetime import timedelta
 import os
 
 from pathlib import Path
 
 from dotenv import load_dotenv
 
+
 load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 REACT_APP_DIR = os.path.join(BASE_DIR, 'frontend', 'build')
 
-SECRET_KEY = os.environ.get('SECRET_KEY', '')
+SECRET_KEY = os.getenv('SECRET_KEY', '')
 
 DEBUG = True
 
@@ -59,7 +61,6 @@ REST_FRAMEWORK = {
     ),
 }
 
-from datetime import timedelta
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(days=30),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=30),
