@@ -4,14 +4,16 @@ import './EditPastePage.css';
 
 const API_URL = 'http://localhost:8000/api';
 
-const EditPastePage = () => {
+const ViewPastePage = () => {
   const { pasteCode } = useParams();
   const navigate = useNavigate();
   const handleBack = () => {
       if (from === 'profile') {
             navigate('/api/profile');
-          } else {
+          } else if (from === 'pastes') {
             navigate('/api/pastes');
+          } else {
+            navigate('/')
           }
     };
   
@@ -25,7 +27,7 @@ const EditPastePage = () => {
   const [message, setMessage] = useState('');
 
   const location = useLocation();
-  const from = location.state?.from || 'pastes';
+  const from = location.state?.from || 'main';
   
   // Данные пасты
   const [title, setTitle] = useState('');
@@ -178,12 +180,6 @@ const EditPastePage = () => {
 
         if (response.ok) {
           const data = await response.json();
-          
-          if (data.user.username !== data.paste_user.username) {
-            setError('⛔ Вы можете редактировать только свои пасты');
-            setTimeout(() => navigate('/api/pastes'), 20000);
-            return;
-          }
           fetchProfileData();
           setTitle(data.paste.title || '');
           setContent(data.paste.text || '');
@@ -314,7 +310,7 @@ const EditPastePage = () => {
       
       <div className="edit-page-content">
         <div className="edit-page-header">
-          {user ? <h1>Редактирование пасты</h1> : <h1>Просмотр</h1>}
+            <h1>Просмотр заметки</h1>
           <button onClick={() => handleBack()} className="back-btn">
             ← Назад
           </button>
@@ -330,6 +326,7 @@ const EditPastePage = () => {
               placeholder="Название пасты..."
               maxLength={100}
               className="edit-input"
+              disabled
             />
           </div>
 
@@ -342,6 +339,7 @@ const EditPastePage = () => {
               rows={12}
               required
               className="edit-textarea"
+              disabled
             />
           </div>
 
@@ -352,6 +350,7 @@ const EditPastePage = () => {
                 value={category} 
                 onChange={(e) => setCategory(e.target.value)}
                 className="edit-select"
+                disabled
               >
                 {categories.map(cat => (
                   <option key={cat.id} value={cat.id}>{cat.name}</option>
@@ -364,6 +363,7 @@ const EditPastePage = () => {
                 value={language} 
                 onChange={(e) => setLanguage(e.target.value)}
                 className="edit-select"
+                disabled
               >
                 <option value="javascript">🟨 JavaScript</option>
                 <option value="python">🐍 Python</option>
@@ -387,17 +387,9 @@ const EditPastePage = () => {
               {tags.map((tag, i) => (
                 <span key={i} className="tag">
                   #{tag}
-                  <span className="remove" onClick={() => removeTag(i)}>×</span>
                 </span>
               ))}
-              <input
-                type="text"
-                value={tagInput}
-                onChange={(e) => setTagInput(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addTag())}
-                placeholder="Тег и Enter"
-                className="tag-input"
-              />
+              
             </div>
           </div>
 
@@ -406,24 +398,6 @@ const EditPastePage = () => {
               {message}
             </div>
           )}
-        {user ? (
-          <div className="form-actions">
-            <button 
-              type="button" 
-              onClick={() => handleBack()}
-              className="cancel-btn"
-            >
-              Отмена
-            </button>
-            <button 
-              type="submit" 
-              className="save-btn" 
-              disabled={saving}
-            >
-              {saving ? '⏳ Сохранение...' : 'Сохранить'}
-            </button>
-          </div>
-        ) : ''}
           
         </form>
 
@@ -437,4 +411,4 @@ const EditPastePage = () => {
   );
 };
 
-export default EditPastePage;
+export default ViewPastePage;

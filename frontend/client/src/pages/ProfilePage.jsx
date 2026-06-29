@@ -20,6 +20,12 @@ function ProfilePage({ changePage }) {
   const canvasRef = useRef(null);
   const [isHovered, setIsHovered] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
+  const openPasteView = (paste) => {
+  
+    navigate(`/api/pastes/view/${paste.code}/`, { 
+      state: { from: 'profile' } 
+    });
+};
   
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(localStorage.getItem('token') || '');
@@ -1230,63 +1236,74 @@ function ProfilePage({ changePage }) {
     </div>
   ) : (
     <div className="pastes-list">
-      {statsData?.pastes?.map((paste) => (
-        <div key={paste.id} className="paste-item">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div className="paste-title">
-              {getCategoryIcon(paste.category)} {paste.title || 'Без названия'}
-            </div>
-            <div style={{ display: 'flex', gap: '4px' }}>
-              <button
-                onClick={() => navigate(`/api/pastes/edit/${paste.code}/`, {state: {from: 'profile'}})}
-                title="Редактировать"
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  cursor: 'pointer',
-                  fontSize: '16px',
-                  padding: '4px 8px',
-                  borderRadius: '4px',
-                  transition: 'all 0.2s ease',
-                  color: '#667eea'
-                }}
-                onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(102, 126, 234, 0.1)'}
-                onMouseLeave={(e) => e.currentTarget.style.background = 'none'}
-              >
-                ✏️
-              </button>
-              <button
-                onClick={(e) => deletePaste(paste.code, e)}
-                title="Удалить"
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  cursor: 'pointer',
-                  fontSize: '16px',
-                  padding: '4px 8px',
-                  borderRadius: '4px',
-                  transition: 'all 0.2s ease',
-                  color: '#dc3545'
-                }}
-                onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(220, 53, 69, 0.1)'}
-                onMouseLeave={(e) => e.currentTarget.style.background = 'none'}
-              >
-                🗑️
-              </button>
-            </div>
-          </div>
-          <div className="paste-meta">
-            <span>{getLanguageIcon(paste.language)} {getLanguageName(paste.language)}</span>
-            <span>{getCategoryIcon(paste.category)} {getCategoryName(paste.category)}</span>
-            <span>🕐 {getTimeAgo(paste.created_at || paste.createdAt)}</span>
-            <span>📦 {formatSize(paste.size)}</span>
-            {paste.tags && paste.tags.map((t, i) => (
-              <span key={i} className="tag-badge">#{t}</span>
-            ))}
-          </div>
+  {statsData?.pastes?.map((paste) => (
+    <div 
+      key={paste.id} 
+      className="paste-item"
+      onClick={() => openPasteView(paste)}
+      style={{ cursor: 'pointer' }}
+    >
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div className="paste-title">
+          {getCategoryIcon(paste.category)} {paste.title || 'Без названия'}
         </div>
-      ))}
+        <div style={{ display: 'flex', gap: '4px' }}>
+          <button
+            onClick={(e) => {
+              e.stopPropagation(); // ← Останавливаем всплытие
+              navigate(`/api/pastes/edit/${paste.code}/`, {state: {from: 'profile'}});
+            }}
+            title="Редактировать"
+            style={{
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              fontSize: '16px',
+              padding: '4px 8px',
+              borderRadius: '4px',
+              transition: 'all 0.2s ease',
+              color: '#667eea'
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(102, 126, 234, 0.1)'}
+            onMouseLeave={(e) => e.currentTarget.style.background = 'none'}
+          >
+            ✏️
+          </button>
+          <button
+            onClick={(e) => {
+              e.stopPropagation(); // ← Останавливаем всплытие
+              deletePaste(paste.code, e);
+            }}
+            title="Удалить"
+            style={{
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              fontSize: '16px',
+              padding: '4px 8px',
+              borderRadius: '4px',
+              transition: 'all 0.2s ease',
+              color: '#dc3545'
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(220, 53, 69, 0.1)'}
+            onMouseLeave={(e) => e.currentTarget.style.background = 'none'}
+          >
+            🗑️
+          </button>
+        </div>
+      </div>
+      <div className="paste-meta">
+        <span>{getLanguageIcon(paste.language)} {getLanguageName(paste.language)}</span>
+        <span>{getCategoryIcon(paste.category)} {getCategoryName(paste.category)}</span>
+        <span>🕐 {getTimeAgo(paste.created_at || paste.createdAt)}</span>
+        <span>📦 {formatSize(paste.size)}</span>
+        {paste.tags && paste.tags.map((t, i) => (
+          <span key={i} className="tag-badge">#{t}</span>
+        ))}
+      </div>
     </div>
+  ))}
+</div>
   )}
 </div>
 

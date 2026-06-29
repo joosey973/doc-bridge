@@ -7,6 +7,7 @@ import ConverterPage from "./pages/ConverterPage";
 import CompressPage from "./pages/CompressPage";
 import DropPage from "./pages/DropPage";
 import EditPastePage from "./pages/EditPastePage";
+import ViewPastePage from "./pages/ViewPaste";
 
 function App(){
   return (
@@ -20,6 +21,7 @@ function App(){
       <Route path="/api/compress" element={<CompressPage/>}/>
       <Route path="/api/droppage" element={<DropPage/>}/>
       <Route path="/api/pastes/edit/:pasteCode" element={<EditPastePage/>}/>
+      <Route path="/api/pastes/view/:pasteCode" element={<ViewPastePage/>}/>
     </Routes>
     </Router>
   );

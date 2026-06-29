@@ -31,6 +31,14 @@ function Pastes() {
   
   const canvasRef = useRef(null);
   const [isHovered, setIsHovered] = useState(false);
+  const openPasteView = (paste) => {
+  
+  setTimeout(() => {
+    navigate(`/api/pastes/view/${paste.code}/`, { 
+      state: { from: 'pastes' } 
+    });
+  }, 2000);
+};
   
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -434,6 +442,7 @@ function Pastes() {
       const data = await response.json();
       if (data.success) {
         setMessage(`✅ Паста создана! Код: ${data.paste.code}`);
+        openPasteView(data.paste);
         setTitle('');
         setContent('');
         setTags([]);
