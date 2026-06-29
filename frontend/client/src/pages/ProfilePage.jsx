@@ -700,8 +700,7 @@ function ProfilePage({ changePage }) {
           <li><Link to="/api/compress/" onClick={closeMenu}>Сжатие</Link></li>
           <li><Link to="/api/pastes/" onClick={closeMenu}>Заметки</Link></li>
           <li><Link to="/api/droppage/" onClick={closeMenu}>Файлообменник</Link></li>
-          <li><a href="#" onClick={(e) => { e.preventDefault(); closeMenu(); }}>Хранилище</a></li>
-          <li><a href="#" onClick={(e) => { e.preventDefault(); closeMenu(); }}>О нас</a></li>
+          <li><Link to="/api/about/" onClick={closeMenu}>О нас</Link></li>
         </ul>
       </nav>
 
