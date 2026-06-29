@@ -151,7 +151,7 @@ function MainPage({ changePage }) {
         size: Math.floor(Math.random() * 6) + 12,
         tick: 0,
         tickMax: Math.floor(Math.random() * 15) + 5,
-        speedX: (Math.random() - 0.5) * 2, // Базовая скорость для хаотичного движения
+        speedX: (Math.random() - 0.5) * 2,
         speedY: (Math.random() - 0.5) * 2
       });
     }
@@ -176,12 +176,11 @@ function MainPage({ changePage }) {
           const rows = 8; 
           const targetY = (idx % rows) * (height / rows) + (height / (rows * 2));
           
-          // Плавное притягивание к линиям сетки вместо резкого прыжка
           d.y += (targetY - d.y) * 0.1;
           
           d.tick++;
           if (d.tick > 5) {
-            d.x += 12; // Движение вбок в режиме ховера
+            d.x += 12;
             if (Math.random() > 0.85) d.char = d.char === '1' ? '0' : '1';
             d.tick = 0;
           }
@@ -192,13 +191,11 @@ function MainPage({ changePage }) {
             ctx.fillStyle = 'rgba(0, 0, 0, 0.22)'; 
           }
         } else {
-          // Стандартное хаотичное движение (без телепортаций)
           d.x += d.speedX;
           d.y += d.speedY;
 
           d.tick++;
           if (d.tick >= d.tickMax) {
-            // Слегка меняем вектор движения время от времени
             d.speedX = (Math.random() - 0.5) * 2;
             d.speedY = (Math.random() - 0.5) * 2;
             if (Math.random() > 0.5) d.char = Math.random() > 0.5 ? '1' : '0';
@@ -207,7 +204,6 @@ function MainPage({ changePage }) {
           }
         }
 
-        // Границы экрана
         if (d.x < 0) d.x = width;
         if (d.x > width) d.x = 0;
         if (d.y < 0) d.y = height;
@@ -225,7 +221,7 @@ function MainPage({ changePage }) {
       window.removeEventListener('resize', handleResize);
       cancelAnimationFrame(animationFrameId);
     };
-  }, []); // Пустой массив зависимостей гарантирует стабильный FPS
+  }, []);
 
   if (loadingAuth) {
     return (
@@ -280,7 +276,6 @@ function MainPage({ changePage }) {
 
       <main className="main-content">
         <div className="buttons-grid">
-          {/* Исправлено: Ссылки теперь сами выступают в роли интерактивных кнопок */}
           <Link 
             to="/api/converter/" 
             className="menu-item-btn"
@@ -422,8 +417,17 @@ function MainPage({ changePage }) {
           </div>
         </div>
       )}
+
+      {/* ✅ Футер теперь ВНУТРИ компонента */}
+  <footer className="bottom-footer">
+        <div className="footer-buttons">
+          <Link to="/api/policy/" className="footer-btn">Политика</Link>
+          <Link to="/api/termsofservice/" className="footer-btn">Условия</Link>
+          <Link to="/api/contacts/" className="footer-btn">Контакты</Link>
+        </div>
+      </footer>
     </div>
   );
-}
+}  {}
 
 export default MainPage;
