@@ -129,7 +129,7 @@ function MainPage({ changePage }) {
           username: authForm.username,
           email: authForm.email,
           password: authForm.password,
-          password_confirm: authForm.passwordConfirm
+          password_confirm: authForm.passwordConfirm 
         })
       });
       
@@ -162,7 +162,7 @@ function MainPage({ changePage }) {
     let width = (canvas.width = window.innerWidth);
     let height = (canvas.height = window.innerHeight);
 
-    const numDigits = 100;
+    const numDigits = 70; 
     const digits = [];
 
     for (let i = 0; i < numDigits; i++) {
@@ -170,7 +170,7 @@ function MainPage({ changePage }) {
         x: Math.random() * width,
         y: Math.random() * height,
         char: Math.random() > 0.5 ? '1' : '0',
-        size: Math.floor(Math.random() * 6) + 12,
+        size: Math.floor(Math.random() * 6) + 12, 
         glitchX: (Math.random() - 0.5) * 20,
         glitchY: (Math.random() - 0.5) * 20,
         tick: 0,
@@ -360,6 +360,7 @@ function MainPage({ changePage }) {
         </div>
       </main>
 
+      {/* Модальное окно авторизации */}
       {showAuthModal && (
         <div className="modal-overlay" onClick={() => setShowAuthModal(false)}>
           <div className="modal-content auth-modal" onClick={(e) => e.stopPropagation()}>
@@ -421,6 +422,7 @@ function MainPage({ changePage }) {
                 />
               </div>
 
+              {/* Добавлено поле подтверждения пароля для регистрации */}
               {!isLoginMode && (
                 <div className="form-group">
                   <label>Подтверждение пароля</label>
