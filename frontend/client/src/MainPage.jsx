@@ -204,9 +204,6 @@ useEffect(() => {
     }
   };
 
-  // Анимация canvas - РАБОТАЕТ ПОСТОЯННО без привязки к hover
-  
-
   if (loadingAuth) {
     return (
       <div className="app-container">
@@ -381,16 +378,15 @@ useEffect(() => {
         </div>
       )}
 
-      <footer className="bottom-footer">
+  <footer className="bottom-footer">
         <div className="footer-buttons">
-          <button className="footer-btn">Политика</button>
-          <button className="footer-btn">Условия</button>
           <Link to="/api/policy/" className="footer-btn">Политика</Link>
           <Link to="/api/termsofservice/" className="footer-btn">Условия</Link>
+          <Link to="/api/contacts/" className="footer-btn">Контакты</Link>
         </div>
       </footer>
     </div>
   );
-}
+}  {}
 
 export default MainPage;

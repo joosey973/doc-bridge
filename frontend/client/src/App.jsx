@@ -9,6 +9,9 @@ import DropPage from "./pages/DropPage";
 import EditPastePage from "./pages/EditPastePage";
 import ViewPastePage from "./pages/ViewPaste";
 import AboutPage from "./pages/AboutPage";
+import TermsofService from "./pages/termsofservice";
+import ContactsPage from "./pages/contacts";
+import PolicyPage from "./pages/policypage";
 
 function App(){
   return (
@@ -24,6 +27,9 @@ function App(){
       <Route path="/api/pastes/edit/:pasteCode/" element={<EditPastePage/>}/>
       <Route path="/api/pastes/view/:pasteCode/" element={<ViewPastePage/>}/>
       <Route path="/api/about/" element={<AboutPage/>}/>
+      <Route path="/api/termsofservice/" element={<TermsofService/>}/>
+      <Route path="/api/contacts/" element={<ContactsPage/>}/>
+      <Route path="/api/policy/" element={<PolicyPage/>}/>
     </Routes>
     </Router>
   );
