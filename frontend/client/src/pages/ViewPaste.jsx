@@ -2,21 +2,59 @@ import { useParams, useNavigate, useLocation, Link } from 'react-router-dom';
 import { useState, useEffect, useRef } from 'react';
 import './EditPastePage.css';
 
+// ===== ИКОНКИ =====
+import { 
+  MdOutlineWorkOutline,
+  MdAccessTime,
+  MdEdit,
+  MdDelete,
+  MdLock,
+  MdClose
+} from "react-icons/md";
+import { 
+  BsPersonWorkspace 
+} from "react-icons/bs";
+import { 
+  MdOutlineFastfood 
+} from "react-icons/md";
+import { 
+  PiBookBookmarkThin,
+  PiFilmSlateLight 
+} from "react-icons/pi";
+import { 
+  IoIosAirplane, 
+  IoIosStarOutline 
+} from "react-icons/io";
+import { 
+  CiMedicalCross,
+  CiInboxIn 
+} from "react-icons/ci";
+import { 
+  GoPencil 
+} from "react-icons/go";
+import { 
+  IoTrashOutline 
+} from "react-icons/io5";
+import { 
+  VscDeviceCamera 
+} from "react-icons/vsc";
+import { SlLock } from "react-icons/sl";
+
 const API_URL = 'http://localhost:8000/api';
 
 const ViewPastePage = () => {
   const { pasteCode } = useParams();
   const navigate = useNavigate();
-  const handleBack = () => {
-      if (from === 'profile') {
-            navigate('/api/profile');
-          } else if (from === 'pastes') {
-            navigate('/api/pastes');
-          } else {
-            navigate('/')
-          }
-    };
   
+  const handleBack = () => {
+    if (from === 'profile') {
+      navigate('/api/profile');
+    } else if (from === 'pastes') {
+      navigate('/api/pastes');
+    } else {
+      navigate('/');
+    }
+  };
   
   const canvasRef = useRef(null);
   const [isHovered, setIsHovered] = useState(false);
@@ -41,16 +79,46 @@ const ViewPastePage = () => {
   const token = localStorage.getItem('token');
   const user = location.state?.usr || 'null';
 
+  // ===== КАТЕГОРИИ С REACT-ИКОНКАМИ =====
   const categories = [
-    { id: 'work', name: '💼 Работа' },
-    { id: 'personal', name: '👤 Личная жизнь' },
-    { id: 'food', name: '🍕 Еда' },
-    { id: 'study', name: '📚 Учеба' },
-    { id: 'travel', name: '✈️ Путешествия' },
-    { id: 'health', name: '💪 Здоровье' },
-    { id: 'entertainment', name: '🎬 Развлечения' },
-    { id: 'other', name: '📌 Другое' },
+    { id: 'work', name: 'Работа', icon: <MdOutlineWorkOutline size={16} /> },
+    { id: 'personal', name: 'Личная жизнь', icon: <BsPersonWorkspace size={16} /> },
+    { id: 'food', name: 'Еда', icon: <MdOutlineFastfood size={16} /> },
+    { id: 'study', name: 'Учеба', icon: <PiBookBookmarkThin size={16} /> },
+    { id: 'travel', name: 'Путешествия', icon: <IoIosAirplane size={16} /> },
+    { id: 'health', name: 'Здоровье', icon: <CiMedicalCross size={16} /> },
+    { id: 'entertainment', name: 'Развлечения', icon: <PiFilmSlateLight size={16} /> },
+    { id: 'other', name: 'Другое', icon: <IoIosStarOutline size={16} /> },
   ];
+
+  // ===== ФУНКЦИИ ДЛЯ ИКОНОК =====
+  const getCategoryIcon = (catId) => {
+    const icons = {
+      work: <MdOutlineWorkOutline size={16} />,
+      personal: <BsPersonWorkspace size={16} />,
+      food: <MdOutlineFastfood size={16} />,
+      study: <PiBookBookmarkThin size={16} />,
+      travel: <IoIosAirplane size={16} />,
+      health: <CiMedicalCross size={16} />,
+      entertainment: <PiFilmSlateLight size={16} />,
+      other: <IoIosStarOutline size={16} />
+    };
+    return icons[catId] || <IoIosStarOutline size={16} />;
+  };
+
+  const getCategoryName = (catId) => {
+    const names = {
+      work: 'Работа',
+      personal: 'Личная жизнь',
+      food: 'Еда',
+      study: 'Учеба',
+      travel: 'Путешествия',
+      health: 'Здоровье',
+      entertainment: 'Развлечения',
+      other: 'Другое'
+    };
+    return names[catId] || 'Другое';
+  };
 
   const copyToClipboard = async () => {
     const link = `${window.location.origin}/api/pastes/view/${pasteCode}`;
@@ -81,8 +149,6 @@ const ViewPastePage = () => {
         tickMax: Math.floor(Math.random() * 15) + 5
       });
     }
-
-    
 
     const handleResize = () => {
       if (!canvas) return;
@@ -149,135 +215,38 @@ const ViewPastePage = () => {
     };
   }, [isHovered]);
 
-  const fetchProfileData = async () => {
-    try {
-      const savedToken = localStorage.getItem('token');
-      const response = await fetch(`${API_URL}/pastes/edit/${pasteCode}/`, {
-        headers: {
-          'Authorization': `Bearer ${savedToken}`
-        }
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        setProfileData(data.user);
-      }
-    } catch (error) {
-      console.error('Ошибка:', error);
-    }
-  };
-
   // Загрузка данных пасты
-  // Загрузка данных пасты
-useEffect(() => {
-  const fetchPaste = async () => {
-    try {
-      // Используем эндпоинт для просмотра, а не для редактирования!
-      const response = await fetch(`${API_URL}/pastes/view/${pasteCode}/`, {
-        headers: {
-          'Content-Type': 'application/json',
-        }
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setTitle(data.paste.title || '');
-        setContent(data.paste.text || '');
-        setLanguage(data.paste.language || 'javascript');
-        setCategory(data.paste.category || 'other');
-        setTags(data.paste.tags || []);
-        setProfileData(data.paste_user || 'Аноним');
-      } else {
-        setError('❌ Паста не найдена');
-        setTimeout(() => navigate('/api/pastes'), 20000);
-      }
-    } catch (err) {
-      setError('❌ Ошибка загрузки пасты');
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  fetchPaste();
-}, [pasteCode, navigate]);
-
-  const addTag = () => {
-    const trimmed = tagInput.trim();
-    if (trimmed && !tags.includes(trimmed)) {
-      setTags([...tags, trimmed]);
-      setTagInput('');
-    }
-  };
-
-  const removeTag = (index) => {
-    setTags(tags.filter((_, i) => i !== index));
-  };
-
-  const handleSave = async (e) => {
-    e.preventDefault();
-    
-    if (!content.trim()) {
-      setMessage('⚠️ Введите содержимое');
-      return;
-    }
-
-    setSaving(true);
-    setMessage('');
-
-    try {
-      const response = await fetch(`${API_URL}/pastes/edit/${pasteCode}/`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          title: title || 'Без названия',
-          text: content,
-          language: language,
-          category: category,
-          tags: tags,
-        }),
-      });
-
-      const data = await response.json();
-      
-      if (data.success) {
-        setMessage('✅ Паста успешно обновлена!');
-        setTimeout(() => {
-          if (from === 'profile')
-          {
-            navigate('/api/profile', { 
-            state: { message: '✅ Паста успешно обновлена!' }
-          });
-          } else {
-            navigate('/api/pastes', { 
-            state: { message: '✅ Паста успешно обновлена!' }
-          });
+  useEffect(() => {
+    const fetchPaste = async () => {
+      try {
+        const response = await fetch(`${API_URL}/pastes/view/${pasteCode}/`, {
+          headers: {
+            'Content-Type': 'application/json',
           }
-          
-        }, 1500);
-      } else {
-        let errorMessage = 'Ошибка обновления';
-        if (data.errors) {
-          const errorMessages = Object.values(data.errors).join(', ');
-          setMessage(`❌ ${errorMessages}`);
-        } else if (data.error) {
-          setMessage(`❌ ${data.error}`);
-        } else if (data.message) {
-          setMessage(`❌ ${data.message}`);
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setTitle(data.paste.title || '');
+          setContent(data.paste.text || '');
+          setLanguage(data.paste.language || 'javascript');
+          setCategory(data.paste.category || 'other');
+          setTags(data.paste.tags || []);
+          setProfileData(data.paste_user || 'Аноним');
         } else {
-          setMessage(`❌ ${errorMessage}`);
+          setError('❌ Паста не найдена');
+          setTimeout(() => navigate('/api/pastes'), 20000);
         }
+      } catch (err) {
+        setError('❌ Ошибка загрузки пасты');
+        console.error(err);
+      } finally {
+        setLoading(false);
       }
-    } catch (err) {
-      console.error('Ошибка сохранения:', err);
-      setMessage('❌ Ошибка подключения к серверу');
-    } finally {
-      setSaving(false);
-    }
-  };
+    };
+
+    fetchPaste();
+  }, [pasteCode, navigate]);
 
   if (loading) {
     return (
@@ -311,23 +280,24 @@ useEffect(() => {
       
       <div className="edit-page-content">
         <div className="edit-page-header">
-          <div className='link-container'>
+          <div className="link-container">
             <h1>Просмотр заметки</h1>
-            <div onClick={() => copyToClipboard()} style={{cursor: 'pointer'}}>Скопировать ссылку на заметку</div>
+            <div onClick={copyToClipboard} style={{cursor: 'pointer'}}>
+              📋 Скопировать ссылку на заметку
+            </div>
           </div>
             
-          <button onClick={() => handleBack()} className="back-btn">
+          <button onClick={handleBack} className="back-btn">
             ← Назад
           </button>
         </div>
 
-        <form onSubmit={handleSave} className="edit-form">
+        <div className="edit-form">
           <div className="form-group">
             <label>Заголовок</label>
             <input
               type="text"
               value={title}
-              onChange={(e) => setTitle(e.target.value)}
               placeholder="Название пасты..."
               maxLength={100}
               className="edit-input"
@@ -339,10 +309,8 @@ useEffect(() => {
             <label>Содержимое</label>
             <textarea
               value={content}
-              onChange={(e) => setContent(e.target.value)}
               placeholder="Введите текст или код..."
               rows={12}
-              required
               className="edit-textarea"
               disabled
             />
@@ -351,38 +319,15 @@ useEffect(() => {
           <div className="form-row">
             <div className="form-group">
               <label>Тип пасты</label>
-              <select 
-                value={category} 
-                onChange={(e) => setCategory(e.target.value)}
-                className="edit-select"
-                disabled
-              >
-                {categories.map(cat => (
-                  <option key={cat.id} value={cat.id}>{cat.name}</option>
-                ))}
-              </select>
+              <div className="category-display">
+                {getCategoryIcon(category)} {getCategoryName(category)}
+              </div>
             </div>
             <div className="form-group">
               <label>Подсветка</label>
-              <select 
-                value={language} 
-                onChange={(e) => setLanguage(e.target.value)}
-                className="edit-select"
-                disabled
-              >
-                <option value="javascript">🟨 JavaScript</option>
-                <option value="python">🐍 Python</option>
-                <option value="cpp">⚡ C++</option>
-                <option value="java">☕ Java</option>
-                <option value="html">🌐 HTML</option>
-                <option value="css">🎨 CSS</option>
-                <option value="php">🐘 PHP</option>
-                <option value="ruby">💎 Ruby</option>
-                <option value="go">🐹 Go</option>
-                <option value="rust">🦀 Rust</option>
-                <option value="sql">🗄️ SQL</option>
-                <option value="text">📝 Текст</option>
-              </select>
+              <div className="language-display">
+                {language.charAt(0).toUpperCase() + language.slice(1)}
+              </div>
             </div>
           </div>
 
@@ -394,22 +339,17 @@ useEffect(() => {
                   #{tag}
                 </span>
               ))}
-              
+              {tags.length === 0 && (
+                <span style={{ color: '#999', fontSize: '14px' }}>Нет тегов</span>
+              )}
             </div>
           </div>
-
-          {message && (
-            <div className={`message ${message.includes('✅') ? 'success' : 'error'}`}>
-              {message}
-            </div>
-          )}
-          
-        </form>
+        </div>
 
         <div className="paste-info">
           <span>Код пасты: <strong>{pasteCode}</strong></span>
           <span>•</span>
-          <span>Владелец: <strong>{profileData?.username}</strong></span>
+          <span>Владелец: <strong>{profileData?.username || 'Аноним'}</strong></span>
         </div>
       </div>
     </div>

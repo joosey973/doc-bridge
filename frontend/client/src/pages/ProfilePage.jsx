@@ -2,14 +2,44 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import './Pages.css';
 import '../MainPage.css';
+
+// ===== ИКОНКИ =====
 import { 
+  MdOutlineWorkOutline,
   MdAccessTime,
+  MdEdit,
+  MdDelete,
+  MdLock
 } from "react-icons/md";
-import {  IoIosStarOutline } from "react-icons/io";
-import { GoPencil } from "react-icons/go";
-import { IoTrashOutline } from "react-icons/io5";
-import { CiInboxIn } from "react-icons/ci";
-import { VscDeviceCamera } from "react-icons/vsc";
+import { 
+  BsPersonWorkspace 
+} from "react-icons/bs";
+import { 
+  MdOutlineFastfood 
+} from "react-icons/md";
+import { 
+  PiBookBookmarkThin,
+  PiFilmSlateLight 
+} from "react-icons/pi";
+import { 
+  IoIosAirplane, 
+  IoIosStarOutline 
+} from "react-icons/io";
+import { 
+  CiMedicalCross,
+  CiInboxIn 
+} from "react-icons/ci";
+import { 
+  GoPencil 
+} from "react-icons/go";
+import { 
+  IoTrashOutline 
+} from "react-icons/io5";
+import { 
+  VscDeviceCamera 
+} from "react-icons/vsc";
+import { SlLock } from "react-icons/sl";
+
 const API_URL = 'http://localhost:8000/api';
 
 function ProfilePage({ changePage }) {
@@ -27,12 +57,12 @@ function ProfilePage({ changePage }) {
   const canvasRef = useRef(null);
   const [isHovered, setIsHovered] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
-  const openPasteView = (paste) => {
   
+  const openPasteView = (paste) => {
     navigate(`/api/pastes/view/${paste.code}/`, { 
       state: { from: 'profile' } 
     });
-};
+  };
   
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(localStorage.getItem('token') || '');
@@ -309,9 +339,7 @@ function ProfilePage({ changePage }) {
   window.addEventListener('resize', handleResize);
 
   const animate = () => {
-    // Прозрачный фон для эффекта трейлов
     ctx.clearRect(0, 0, width, height);
-    // Небольшой белый фон, чтобы цифры были видны
     ctx.fillStyle = 'rgba(255, 255, 255, 0.05)';
     ctx.fillRect(0, 0, width, height);
     
@@ -329,16 +357,13 @@ function ProfilePage({ changePage }) {
         d.opacity = Math.random() * 0.5 + 0.3;
       }
 
-      // Отражение от стен
       if (d.x < 0 || d.x > width) d.speedX *= -1;
       if (d.y < 0 || d.y > height) d.speedY *= -1;
 
-      // Рисуем цифры с черным цветом и прозрачностью
       ctx.fillStyle = `rgba(0, 0, 0, ${d.opacity})`;
       ctx.font = `700 ${d.size}px monospace`;
       ctx.fillText(d.char, d.x, d.y);
       
-      // Эффект тени для читаемости
       ctx.shadowColor = 'rgba(255, 255, 255, 0.5)';
       ctx.shadowBlur = 10;
       ctx.fillText(d.char, d.x, d.y);
@@ -401,18 +426,31 @@ function ProfilePage({ changePage }) {
     return icons[langId] || 'TXT';
   };
 
+  // ===== НОВЫЕ ФУНКЦИИ С REACT-ИКОНКАМИ =====
   const getCategoryIcon = (catId) => {
     const icons = {
-      work: '💼', personal: '👤', food: '🍕', study: '📚',
-      travel: '✈️', health: '💪', entertainment: '🎬', other: '📌'
+      work: <MdOutlineWorkOutline size={16} />,
+      personal: <BsPersonWorkspace size={16} />,
+      food: <MdOutlineFastfood size={16} />,
+      study: <PiBookBookmarkThin size={16} />,
+      travel: <IoIosAirplane size={16} />,
+      health: <CiMedicalCross size={16} />,
+      entertainment: <PiFilmSlateLight size={16} />,
+      other: <IoIosStarOutline size={16} />
     };
-    return icons[catId] || '📌';
+    return icons[catId] || <IoIosStarOutline size={16} />;
   };
 
   const getCategoryName = (catId) => {
     const names = {
-      work: 'Работа', personal: 'Личная жизнь', food: 'Еда', study: 'Учеба',
-      travel: 'Путешествия', health: 'Здоровье', entertainment: 'Развлечения', other: 'Другое'
+      work: 'Работа',
+      personal: 'Личная жизнь',
+      food: 'Еда',
+      study: 'Учеба',
+      travel: 'Путешествия',
+      health: 'Здоровье',
+      entertainment: 'Развлечения',
+      other: 'Другое'
     };
     return names[catId] || 'Другое';
   };
@@ -548,8 +586,6 @@ function ProfilePage({ changePage }) {
           <span></span>
         </button>
 
-       
-
         <header className="top-header">
           <div className="header-left"></div>
           <h1 className="logo"><Link to="/" style={{ textDecoration: 'none', color: 'inherit' }}>DocBridge</Link></h1>
@@ -569,7 +605,7 @@ function ProfilePage({ changePage }) {
 
         <main className="main-content" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
           <div className="profile-card glass-panel" style={{ textAlign: 'center', padding: '60px 20px', maxWidth: '500px', width: '100%' }}>
-            <div style={{ fontSize: '64px', marginBottom: '20px' }}><CiLock><CiLock/></CiLock></div>
+            <div style={{ fontSize: '64px', marginBottom: '20px' }}><SlLock size={64} /></div>
             <h2 style={{ color: '#1a1a1a', marginBottom: '10px' }}>Войдите в аккаунт</h2>
             <p style={{ color: '#666', marginBottom: '24px' }}>Чтобы просмотреть профиль, необходимо авторизоваться</p>
             <button 
@@ -1159,7 +1195,7 @@ function ProfilePage({ changePage }) {
                   className="avatar-edit-btn"
                   onClick={() => setIsEditingPhoto(!isEditingPhoto)}
                 >
-                  <VscDeviceCamera ></VscDeviceCamera >
+                  <VscDeviceCamera size={18} />
                 </button>
 
                 {isEditingPhoto && (
@@ -1232,86 +1268,87 @@ function ProfilePage({ changePage }) {
             </div>
 
             <div className="profile-pastes" style={{ marginTop: '40px' }}>
-  <h3 style={{ borderBottom: '1px solid rgba(0,0,0,0.08)', paddingBottom: '10px', color: '#111' }}>Мои пасты</h3>
-  {loading ? (
-    <p style={{ color: '#666' }}>Загрузка...</p>
-  ) : statsData?.pastes?.length === 0 ? (
-    <div className="empty-state">
-      <p style={{ margin: 0, fontWeight: '600' }}>У вас пока нет паст</p>
-      <p style={{ fontSize: '13px', color: '#888', marginTop: '4px' }}>Создайте первую пасту в разделе "Заметки"</p>
-    </div>
-  ) : (
-    <div className="pastes-list">
-  {statsData?.pastes?.map((paste) => (
-    <div 
-      key={paste.id} 
-      className="paste-item"
-      onClick={() => openPasteView(paste)}
-      style={{ cursor: 'pointer' }}
-    >
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div className="paste-title">
-          {getCategoryIcon(paste.category)} {paste.title || 'Без названия'}
-        </div>
-        <div style={{ display: 'flex', gap: '4px' }}>
-          <button
-            onClick={(e) => {
-              e.stopPropagation(); // ← Останавливаем всплытие
-              navigate(`/api/pastes/edit/${paste.code}/`, {state: {from: 'profile'}});
-            }}
-            title="Редактировать"
-            style={{
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              fontSize: '16px',
-              padding: '4px 8px',
-              borderRadius: '4px',
-              transition: 'all 0.2s ease',
-              color: '#667eea'
-            }}
-            onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(102, 126, 234, 0.1)'}
-            onMouseLeave={(e) => e.currentTarget.style.background = 'none'}
-          >
-            <GoPencil></GoPencil>
-          </button>
-          <button
-            onClick={(e) => {
-              e.stopPropagation(); // ← Останавливаем всплытие
-              deletePaste(paste.code, e);
-            }}
-            title="Удалить"
-            style={{
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              fontSize: '16px',
-              padding: '4px 8px',
-              borderRadius: '4px',
-              transition: 'all 0.2s ease',
-              color: '#dc3545'
-            }}
-            onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(220, 53, 69, 0.1)'}
-            onMouseLeave={(e) => e.currentTarget.style.background = 'none'}
-          >
-            <IoTrashOutline></IoTrashOutline>
-          </button>
-        </div>
-      </div>
-      <div className="paste-meta">
-        <span>{getLanguageIcon(paste.language)} {getLanguageName(paste.language)}</span>
-        <span>{getCategoryIcon(paste.category)} {getCategoryName(paste.category)}</span>
-        <span><MdAccessTime> </MdAccessTime> {getTimeAgo(paste.created_at || paste.createdAt)}</span>
-        <span><CiInboxIn ></CiInboxIn > {formatSize(paste.size)}</span>
-        {paste.tags && paste.tags.map((t, i) => (
-          <span key={i} className="tag-badge">#{t}</span>
-        ))}
-      </div>
-    </div>
-  ))}
-</div>
-  )}
-</div>
+              <h3 style={{ borderBottom: '1px solid rgba(0,0,0,0.08)', paddingBottom: '10px', color: '#111' }}>Мои пасты</h3>
+              {loading ? (
+                <p style={{ color: '#666' }}>Загрузка...</p>
+              ) : statsData?.pastes?.length === 0 ? (
+                <div className="empty-state">
+                  <p style={{ margin: 0, fontWeight: '600' }}>У вас пока нет паст</p>
+                  <p style={{ fontSize: '13px', color: '#888', marginTop: '4px' }}>Создайте первую пасту в разделе "Заметки"</p>
+                </div>
+              ) : (
+                <div className="pastes-list">
+                  {statsData?.pastes?.map((paste) => (
+                    <div 
+                      key={paste.id} 
+                      className="paste-item"
+                      onClick={() => openPasteView(paste)}
+                      style={{ cursor: 'pointer' }}
+                    >
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div className="paste-title">
+                          <span className="category-icon">{getCategoryIcon(paste.category)}</span>
+                          {paste.title || 'Без названия'}
+                        </div>
+                        <div style={{ display: 'flex', gap: '4px' }}>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigate(`/api/pastes/edit/${paste.code}/`, {state: {from: 'profile'}});
+                            }}
+                            title="Редактировать"
+                            style={{
+                              background: 'none',
+                              border: 'none',
+                              cursor: 'pointer',
+                              fontSize: '16px',
+                              padding: '4px 8px',
+                              borderRadius: '4px',
+                              transition: 'all 0.2s ease',
+                              color: '#667eea'
+                            }}
+                            onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(102, 126, 234, 0.1)'}
+                            onMouseLeave={(e) => e.currentTarget.style.background = 'none'}
+                          >
+                            <GoPencil size={16} />
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              deletePaste(paste.code, e);
+                            }}
+                            title="Удалить"
+                            style={{
+                              background: 'none',
+                              border: 'none',
+                              cursor: 'pointer',
+                              fontSize: '16px',
+                              padding: '4px 8px',
+                              borderRadius: '4px',
+                              transition: 'all 0.2s ease',
+                              color: '#dc3545'
+                            }}
+                            onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(220, 53, 69, 0.1)'}
+                            onMouseLeave={(e) => e.currentTarget.style.background = 'none'}
+                          >
+                            <IoTrashOutline size={16} />
+                          </button>
+                        </div>
+                      </div>
+                      <div className="paste-meta">
+                        <span>{getLanguageIcon(paste.language)} {getLanguageName(paste.language)}</span>
+                        <span>{getCategoryIcon(paste.category)} {getCategoryName(paste.category)}</span>
+                        <span><MdAccessTime size={12} style={{ marginRight: '4px' }} /> {getTimeAgo(paste.created_at || paste.createdAt)}</span>
+                        <span><CiInboxIn size={14} style={{ marginRight: '4px' }} /> {formatSize(paste.size)}</span>
+                        {paste.tags && paste.tags.map((t, i) => (
+                          <span key={i} className="tag-badge">#{t}</span>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
 
             {message && <div className={`message ${message.includes('✅') ? 'success' : 'error'}`} style={{ marginTop: '20px' }}>{message}</div>}
           </div>
