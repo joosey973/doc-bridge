@@ -9,7 +9,7 @@ import django.contrib.auth
 from pastes.serializers import PasteSerializer
 from users.serializers import UserSerializer
 from pastes.models import Pastes
-import pastes.utils
+import utils
 
 User = django.contrib.auth.get_user_model()
 
@@ -117,9 +117,9 @@ class PasteView(APIView):
                 'error': f'Отсутствуют обязательные поля: {", ".join(missing_fields)}'
             }, status=status.HTTP_400_BAD_REQUEST)
         
-        code = pastes.utils.generate_code()
+        code = utils.generate_unique_code()
         while Pastes.objects.filter(code=code).exists():
-            code = pastes.utils.generate_code()
+            code = utils.generate_unique_code()
         data = request.data
         data['code'] = code
         if request.user.id:
