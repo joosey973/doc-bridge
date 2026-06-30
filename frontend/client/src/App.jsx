@@ -12,7 +12,7 @@ import AboutPage from "./pages/AboutPage";
 import TermsofService from "./pages/termsofservice";
 import ContactsPage from "./pages/contacts";
 import PolicyPage from "./pages/policypage";
-
+import DownloadPage from "./pages/DownloadPage";
 function App(){
   return (
     <Router>
@@ -30,6 +30,7 @@ function App(){
       <Route path="/api/termsofservice/" element={<TermsofService/>}/>
       <Route path="/api/contacts/" element={<ContactsPage/>}/>
       <Route path="/api/policy/" element={<PolicyPage/>}/>
+      <Route path="/api/droppage/:fileCode/" element={<DownloadPage />} />
     </Routes>
     </Router>
   );

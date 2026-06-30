@@ -1,20 +1,14 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState } from 'react';
 import './Pages.css';
-import { 
-  FaFileAlt, 
-  FaCloudUploadAlt, 
-  FaRegCheckCircle 
-} from "react-icons/fa";
-import { 
-  MdClose, 
-  MdInfoOutline 
-} from "react-icons/md";
+import { FaFileAlt, FaCloudUploadAlt } from "react-icons/fa";
+import { MdClose, MdInfoOutline } from "react-icons/md";
 
 const API_URL = 'http://localhost:8000/api';
+const FRONTEND_URL = 'http://localhost:5173';
 
 function DropPage() {
-  const [selectedFiles, setSelectedFiles] = useState([]);
-  const [filePreviews, setFilePreviews] = useState([]);
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [filePreview, setFilePreview] = useState(null);
   const [fileLink, setFileLink] = useState(null);
   const [recipient, setRecipient] = useState('');
   const [sender, setSender] = useState('');
@@ -22,169 +16,26 @@ function DropPage() {
   const [isDragging, setIsDragging] = useState(false);
   const [uploading, setUploading] = useState(false);
 
-  const [isOpen, setIsOpen] = useState(false);
-  const canvasRef = useRef(null);
-  const [isHovered, setIsHovered] = useState(false);
-  const isHoveredRef = useRef(isHovered);
-  useEffect(() => {
-    isHoveredRef.current = isHovered;
-  }, [isHovered]);
-
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [user, setUser] = useState(null);
-  const [showAuthModal, setShowAuthModal] = useState(false);
-  const [isLoginMode, setIsLoginMode] = useState(true);
-  const [authForm, setAuthForm] = useState({ 
-    login: '',
-    password: '',
-    passwordConfirm: '',
-    username: '',
-    email: ''
-  });
-  const [authError, setAuthError] = useState('');
-  const [loadingAuth, setLoadingAuth] = useState(true);
-  
-    const handleLogout = () => {
-      localStorage.removeItem('token');
-      localStorage.removeItem('userData');
-      setIsAuthenticated(false);
-      setUser(null);
-      window.location.reload();
-    };
-  
-    const handleLogin = async (e) => {
-      e.preventDefault();
-      setAuthError('');
-      try {
-        const isEmail = authForm.login.includes('@');
-        const loginData = { password: authForm.password };
-        if (isEmail) loginData.email = authForm.login;
-        else loginData.username = authForm.login;
-        
-        const response = await fetch(`${API_URL}/auth/login/`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(loginData)
-        });
-        
-        if (response.ok) {
-          const data = await response.json();
-          localStorage.setItem('token', data.token);
-          localStorage.setItem('userData', JSON.stringify(data.user));
-          window.location.reload();
-        } else {
-          const error = await response.json();
-          setAuthError(error.message || 'Неверный логин или пароль');
-        }
-      } catch (error) {
-        setAuthError('Ошибка при входе');
-      }
-    };
-  
-    const handleRegister = async (e) => {
-      e.preventDefault();
-      setAuthError('');
-      if (authForm.password !== authForm.passwordConfirm) {
-        setAuthError('❌ Пароли не совпадают!');
-        return;
-      }
-      try {
-        const response = await fetch(`${API_URL}/auth/register/`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            username: authForm.username,
-            email: authForm.email,
-            password: authForm.password,
-            password_confirm: authForm.passwordConfirm 
-          })
-        });
-        if (response.ok) {
-          const data = await response.json();
-          localStorage.setItem('token', data.token);
-          localStorage.setItem('userData', JSON.stringify(data.user));
-          window.location.reload();
-        } else {
-          const error = await response.json();
-          const errorMessages = Object.values(error.errors).flat().join(', ');
-          setAuthError(errorMessages || 'Ошибка регистрации');
-        }
-      } catch (error) {
-        setAuthError('Ошибка при регистрации');
-      }
-    };
-  
-  useEffect(() => {
-          const checkAuth = async () => {
-            const savedToken = localStorage.getItem('token');
-            if (savedToken) {
-              try {
-                const response = await fetch(`${API_URL}/auth/me/`, {
-                  headers: { 'Authorization': `Bearer ${savedToken}` }
-                });
-                if (response.ok) {
-                  const data = await response.json();
-                  setIsAuthenticated(true);
-                  setUser(data.user);
-                  localStorage.setItem('userData', JSON.stringify(data.user));
-                } else {
-                  localStorage.removeItem('token');
-                  localStorage.removeItem('userData');
-                }
-              } catch (error) {
-                console.error('❌ Ошибка проверки авторизации:', error);
-                localStorage.removeItem('token');
-                localStorage.removeItem('userData');
-              }
-            }
-            setLoadingAuth(false);
-          };
-          checkAuth();
-        }, []);
-
-    
-
-  const handleFilesSelect = (files) => {
-    if (!files || files.length === 0) return;
+  const handleFileSelect = (file) => {
+    if (!file) return;
 
     const validExtensions = ['pdf', 'docx', 'jpg', 'jpeg', 'png', 'txt', 'zip', 'rar'];
-    const newFiles = [];
-    const newPreviews = [];
-    let hasInvalid = false;
+    const ext = file.name.split('.').pop().toLowerCase();
 
-    Array.from(files).forEach(file => {
-      const ext = file.name.split('.').pop().toLowerCase();
-      
-      if (!validExtensions.includes(ext)) {
-        hasInvalid = true;
-        return;
-      }
-
-      newFiles.push(file);
-      newPreviews.push({
-        name: file.name,
-        size: file.size,
-        format: ext,
-      });
-    });
-
-    if (hasInvalid) {
-      setMessage('Некоторые файлы имеют неподдерживаемый формат');
+    if (!validExtensions.includes(ext)) {
+      setMessage('Неподдерживаемый формат файла');
       setTimeout(() => setMessage(''), 3000);
+      return;
     }
 
-    if (newFiles.length > 0) {
-      setSelectedFiles(prev => [...prev, ...newFiles]);
-      setFilePreviews(prev => [...prev, ...newPreviews]);
-      setMessage(`Добавлено ${newFiles.length} файл(ов)`);
-      setTimeout(() => setMessage(''), 10000);
-    }
-  };
-
-  const handleFileSelect = (file) => {
-    if (file) {
-      handleFilesSelect([file]);
-    }
+    setSelectedFile(file);
+    setFilePreview({
+      name: file.name,
+      size: file.size,
+      format: ext,
+    });
+    setMessage(`Файл "${file.name}" успешно загружен`);
+    setTimeout(() => setMessage(''), 3000);
   };
 
   const handleDragOver = (e) => {
@@ -200,51 +51,51 @@ function DropPage() {
   const handleDrop = (e) => {
     e.preventDefault();
     setIsDragging(false);
-    const files = e.dataTransfer.files;
-    handleFilesSelect(files);
+    const file = e.dataTransfer.files[0];
+    handleFileSelect(file);
   };
 
   const handleFileInput = (e) => {
-    const files = e.target.files;
-    handleFilesSelect(files);
-    e.target.value = '';
+    const file = e.target.files[0];
+    handleFileSelect(file);
   };
 
-  const removeFile = (index) => {
-    setSelectedFiles(prev => prev.filter((_, i) => i !== index));
-    setFilePreviews(prev => prev.filter((_, i) => i !== index));
-  };
+  // ===== ЗАГРУЗКА НА СЕРВЕР =====
+  const handleUpload = async () => {
+    if (!selectedFile) {
+      setMessage('Выберите файл!');
+      return;
+    }
 
-  const handleUpload = async (files) => {
-    if (selectedFiles.length === 0) return;
     setUploading(true);
-    setMessage('Загрузка файлов на сервер...');
+    setMessage('Загрузка файла на сервер...');
 
     const formData = new FormData();
+    formData.append('file', selectedFile);
 
-    files.forEach((file, index) => {
-      formData.append(`file_${index + 1}`, file);
-    });
-
-    formData.append('user', user || 'Аноним');
     try {
       const response = await fetch(`${API_URL}/droppage/`, {
         method: 'POST',
         body: formData,
       });
-      const data = await response.json();
-      if (response.ok)
-      {
-        setTimeout(() => {
-        setUploading(false);
-        setFileLink(`${API_URL}/droppage/${data.code}/`);
-        setMessage(`${selectedFiles.length} файл(ов) успешно загружены! Ссылка сгенерирована.`);
-      }, 2000);
-      }
-      
-    } catch (error)
-    {
 
+      const data = await response.json();
+      console.log('Ответ сервера:', data);
+
+      if (response.ok && data.code) {
+        // ✅ ССЫЛКА НА REACT (ПОРТ 5173)
+        const link = `${FRONTEND_URL}/api/droppage/${data.code}/`;
+        setFileLink(link);
+        setMessage('✅ Файл успешно загружен! Ссылка сгенерирована.');
+        console.log('🔗 Ссылка:', link);
+      } else {
+        setMessage(`❌ ${data.error || 'Ошибка загрузки'}`);
+      }
+    } catch (error) {
+      console.error('Ошибка:', error);
+      setMessage('❌ Ошибка подключения к серверу');
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -258,8 +109,8 @@ function DropPage() {
     setMessage(`Ссылка успешно отправлена на ${recipient}`);
     setTimeout(() => {
       setMessage('');
-      setSelectedFiles([]);
-      setFilePreviews([]);
+      setSelectedFile(null);
+      setFilePreview(null);
       setFileLink(null);
       setRecipient('');
       setSender('');
@@ -272,22 +123,17 @@ function DropPage() {
     return (bytes / 1048576).toFixed(1) + ' МБ';
   };
 
-  const getTotalSize = () => {
-    const total = filePreviews.reduce((sum, file) => sum + file.size, 0);
-    return formatFileSize(total);
-  };
-
   return (
     <div className="page-container drop-container">
       <div className="page-card drop-card">
         <div className="page-header">
           <h2><FaCloudUploadAlt size={24} style={{ marginRight: '8px', verticalAlign: 'middle' }} /> Обмен файлами</h2>
-          <p className="page-subtitle">Загрузите файлы и отправьте ссылку другу</p>
+          <p className="page-subtitle">Загрузите большой файл и отправьте ссылку другу</p>
         </div>
 
         {/* DRAG-AND-DROP ЗОНА */}
         <div 
-          className={`drop-zone ${isDragging ? 'dragging' : ''} ${selectedFiles.length > 0 ? 'has-file' : ''}`}
+          className={`drop-zone ${isDragging ? 'dragging' : ''} ${selectedFile ? 'has-file' : ''}`}
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}
@@ -296,78 +142,57 @@ function DropPage() {
           <input
             type="file"
             id="dropFileInput"
-            multiple
             style={{ display: 'none' }}
             onChange={handleFileInput}
           />
           
-          {selectedFiles.length === 0 ? (
+          {!selectedFile ? (
             <>
               <div className="drop-zone-icon"><FaCloudUploadAlt size={48} style={{ color: '#667eea' }} /></div>
-              <h3>Перетащите файлы сюда</h3>
+              <h3>Перетащите файл сюда</h3>
               <p>или нажмите для выбора</p>
               <div className="supported-formats">
                 Максимальный размер: 2 ГБ. Любые форматы.
               </div>
             </>
           ) : (
-            <div className="files-preview">
-              <div className="files-header">
-                <span className="files-count" style={{marginBottom: '5px'}}>Выбрано файлов: {selectedFiles.length}</span>
-                <span className="files-total-size">Общий размер: {getTotalSize()}</span>
-              </div>
-              <div className="files-list">
-                {filePreviews.map((file, index) => (
-                  <div key={index} className="file-preview-item">
-                    <div className="file-icon"><FaFileAlt size={20} /></div>
-                    <div className="file-info">
-                      <div className="file-name">{file.name}</div>
-                      <div className="file-details">
-                        <span className="file-format">{file.format?.toUpperCase()}</span>
-                        <span className="file-size">{formatFileSize(file.size)}</span>
-                      </div>
-                    </div>
-                    {!fileLink && (
-                      <button 
-                        className="file-remove"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          removeFile(index);
-                        }}
-                      >
-                        <MdClose size={18} />
-                      </button>
-                    )}
-                  </div>
-                ))}
+            <div className="file-preview">
+              <div className="file-icon"><FaFileAlt size={32} /></div>
+              <div className="file-info">
+                <div className="file-name">{filePreview?.name}</div>
+                <div className="file-details">
+                  <span className="file-format">{filePreview?.format?.toUpperCase()}</span>
+                  <span className="file-size">{formatFileSize(filePreview?.size)}</span>
+                </div>
               </div>
               {!fileLink && (
                 <button 
-                  className="add-more-btn"
+                  className="file-remove"
                   onClick={(e) => {
                     e.stopPropagation();
-                    document.getElementById('dropFileInput').click();
+                    setSelectedFile(null);
+                    setFilePreview(null);
                   }}
                 >
-                  Добавить еще файлы
+                  <MdClose size={18} />
                 </button>
               )}
             </div>
           )}
         </div>
 
-        {/* ССЫЛКА И ОТПРАВКА */}
-        {selectedFiles.length > 0 && !fileLink && (
+        {/* КНОПКА ЗАГРУЗКИ */}
+        {selectedFile && !fileLink && (
           <button 
             className="upload-btn" 
-            onClick={() => handleUpload(selectedFiles)}
+            onClick={handleUpload}
             disabled={uploading}
           >
-            {uploading ? 'Загрузка...' : `Получить ссылку (${selectedFiles.length} файл${selectedFiles.length > 1 ? 'ов' : ''})`}
+            {uploading ? 'Загрузка...' : 'Получить ссылку'}
           </button>
-        )
-        }
+        )}
 
+        {/* ССЫЛКА */}
         {fileLink && (
           <div className="link-section">
             <div className="link-label">Ваша ссылка готова:</div>
@@ -407,17 +232,17 @@ function DropPage() {
               />
             </div>
 
-          <button 
-            className="send-btn" 
-            onClick={handleSendEmail}
-            disabled={selectedFiles.length === 0 || !recipient || !sender}
-          >
-            Отправить ссылку
-          </button>
-        </div>
+            <button 
+              className="send-btn" 
+              onClick={handleSendEmail}
+              disabled={!selectedFile || !recipient}
+            >
+              Отправить ссылку
+            </button>
+          </div>
         )}
 
-        {message && <div className={`message ${message.includes('успешно') || message.includes('загружен') || message.includes('Добавлено') || message.includes('Загрузка') ? 'success' : 'error'}`}>{message}</div>}
+        {message && <div className={`message ${message.includes('успешно') || message.includes('загружен') ? 'success' : 'error'}`}>{message}</div>}
       </div>
 
       {/* ИНФОРМАЦИОННАЯ КАРТОЧКА */}
@@ -434,7 +259,7 @@ function DropPage() {
           </div>
           <div className="info-item">
             <span>Отправка</span>
-            <span>Email</span>
+            <span>Email / SMS</span>
           </div>
         </div>
         <p className="info-note">
