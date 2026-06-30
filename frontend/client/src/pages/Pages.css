@@ -213,14 +213,17 @@
   align-items: center;
   justify-content: center;
 }
+
 .drop-zone:hover, .drop-zone.dragging, .drop-zone.has-file { border-style: solid; background: rgba(0, 0, 0, 0.158); }
 .drop-zone-icon { font-size: 36px; margin-bottom: 15px; filter: grayscale(1); }
 .drop-zone h3 { font-size: 14px; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 8px; font-weight: 500; }
 .drop-zone p { color: #000000; font-size: 12px; }
 .supported-formats { font-size: 10px; text-transform: uppercase; margin-top: 15px; padding: 5px 15px; border: var(--border-style); letter-spacing: 1px; }
 
-/* ПРЕВЬЮ ФАЙЛА */
 .file-preview { display: flex; align-items: center; gap: 20px; width: 100%; padding: 15px 20px; background: var(--bg-color); border: 0.5px solid var(--text-color); box-sizing: border-box; }
+.file-preview-item { display: flex; flex-direction: row; align-items: center; margin: 30px;}
+.file-remove { margin-left: 15px; }
+.file-icon { margin-right: 15px;}
 .file-info { flex: 1; text-align: left; }
 .file-name { font-size: 14px; word-break: break-all; }
 .file-details { display: flex; gap: 15px; margin-top: 6px; }
@@ -228,12 +231,29 @@
 .file-size { color: #000000; font-size: 11px; font-family: monospace; }
 .file-remove { background: none; border: none; cursor: pointer; font-size: 16px; }
 
+.files-header {display: flex; flex-direction: column;}
+.add-more-btn {
+  padding: 15px;
+  width: 50%;
+  background: var(--text-color);
+  color: var(--bg-color);
+  border: 1px solid var(--text-color);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-top: 20px;
+  font-weight: 500;
+}
+
 /* ===== КНОПКИ ДЕЙСТВИЯ ===== */
 .upload-btn, .convert-btn, .compress-btn, .send-btn, .copy-btn {
   width: 100%; padding: 15px; background: var(--text-color); color: var(--bg-color); border: 1px solid var(--text-color);
   font-size: 12px; text-transform: uppercase; letter-spacing: 2px; cursor: pointer; transition: all 0.3s ease; margin-top: 20px;
   font-weight: 500;
 }
+.copy-btn {margin-top: 10px;}
 .upload-btn:hover, .convert-btn:hover, .compress-btn:hover, .send-btn:hover, .copy-btn:hover { background: var(--bg-color); color: var(--text-color); }
 .upload-btn:disabled, .send-btn:disabled { opacity: 0.3; cursor: not-allowed; }
 
@@ -282,7 +302,7 @@
 .format-select:focus, .link-input:focus, .form-input:focus { border-color: #000000 !important; }
 .link-container { margin-top: 20px; padding: 20px; border: 0.5px dashed var(--text-color); }
 .link-box { display: flex; align-items: center; gap: 15px; flex-wrap: wrap; }
-.copy-btn { width: auto; margin-top: 0; padding: 10px 20px; }
+.copy-btn { width: auto; margin-top: 10px; padding: 10px 20px; }
 
 /* СИСТЕМНЫЕ СООБЩЕНИЯ */
 .message { padding: 14px 20px; margin-top: 20px; border: var(--border-style); font-size: 12px; text-transform: uppercase; letter-spacing: 1px; }
