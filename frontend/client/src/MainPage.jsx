@@ -21,6 +21,10 @@ function MainPage({ changePage }) {
   });
   const [authError, setAuthError] = useState('');
   const [loadingAuth, setLoadingAuth] = useState(true);
+  const getAvatarUrl = () => {
+    if (user?.avatar) return `http://localhost:8000${user.avatar}`;
+    return null;
+  };
 useEffect(() => {
   const canvas = canvasRef.current;
   console.log(canvas);
@@ -246,9 +250,7 @@ useEffect(() => {
             <span className="notification-badge"></span>
             ➤
           </button>
-          <button className="auth-btn" onClick={isAuthenticated ? handleLogout : () => setShowAuthModal(true)}>
-            {isAuthenticated ? 'Выйти' : 'Войти'}
-          </button>
+          <Link to="/api/profile/" className="auth-btn" style={{ textDecoration: 'none', color: 'inherit' }}>Личный кабинет</Link>
         </div>
       </header>
 
