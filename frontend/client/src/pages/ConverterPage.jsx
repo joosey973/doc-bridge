@@ -7,14 +7,16 @@ import {
   FaRegFileImage, 
   FaRegFileAlt,
   FaRegFilePowerpoint,
-  FaRegFileCode,
-  FaFileCsv
+  FaRegFileCode
 } from "react-icons/fa";
 import { 
   MdCloudUpload, 
   MdArrowForward, 
-  MdClose 
+  MdClose,
+  MdAutorenew
 } from "react-icons/md";
+
+const API_URL = 'http://localhost:8000/api';
 
 function ConverterPage({ changePage }) {
   const [selectedFile, setSelectedFile] = useState(null);
@@ -24,6 +26,23 @@ function ConverterPage({ changePage }) {
   const [isDragging, setIsDragging] = useState(false);
   const [message, setMessage] = useState('');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isConverting, setIsConverting] = useState(false);
+  const [convertedFile, setConvertedFile] = useState(null);
+  
+  // ===== АВТОРИЗАЦИЯ =====
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [user, setUser] = useState(null);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [isLoginMode, setIsLoginMode] = useState(true);
+  const [authForm, setAuthForm] = useState({ 
+    login: '',
+    password: '',
+    passwordConfirm: '',
+    username: '',
+    email: ''
+  });
+  const [authError, setAuthError] = useState('');
+  const [loadingAuth, setLoadingAuth] = useState(true);
 
   const canvasRef = useRef(null);
   const [isHovered, setIsHovered] = useState(false);
@@ -32,6 +51,105 @@ function ConverterPage({ changePage }) {
   useEffect(() => {
     isHoveredRef.current = isHovered;
   }, [isHovered]);
+
+  // Проверка авторизации
+  useEffect(() => {
+    const checkAuth = async () => {
+      const savedToken = localStorage.getItem('token');
+      if (savedToken) {
+        try {
+          const response = await fetch(`${API_URL}/auth/me/`, {
+            headers: { 'Authorization': `Bearer ${savedToken}` }
+          });
+          if (response.ok) {
+            const data = await response.json();
+            setIsAuthenticated(true);
+            setUser(data.user);
+            localStorage.setItem('userData', JSON.stringify(data.user));
+          } else {
+            localStorage.removeItem('token');
+            localStorage.removeItem('userData');
+          }
+        } catch (error) {
+          console.error('❌ Ошибка проверки авторизации:', error);
+          localStorage.removeItem('token');
+          localStorage.removeItem('userData');
+        }
+      }
+      setLoadingAuth(false);
+    };
+    checkAuth();
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('userData');
+    setIsAuthenticated(false);
+    setUser(null);
+    window.location.reload();
+  };
+
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setAuthError('');
+    try {
+      const isEmail = authForm.login.includes('@');
+      const loginData = { password: authForm.password };
+      if (isEmail) loginData.email = authForm.login;
+      else loginData.username = authForm.login;
+      
+      const response = await fetch(`${API_URL}/auth/login/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(loginData)
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('userData', JSON.stringify(data.user));
+        window.location.reload();
+      } else {
+        const error = await response.json();
+        setAuthError(error.message || 'Неверный логин или пароль');
+      }
+    } catch (error) {
+      setAuthError('Ошибка при входе');
+    }
+  };
+
+  const handleRegister = async (e) => {
+    e.preventDefault();
+    setAuthError('');
+    if (authForm.password !== authForm.passwordConfirm) {
+      setAuthError('❌ Пароли не совпадают!');
+      return;
+    }
+    try {
+      const response = await fetch(`${API_URL}/auth/register/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          username: authForm.username,
+          email: authForm.email,
+          password: authForm.password,
+          password_confirm: authForm.passwordConfirm 
+        })
+      });
+      if (response.ok) {
+        const data = await response.json();
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('userData', JSON.stringify(data.user));
+        window.location.reload();
+      } else {
+        const error = await response.json();
+        const errorMessages = Object.values(error.errors).flat().join(', ');
+        setAuthError(errorMessages || 'Ошибка регистрации');
+      }
+    } catch (error) {
+      setAuthError('Ошибка при регистрации');
+    }
+  };
 
   // Эффект анимации матрицы/глитча
   useEffect(() => {
@@ -160,7 +278,7 @@ function ConverterPage({ changePage }) {
       txt: <FaRegFileAlt size={size} />,
       pptx: <FaRegFilePowerpoint size={size} />,
       xml: <FaRegFileCode size={size} />,
-      csv: <BsFiletypeCsv size={size} />,  // ← только эта не Regular
+      csv: <BsFiletypeCsv size={size} />,
     };
     return icons[format] || <FaRegFileAlt size={size} />;
   };
@@ -197,6 +315,7 @@ function ConverterPage({ changePage }) {
 
     setSelectedFile(file);
     setConvertFrom(format);
+    setConvertedFile(null); // Сбрасываем результат конвертации
 
     setFilePreview({
       name: file.name,
@@ -237,17 +356,78 @@ function ConverterPage({ changePage }) {
     handleFileSelect(file);
   };
 
-  const handleConvert = () => {
+  // ===== ОТПРАВКА НА СЕРВЕР =====
+  const handleConvert = async () => {
     if (!selectedFile) {
       setMessage('> Сначала загрузите файл!');
       setTimeout(() => setMessage(''), 3000);
       return;
     }
 
-    setMessage(`~ Конвертация ${selectedFile.name} из ${convertFrom.toUpperCase()} в ${convertTo.toUpperCase()}... (заглушка)`);
-    setTimeout(() => {
-      setMessage(`+ Конвертация завершена! (UI-заглушка)`);
-    }, 2000);
+    setIsConverting(true);
+    setMessage('~ Отправка на сервер...');
+
+    const formData = new FormData();
+    formData.append('file', selectedFile);
+    formData.append('from_format', convertFrom);
+    formData.append('to_format', convertTo);
+    formData.append('file_type', selectedFile.name.split('.').pop().toLowerCase());
+
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_URL}/converter/`, {
+        method: 'POST',
+        body: formData,
+        headers: token ? {
+          'Authorization': `Bearer ${token}`
+        } : {},
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setIsConverting(false);
+        setMessage(`+ Конвертация завершена! (${convertFrom.toUpperCase()} → ${convertTo.toUpperCase()})`);
+        
+        setConvertedFile({
+          name: `converted_${selectedFile.name.replace(/\.[^.]+$/, '')}.${convertTo}`,
+          size: data.size || Math.floor(selectedFile.size * 0.8),
+          originalSize: data.original_size || selectedFile.size,
+          downloadUrl: data.download_url || null
+        });
+      } else {
+        setIsConverting(false);
+        setMessage(`❌ ${data.error || 'Ошибка конвертации'}`);
+      }
+    } catch (error) {
+      setIsConverting(false);
+      setMessage('❌ Ошибка подключения к серверу');
+      console.error('Convert error:', error);
+    }
+  };
+
+  // ===== СКАЧИВАНИЕ =====
+  const handleDownload = () => {
+    if (!convertedFile) return;
+
+    if (convertedFile.downloadUrl) {
+      window.open(convertedFile.downloadUrl, '_blank');
+    } else {
+      // Тестовый файл (заглушка)
+      const content = `Конвертированный файл: ${convertedFile.name}\nИсходный формат: ${convertFrom.toUpperCase()}\nЦелевой формат: ${convertTo.toUpperCase()}\nИсходный размер: ${formatFileSize(convertedFile.originalSize)}\nРазмер: ${formatFileSize(convertedFile.size)}\n\nЭто демонстрационный файл. Реальная конвертация будет добавлена позже.`;
+      const blob = new Blob([content], { type: 'text/plain' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = convertedFile.name;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    }
+    
+    setMessage('✅ Файл скачан!');
+    setTimeout(() => setMessage(''), 3000);
   };
 
   const formatFileSize = (bytes) => {
@@ -279,7 +459,9 @@ function ConverterPage({ changePage }) {
         </div>
         <div className="page-header-right">
           <button className="page-icon-btn" title="Уведомления">[•]</button>
-          <button className="page-auth-btn">Войти</button>
+          <button className="page-auth-btn" onClick={isAuthenticated ? handleLogout : () => setShowAuthModal(true)}>
+            {isAuthenticated ? 'Выйти' : 'Войти'}
+          </button>
         </div>
       </header>
 
@@ -343,6 +525,7 @@ function ConverterPage({ changePage }) {
                     e.stopPropagation();
                     setSelectedFile(null);
                     setFilePreview(null);
+                    setConvertedFile(null);
                   }}
                 >
                   <MdClose size={18} />
@@ -351,7 +534,7 @@ function ConverterPage({ changePage }) {
             )}
           </div>
 
-          {selectedFile && (
+          {selectedFile && !convertedFile && (
             <div className="converter-options">
               <div className="converter-row">
                 <div className="converter-field">
@@ -382,13 +565,55 @@ function ConverterPage({ changePage }) {
                 </div>
               </div>
 
-              <button className="convert-btn" onClick={handleConvert} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-                <MdArrowForward size={18} /> Конвертировать
+              <button 
+                className="convert-btn" 
+                onClick={handleConvert}
+                disabled={isConverting}
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+              >
+                {isConverting ? (
+                  <>
+                    <MdAutorenew size={18} className="spinner-animation" style={{ marginRight: '8px' }} /> Обработка...
+                  </>
+                ) : (
+                  <>
+                    <MdArrowForward size={18} /> Конвертировать
+                  </>
+                )}
               </button>
             </div>
           )}
 
-          {message && <div className={`message ${message.includes('+') ? 'success' : 'error'}`}>{message}</div>}
+          {convertedFile && (
+            <div className="convert-result">
+              <div className="result-info">
+                <div className="result-row">
+                  <span>Исходный формат:</span>
+                  <span className="result-value">{convertFrom.toUpperCase()}</span>
+                </div>
+                <div className="result-row">
+                  <span>Целевой формат:</span>
+                  <span className="result-value">{convertTo.toUpperCase()}</span>
+                </div>
+                <div className="result-row">
+                  <span>Исходный размер:</span>
+                  <span className="result-value">{formatFileSize(convertedFile.originalSize)}</span>
+                </div>
+                <div className="result-row">
+                  <span>Размер после конвертации:</span>
+                  <span className="result-value result-success">{formatFileSize(convertedFile.size)}</span>
+                </div>
+              </div>
+              <button 
+                className="download-btn" 
+                onClick={handleDownload}
+              >
+                <MdArrowForward size={16} style={{ marginRight: '8px' }} /> Скачать сконвертированный файл
+              </button>
+            </div>
+          )}
+
+          {message && <div className={`message ${message.includes('+') || message.includes('✅') ? 'success' : 'error'}`}>{message}</div>}
         </div>
 
         <div className="info-card">
@@ -417,6 +642,55 @@ function ConverterPage({ changePage }) {
           height: 100vh;
           z-index: -1;
           pointer-events: none;
+        }
+
+        .convert-result {
+          margin-top: 20px;
+          padding: 20px;
+          border: 1px solid #000;
+          border-radius: 8px;
+          background: #f9f9f9;
+        }
+
+        .result-info {
+          margin-bottom: 16px;
+        }
+
+        .result-row {
+          display: flex;
+          justify-content: space-between;
+          padding: 4px 0;
+          font-size: 14px;
+        }
+
+        .result-value {
+          font-weight: 600;
+        }
+
+        .result-success {
+          color: #2e7d32;
+        }
+
+        .download-btn {
+          width: 100%;
+          padding: 14px;
+          background: #000;
+          color: #fff;
+          border: none;
+          border-radius: 6px;
+          font-size: 15px;
+          font-weight: 600;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transition: all 0.3s;
+        }
+
+        .download-btn:hover {
+          background: #333;
+          transform: translateY(-2px);
+          box-shadow: 0 4px 12px rgba(0,0,0,0.2);
         }
 
         .custom-select {
@@ -480,6 +754,88 @@ function ConverterPage({ changePage }) {
         
         .form-row, .form-group, .create-paste, .main-content { overflow: visible !important; }
       `}</style>
+
+      {/* Модальное окно авторизации */}
+      {showAuthModal && (
+        <div className="modal-overlay" onClick={() => setShowAuthModal(false)}>
+          <div className="modal-content auth-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>{isLoginMode ? 'Вход' : 'Регистрация'}</h2>
+              <button className="modal-close" onClick={() => setShowAuthModal(false)}>×</button>
+            </div>
+            <form onSubmit={isLoginMode ? handleLogin : handleRegister}>
+              {isLoginMode ? (
+                <div className="form-group">
+                  <label>Email или имя пользователя</label>
+                  <input
+                    type="text"
+                    placeholder="Введите email или username"
+                    value={authForm.login}
+                    onChange={(e) => setAuthForm({...authForm, login: e.target.value})}
+                    required
+                  />
+                </div>
+              ) : (
+                <>
+                  <div className="form-group">
+                    <label>Имя пользователя</label>
+                    <input
+                      type="text"
+                      placeholder="Придумайте имя"
+                      value={authForm.username}
+                      onChange={(e) => setAuthForm({...authForm, username: e.target.value})}
+                      required
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Email</label>
+                    <input
+                      type="email"
+                      placeholder="example@mail.com"
+                      value={authForm.email}
+                      onChange={(e) => setAuthForm({...authForm, email: e.target.value})}
+                      required
+                    />
+                  </div>
+                </>
+              )}
+              <div className="form-group">
+                <label>Пароль</label>
+                <input
+                  type="password"
+                  placeholder="Введите пароль"
+                  value={authForm.password}
+                  onChange={(e) => setAuthForm({...authForm, password: e.target.value})}
+                  required
+                />
+              </div>
+              {!isLoginMode && (
+                <div className="form-group">
+                  <label>Подтверждение пароля</label>
+                  <input
+                    type="password"
+                    placeholder="Повторите пароль"
+                    value={authForm.passwordConfirm}
+                    onChange={(e) => setAuthForm({...authForm, passwordConfirm: e.target.value})}
+                    required
+                  />
+                </div>
+              )}
+              {authError && <div className="message error">{authError}</div>}
+              <button type="submit" className="submit-btn">
+                {isLoginMode ? 'Войти' : 'Зарегистрироваться'}
+              </button>
+            </form>
+            <div className="auth-switch">
+              {isLoginMode ? (
+                <span>Нет аккаунта? <span onClick={() => { setIsLoginMode(false); setAuthError(''); }}>Зарегистрироваться</span></span>
+              ) : (
+                <span>Уже есть аккаунт? <span onClick={() => { setIsLoginMode(true); setAuthError(''); }}>Войти</span></span>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }
