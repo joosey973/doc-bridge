@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import './Pages.css';
 import '../MainPage.css';import { 
-  FaFileAlt
+  FaFileAlt,
+  FaCloudUploadAlt
 } from "react-icons/fa";
 import { 
   MdClose, 

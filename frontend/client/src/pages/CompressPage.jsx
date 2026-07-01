@@ -6,7 +6,7 @@ import {
   FaFilePdf, 
   FaFileImage, 
   FaFileArchive, 
-  FaBalanceScale 
+  FaBalanceScale,
 } from "react-icons/fa";
 import { 
   MdCloudUpload, 
@@ -290,7 +290,6 @@ function CompressPage({ changePage }) {
             <p className="page-subtitle">Загрузите файл и выберите степень сжатия</p>
           </div>
 
-          {/* DRAG-AND-DROP ЗОНА */}
         <div 
           className={`drop-zone ${isDragging ? 'dragging' : ''} ${selectedFile ? 'has-file' : ''}`}
           onDragOver={handleDragOver}

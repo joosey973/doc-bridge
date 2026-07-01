@@ -22,11 +22,14 @@ class PasteEditDelete(APIView):
         paste_user_obj = User.objects.filter(username=paste_obj.user)
         user_obj = User.objects.filter(username=request.user)
         paste = PasteSerializer(paste_obj).data
-        if not (paste_obj and user_obj):
-            paste_user = {}
+        
+        if not user_obj:
             user = {}
-        else:
+        if not paste_user_obj:
+            paste_user = {}
+        if paste_user_obj:
             paste_user = UserSerializer(paste_user_obj.first()).data
+        if user_obj:
             user = UserSerializer(user_obj.first()).data
         return Response(
             {'paste_user': paste_user, 'paste': paste, 'user': user}, status=status.HTTP_200_OK)
