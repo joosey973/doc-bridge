@@ -22,7 +22,6 @@ function ConverterPage() {
   const [isDragging, setIsDragging] = useState(false);
   const [message, setMessage] = useState('');
 
-  // Форматы и их расширения
   const formats = {
     pdf: ['docx', 'txt', 'jpg', 'png'],
     docx: ['pdf', 'txt'],

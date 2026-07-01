@@ -14,7 +14,9 @@ import {
   MdSpeed, 
   MdFlashOn, 
   MdAutorenew, 
-  MdInfoOutline 
+  MdInfoOutline,
+  MdCheckCircle,
+  MdError 
 } from "react-icons/md";
 
 const API_URL = 'http://localhost:8000/api';
@@ -25,12 +27,14 @@ function CompressPage({ changePage }) {
   const [compressLevel, setCompressLevel] = useState('medium');
   const [isDragging, setIsDragging] = useState(false);
   const [message, setMessage] = useState('');
+  const [messageType, setMessageType] = useState('');
   const [isCompressing, setIsCompressing] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [compressedFile, setCompressedFile] = useState(null);
   const canvasRef = useRef(null);
   const [isHovered, setIsHovered] = useState(false);
   const isHoveredRef = useRef(isHovered);
+  const fileInputRef = useRef(null); // Добавляем реф для файлового инпута
   
   // ===== АВТОРИЗАЦИЯ =====
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -163,7 +167,7 @@ function CompressPage({ changePage }) {
             localStorage.removeItem('userData');
           }
         } catch (error) {
-          console.error('❌ Ошибка проверки авторизации:', error);
+          console.error('Ошибка проверки авторизации:', error);
           localStorage.removeItem('token');
           localStorage.removeItem('userData');
         }
@@ -214,7 +218,7 @@ function CompressPage({ changePage }) {
     e.preventDefault();
     setAuthError('');
     if (authForm.password !== authForm.passwordConfirm) {
-      setAuthError('❌ Пароли не совпадают!');
+      setAuthError('Пароли не совпадают!');
       return;
     }
     try {
@@ -250,15 +254,47 @@ function CompressPage({ changePage }) {
     { id: 'high', label: 'Высокое сжатие (медленно)', icon: <MdFlashOn size={18} />, desc: 'Максимальное сжатие, дольше обработка' },
   ];
 
+  // Функция для полного сброса выбора файла
+  const resetFileSelection = () => {
+    setSelectedFile(null);
+    setFilePreview(null);
+    setCompressedFile(null);
+    // Очищаем значение инпута
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+    setMessage('');
+    setMessageType('');
+  };
+
   const handleFileSelect = (file) => {
     if (!file) return;
+
+    // Проверяем, не тот ли это файл, который уже выбран
+    if (selectedFile && selectedFile.name === file.name && selectedFile.size === file.size) {
+      // Если это тот же файл, сбрасываем и загружаем заново
+      resetFileSelection();
+      // Небольшая задержка для перезагрузки
+      setTimeout(() => {
+        handleFileSelect(file);
+      }, 10);
+      return;
+    }
 
     const validExtensions = ['pdf', 'docx', 'jpg', 'jpeg', 'png', 'txt', 'zip', 'rar'];
     const ext = file.name.split('.').pop().toLowerCase();
 
     if (!validExtensions.includes(ext)) {
       setMessage('Неподдерживаемый формат файла');
-      setTimeout(() => setMessage(''), 3000);
+      setMessageType('error');
+      setTimeout(() => { 
+        setMessage(''); 
+        setMessageType(''); 
+      }, 3000);
+      // Очищаем инпут при ошибке
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
       return;
     }
 
@@ -269,7 +305,11 @@ function CompressPage({ changePage }) {
       format: ext,
     });
     setMessage(`Файл "${file.name}" успешно загружен`);
-    setTimeout(() => setMessage(''), 3000);
+    setMessageType('success');
+    setTimeout(() => { 
+      setMessage(''); 
+      setMessageType(''); 
+    }, 3000);
     setCompressedFile(null);
   };
 
@@ -293,13 +333,21 @@ function CompressPage({ changePage }) {
   const handleFileInput = (e) => {
     const file = e.target.files[0];
     handleFileSelect(file);
+    // Очищаем инпут после выбора, чтобы можно было выбрать тот же файл снова
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
   };
 
   // ===== ОТПРАВКА НА СЕРВЕР =====
   const handleCompress = async () => {
     if (!selectedFile) {
       setMessage('Сначала загрузите файл!');
-      setTimeout(() => setMessage(''), 3000);
+      setMessageType('error');
+      setTimeout(() => { 
+        setMessage(''); 
+        setMessageType(''); 
+      }, 3000);
       return;
     }
 
@@ -325,7 +373,8 @@ function CompressPage({ changePage }) {
 
       if (response.ok) {
         setIsCompressing(false);
-        setMessage(`✅ Сжатие завершено! (Уровень: ${compressLevel})`);
+        setMessage(`Сжатие завершено! (Уровень: ${compressLevel})`);
+        setMessageType('success');
         
         // Сохраняем данные для скачивания
         setCompressedFile({
@@ -337,11 +386,13 @@ function CompressPage({ changePage }) {
         });
       } else {
         setIsCompressing(false);
-        setMessage(`❌ ${data.error || 'Ошибка сжатия'}`);
+        setMessage(`${data.error || 'Ошибка сжатия'}`);
+        setMessageType('error');
       }
     } catch (error) {
       setIsCompressing(false);
-      setMessage('❌ Ошибка подключения к серверу');
+      setMessage('Ошибка подключения к серверу');
+      setMessageType('error');
       console.error('Compress error:', error);
     }
   };
@@ -367,8 +418,12 @@ function CompressPage({ changePage }) {
       window.URL.revokeObjectURL(url);
     }
     
-    setMessage('✅ Файл скачан!');
-    setTimeout(() => setMessage(''), 3000);
+    setMessage('Файл скачан!');
+    setMessageType('success');
+    setTimeout(() => { 
+      setMessage(''); 
+      setMessageType(''); 
+    }, 3000);
   };
 
   const formatFileSize = (bytes) => {
@@ -418,7 +473,7 @@ function CompressPage({ changePage }) {
 
       <div className={`page-sidebar-overlay ${isSidebarOpen ? 'active' : ''}`} onClick={closeSidebar}></div>
       <nav className={`page-sidebar ${isSidebarOpen ? 'active' : ''}`}>
-        <button className="page-sidebar-close" onClick={closeSidebar}>✕</button>
+        <button className="page-sidebar-close" onClick={closeSidebar}><MdClose size={20} /></button>
         <ul>
           <li><a href="#" onClick={(e) => { e.preventDefault(); closeSidebar(); changePage && changePage('main'); }}>Главная</a></li>
           <li><a href="#">Личный кабинет</a></li>
@@ -444,6 +499,7 @@ function CompressPage({ changePage }) {
             <input
               type="file"
               id="compressFileInput"
+              ref={fileInputRef} // Добавляем реф
               style={{ display: 'none' }}
               onChange={handleFileInput}
             />
@@ -473,9 +529,7 @@ function CompressPage({ changePage }) {
                   className="file-remove"
                   onClick={(e) => {
                     e.stopPropagation();
-                    setSelectedFile(null);
-                    setFilePreview(null);
-                    setCompressedFile(null);
+                    resetFileSelection(); // Используем функцию сброса
                   }}
                 >
                   <MdClose size={18} />
@@ -563,7 +617,7 @@ function CompressPage({ changePage }) {
             </div>
           )}
 
-          {message && <div className={`message ${message.includes('✅') ? 'success' : 'error'}`}>{message}</div>}
+          {message && <div className={`message ${messageType === 'success' ? 'success' : 'error'}`}>{messageType === 'success' ? <MdCheckCircle size={16} style={{ marginRight: '6px', verticalAlign: 'middle' }} /> : <MdError size={16} style={{ marginRight: '6px', verticalAlign: 'middle' }} />}{message}</div>}
         </div>
 
         <div className="info-card">

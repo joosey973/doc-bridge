@@ -121,7 +121,7 @@ useEffect(() => {
             localStorage.removeItem('userData');
           }
         } catch (error) {
-          console.error('❌ Ошибка проверки авторизации:', error);
+          console.error('Ошибка проверки авторизации:', error);
           localStorage.removeItem('token');
           localStorage.removeItem('userData');
         }
@@ -174,7 +174,7 @@ useEffect(() => {
     e.preventDefault();
     setAuthError('');
     if (authForm.password !== authForm.passwordConfirm) {
-      setAuthError('❌ Пароли не совпадают!');
+      setAuthError('Пароли не совпадают!');
       return;
     }
     try {

@@ -8,7 +8,9 @@ import {
   MdEdit,
   MdDelete,
   MdLock,
-  MdClose
+  MdClose,
+  MdContentCopy,
+  MdLabel
 } from "react-icons/md";
 import { 
   BsPersonWorkspace 
@@ -22,7 +24,8 @@ import {
 } from "react-icons/pi";
 import { 
   IoIosAirplane, 
-  IoIosStarOutline 
+  IoIosStarOutline,
+  IoIosArrowDown
 } from "react-icons/io";
 import { 
   CiMedicalCross,
@@ -38,6 +41,18 @@ import {
   VscDeviceCamera 
 } from "react-icons/vsc";
 import { SlLock } from "react-icons/sl";
+import { 
+  DiJavascript1,  
+  DiJava, 
+  DiHtml5, 
+  DiCss3, 
+  DiPhp, 
+  DiRuby, 
+  DiGo
+} from "react-icons/di";
+import { AiOutlinePython } from "react-icons/ai";
+import { SiCplusplusbuilder, SiRust, SiSqlite } from "react-icons/si";
+import { FaFileAlt } from "react-icons/fa";
 
 const API_URL = 'http://localhost:8000/api';
 
@@ -77,6 +92,7 @@ const ViewPastePage = () => {
   const token = localStorage.getItem('token');
   const user = location.state?.usr || 'null';
 
+  // Опции для категорий с иконками
   const categories = [
     { id: 'work', name: 'Работа', icon: <MdOutlineWorkOutline size={16} /> },
     { id: 'personal', name: 'Личная жизнь', icon: <BsPersonWorkspace size={16} /> },
@@ -86,6 +102,22 @@ const ViewPastePage = () => {
     { id: 'health', name: 'Здоровье', icon: <CiMedicalCross size={16} /> },
     { id: 'entertainment', name: 'Развлечения', icon: <PiFilmSlateLight size={16} /> },
     { id: 'other', name: 'Другое', icon: <IoIosStarOutline size={16} /> },
+  ];
+
+  // Опции для языков с иконками
+  const languageOptions = [
+    { value: 'javascript', label: 'JavaScript', icon: <DiJavascript1 size={16} /> },
+    { value: 'python', label: 'Python', icon: <AiOutlinePython size={16} /> },
+    { value: 'cpp', label: 'C++', icon: <SiCplusplusbuilder size={16} /> },
+    { value: 'java', label: 'Java', icon: <DiJava size={16} /> },
+    { value: 'html', label: 'HTML', icon: <DiHtml5 size={16} /> },
+    { value: 'css', label: 'CSS', icon: <DiCss3 size={16} /> },
+    { value: 'php', label: 'PHP', icon: <DiPhp size={16} /> },
+    { value: 'ruby', label: 'Ruby', icon: <DiRuby size={16} /> },
+    { value: 'go', label: 'Go', icon: <DiGo size={25} /> },
+    { value: 'rust', label: 'Rust', icon: <SiRust size={16} /> },
+    { value: 'sql', label: 'SQL', icon: <SiSqlite size={16} /> },
+    { value: 'text', label: 'Текст', icon: <FaFileAlt size={16} /> },
   ];
 
   // ===== ФУНКЦИИ ДЛЯ ИКОНОК =====
@@ -115,6 +147,42 @@ const ViewPastePage = () => {
       other: 'Другое'
     };
     return names[catId] || 'Другое';
+  };
+
+  const getLanguageName = (langId) => {
+    const names = {
+      javascript: 'JavaScript',
+      python: 'Python',
+      cpp: 'C++',
+      java: 'Java',
+      html: 'HTML',
+      css: 'CSS',
+      php: 'PHP',
+      ruby: 'Ruby',
+      go: 'Go',
+      rust: 'Rust',
+      sql: 'SQL',
+      text: 'Текст'
+    };
+    return names[langId] || langId;
+  };
+
+  const getLanguageIcon = (langId) => {
+    const icons = {
+      javascript: <DiJavascript1 size={16} />,
+      python: <AiOutlinePython size={16} />,
+      cpp: <SiCplusplusbuilder size={16} />,
+      java: <DiJava size={16} />,
+      html: <DiHtml5 size={16} />,
+      css: <DiCss3 size={16} />,
+      php: <DiPhp size={16} />,
+      ruby: <DiRuby size={16} />,
+      go: <DiGo size={25} />,
+      rust: <SiRust size={16} />,
+      sql: <SiSqlite size={16} />,
+      text: <FaFileAlt size={16} />
+    };
+    return icons[langId] || <FaFileAlt size={16} />;
   };
 
   const copyToClipboard = async () => {
@@ -212,7 +280,6 @@ const ViewPastePage = () => {
     };
   }, [isHovered]);
 
-  // Загрузка данных пасты
   useEffect(() => {
     const fetchPaste = async () => {
       try {
@@ -231,11 +298,11 @@ const ViewPastePage = () => {
           setTags(data.paste.tags || []);
           setProfileData(data.paste_user || 'Аноним');
         } else {
-          setError('❌ Паста не найдена');
+          setError('Паста не найдена');
           setTimeout(() => navigate('/api/pastes'), 20000);
         }
       } catch (err) {
-        setError('❌ Ошибка загрузки пасты');
+        setError('Ошибка загрузки пасты');
         console.error(err);
       } finally {
         setLoading(false);
@@ -280,7 +347,7 @@ const ViewPastePage = () => {
           <div className="link-container">
             <h1>Просмотр заметки</h1>
             <div onClick={copyToClipboard} style={{cursor: 'pointer'}}>
-              📋 Скопировать ссылку на заметку
+              <MdContentCopy size={16} style={{ marginRight: '6px', verticalAlign: 'middle' }} /> Скопировать ссылку на заметку
             </div>
           </div>
             
@@ -323,7 +390,7 @@ const ViewPastePage = () => {
             <div className="form-group">
               <label>Подсветка</label>
               <div className="language-display">
-                {language.charAt(0).toUpperCase() + language.slice(1)}
+                {getLanguageIcon(language)} {getLanguageName(language)}
               </div>
             </div>
           </div>
@@ -333,7 +400,8 @@ const ViewPastePage = () => {
             <div className="tags-input">
               {tags.map((tag, i) => (
                 <span key={i} className="tag">
-                  #{tag}
+                  <MdLabel size={12} style={{ marginRight: '4px' }} />
+                  {tag}
                 </span>
               ))}
               {tags.length === 0 && (
@@ -349,6 +417,8 @@ const ViewPastePage = () => {
           <span>Владелец: <strong>{profileData?.username || 'Аноним'}</strong></span>
         </div>
       </div>
+
+      
     </div>
   );
 };

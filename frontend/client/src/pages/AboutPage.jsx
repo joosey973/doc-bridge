@@ -71,7 +71,7 @@ function AboutPage() {
     e.preventDefault();
     setAuthError('');
     if (authForm.password !== authForm.passwordConfirm) {
-      setAuthError('❌ Пароли не совпадают!');
+      setAuthError('Пароли не совпадают!');
       return;
     }
     try {
@@ -216,7 +216,7 @@ function AboutPage() {
               localStorage.removeItem('userData');
             }
           } catch (error) {
-            console.error('❌ Ошибка проверки авторизации:', error);
+            console.error('Ошибка проверки авторизации:', error);
             localStorage.removeItem('token');
             localStorage.removeItem('userData');
           }
@@ -257,6 +257,7 @@ function AboutPage() {
 
       <nav className={`sidebar ${isOpen ? 'active' : ''}`}>
         <ul>
+          <li><Link to="/api/profile/" onClick={closeMenu}>Личный кабинет</Link></li>
           <li><Link to="/" onClick={closeMenu}>Главная</Link></li>
           <li><Link to="/api/converter/" onClick={closeMenu}>Конвертер</Link></li>
           <li><Link to="/api/compress/" onClick={closeMenu}>Сжатие</Link></li>

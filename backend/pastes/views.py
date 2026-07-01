@@ -22,7 +22,8 @@ class PasteEditDelete(APIView):
         paste_user_obj = User.objects.filter(username=paste_obj.user)
         user_obj = User.objects.filter(username=request.user)
         paste = PasteSerializer(paste_obj).data
-        if not (paste_obj and user_obj):
+        print(paste_user_obj, user_obj)
+        if not (paste_obj or user_obj):
             paste_user = {}
             user = {}
         else:
@@ -59,7 +60,6 @@ class PasteViewPaste(PasteEditDelete, APIView):
         pass
 
 
-
 class IncrementView(APIView):
     permission_classes = [AllowAny]
     authentication_classes = [JWTAuthentication]
@@ -67,7 +67,6 @@ class IncrementView(APIView):
     def post(self, request, paste_id):
         try:
             paste = get_object_or_404(Pastes, id=paste_id)
-            print(request.user, paste.user)
             if request.user != paste.user:
                 paste.views = (paste.views or 0) + 1
                 paste.save(update_fields=['views'])

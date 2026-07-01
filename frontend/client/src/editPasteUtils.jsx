@@ -1,6 +1,6 @@
 export const handleEditPaste = (pasteCode, setEditingPaste, setShowEditModal, token, setMessage) => {
   if (!token) {
-    setMessage('⚠️ Авторизуйтесь, чтобы редактировать пасты');
+    setMessage('Авторизуйтесь, чтобы редактировать пасты');
     setTimeout(() => setMessage(''), 3000);
     return;
   }

@@ -8,7 +8,8 @@ import {
   MdAccessTime,
   MdEdit,
   MdDelete,
-  MdLock
+  MdLock,
+  MdNotifications
 } from "react-icons/md";
 import { 
   BsPersonWorkspace 
@@ -50,12 +51,15 @@ function ProfilePage({ changePage }) {
   const [avatarPreview, setAvatarPreview] = useState(null);
   const [isEditingPhoto, setIsEditingPhoto] = useState(false);
   const [message, setMessage] = useState('');
+  const [messageType, setMessageType] = useState('');
   const [userPastes, setUserPastes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [loadingAuth, setLoadingAuth] = useState(true);
   const canvasRef = useRef(null);
   const [isHovered, setIsHovered] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
+  const [filesCount, setFilesCount] = useState(null);
+  const [filesSize, setFilesSize] = useState(null);
   
   const openPasteView = (paste) => {
     navigate(`/api/pastes/view/${paste.code}/`, { 
@@ -77,6 +81,12 @@ function ProfilePage({ changePage }) {
   const [authError, setAuthError] = useState('');
 
   const closeMenu = () => setIsOpen(false);
+
+    const formatFileSize = (bytes) => {
+    if (bytes < 1024) return bytes + ' Б';
+    if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' КБ';
+    return (bytes / 1048576).toFixed(1) + ' МБ';
+  };
 
   const fetchPastes = async () => {
     try {
@@ -100,12 +110,13 @@ function ProfilePage({ changePage }) {
     event.stopPropagation();
     
     if (!token) {
-      setMessage('⚠️ Авторизуйтесь, чтобы удалять пасты');
+      setMessage('Авторизуйтесь, чтобы удалять пасты');
+      setMessageType('error');
       setTimeout(() => setMessage(''), 3000);
       return;
     }
     
-    if (!confirm(`🗑️ Удалить пасту "${code}"?`)) {
+    if (!confirm(`Удалить пасту "${code}"?`)) {
       return;
     }
     
@@ -119,14 +130,17 @@ function ProfilePage({ changePage }) {
       
       console.log(data)
       if (data.success) {
-        setMessage('✅ Паста удалена');
+        setMessage('Паста удалена');
+        setMessageType('success');
         fetchPastes();
         setTimeout(() => setMessage(''), 3000);
       } else {
-        setMessage(`❌ ${data.error || 'Ошибка удаления'}`);
+        setMessage(`${data.error || 'Ошибка удаления'}`);
+        setMessageType('error');
       }
     } catch (error) {
-      setMessage('❌ Ошибка удаления');
+      setMessage('Ошибка удаления');
+      setMessageType('error');
     }
   };
 
@@ -181,6 +195,8 @@ function ProfilePage({ changePage }) {
       const data = await response.json();
       setProfileData(data.user);
       setStatsData(data.stats);
+      setFilesCount(data.files_count);
+      setFilesSize(data.files_size);
     } else {
     }
   } catch (error) {
@@ -259,7 +275,7 @@ function ProfilePage({ changePage }) {
     setAuthError('');
 
     if (authForm.password !== authForm.passwordConfirm) {
-      setAuthError('❌ Пароли не совпадают!');
+      setAuthError('Пароли не совпадают!');
       return;
     }
 
@@ -298,7 +314,8 @@ function ProfilePage({ changePage }) {
     localStorage.removeItem('userData');
     setToken('');
     setUser(null);
-    setMessage('👋 Вы вышли');
+    setMessage('Вы вышли');
+    setMessageType('success');
     setTimeout(() => setMessage(''), 3000);
   };
 
@@ -590,7 +607,7 @@ function ProfilePage({ changePage }) {
           <div className="header-right">
             <button className="icon-btn" title="Уведомления">
               <span className="notification-badge"></span>
-              ➤
+              <MdNotifications size={18} />
             </button>
             <button 
               className="auth-btn"
@@ -1255,11 +1272,11 @@ function ProfilePage({ changePage }) {
                   <div className="stat-label">Паст создано</div>
                 </div>
                 <div className="stat-card">
-                  <div className="stat-number">{statsData?.files_count || '-'}</div>
+                  <div className="stat-number">{filesCount || '-'}</div>
                   <div className="stat-label">Файлов загружено</div>
                 </div>
                 <div className="stat-card">
-                  <div className="stat-number">{stats?.total_size || '-'}</div>
+                  <div className="stat-number">{formatFileSize(filesSize) || '-'}</div>
                   <div className="stat-label">Всего места</div>
                 </div>
               </div>
@@ -1348,7 +1365,7 @@ function ProfilePage({ changePage }) {
               )}
             </div>
 
-            {message && <div className={`message ${message.includes('✅') ? 'success' : 'error'}`} style={{ marginTop: '20px' }}>{message}</div>}
+            {message && <div className={`message ${messageType === 'success' ? 'success' : 'error'}`} style={{ marginTop: '20px' }}>{message}</div>}
           </div>
 
           <div className="side-profile-area glass-panel">
@@ -1364,11 +1381,11 @@ function ProfilePage({ changePage }) {
               </div>
               <div className="info-item">
                 <span style={{ color: '#555' }}>Файлы</span>
-                <span style={{ fontWeight: '600' }}>{statsData?.files_count || '-'}</span>
+                <span style={{ fontWeight: '600' }}>{filesCount || '-'}</span>
               </div>
               <div className="info-item">
                 <span style={{ color: '#555' }}>Место</span>
-                <span style={{ fontWeight: '600' }}>{stats?.total_size || '-'}</span>
+                <span style={{ fontWeight: '600' }}>{formatFileSize(filesSize) || '-'}</span>
               </div>
               <div className="info-item">
                 <span style={{ color: '#555' }}>Дата регистрации</span>

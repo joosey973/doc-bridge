@@ -9,6 +9,7 @@ from rest_framework.permissions import IsAuthenticated
 from users.serializers import UserSerializer
 from pastes.serializers import PasteSerializer
 from pastes.models import Pastes
+from userfiles.models import FileUpload
 
 User = django.contrib.auth.get_user_model()
 
@@ -19,6 +20,9 @@ class ProfileView(APIView):
     def get(self, request):
         user = User.objects.get(username=request.user)
         pastes = Pastes.objects.filter(user=user.id).all()
+        files = FileUpload.objects.filter(user=user.id).all()
+        files_count = sum(len(file.files) for file in files)
+        files_size = sum(file.size for file in files)
 
         user_data = UserSerializer(user).data
         pastes_serializer = PasteSerializer(pastes, many=True)
@@ -35,7 +39,9 @@ class ProfileView(APIView):
         return Response({
             'success': True,
             'user': user_data,
-            'stats': stats
+            'stats': stats,
+            'files_count': files_count,
+            'files_size': files_size
         }, status=status.HTTP_200_OK)
 
 

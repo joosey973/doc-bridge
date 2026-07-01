@@ -64,7 +64,7 @@ function DropPage() {
                 localStorage.removeItem('userData');
               }
             } catch (error) {
-              console.error('❌ Ошибка проверки авторизации:', error);
+              console.error('Ошибка проверки авторизации:', error);
               localStorage.removeItem('token');
               localStorage.removeItem('userData');
             }
@@ -117,7 +117,7 @@ function DropPage() {
         e.preventDefault();
         setAuthError('');
         if (authForm.password !== authForm.passwordConfirm) {
-          setAuthError('❌ Пароли не совпадают!');
+          setAuthError('Пароли не совпадают!');
           return;
         }
         try {
@@ -227,7 +227,6 @@ function DropPage() {
     formData.append(`file_${index + 1}`, file);
   });
 
-  // Получаем токен из localStorage
   const token = localStorage.getItem('token');
   
   try {
@@ -236,7 +235,7 @@ function DropPage() {
       body: formData,
       headers: token ? {
         'Authorization': `Bearer ${token}`
-      } : {}, // Если нет токена, отправляем без заголовка
+      } : {},
     });
     
     const data = await response.json();
@@ -256,24 +255,6 @@ function DropPage() {
     console.error('Upload error:', error);
   }
 };
-
-  const handleSendEmail = () => {
-    if (!recipient) {
-      setMessage('Укажите получателя!');
-      setTimeout(() => setMessage(''), 3000);
-      return;
-    }
-
-    setMessage(`Ссылка успешно отправлена на ${recipient}`);
-    setTimeout(() => {
-      setMessage('');
-      setSelectedFiles([]);
-      setFilePreviews([]);
-      setFileLink(null);
-      setRecipient('');
-      setSender('');
-    }, 3000);
-  };
 
   const formatFileSize = (bytes) => {
     if (bytes < 1024) return bytes + ' Б';
