@@ -13,6 +13,7 @@ import TermsofService from "./pages/termsofservice";
 import ContactsPage from "./pages/contacts";
 import PolicyPage from "./pages/policypage";
 import DownloadPage from "./pages/DownloadPage";
+
 function App(){
   return (
     <Router>

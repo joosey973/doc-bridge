@@ -15,8 +15,8 @@ function DownloadPage() {
   const [error, setError] = useState(null);
   const [isOpen, setIsOpen] = useState(false);
   const canvasRef = useRef(null);
+  const [filePreviews, setFilePreviews] = useState([]);
 
-  // ===== ФОН С ЦИФРАМИ =====
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -86,15 +86,14 @@ function DownloadPage() {
     };
   }, []);
 
-  // ===== ЗАГРУЗКА ДАННЫХ ФАЙЛА (С ЗАГЛУШКОЙ) =====
   useEffect(() => {
     const fetchFileData = async () => {
       try {
         const response = await fetch(`${API_URL}/droppage/${fileCode}/`);
-        
         if (response.ok) {
           const data = await response.json();
-          setFileData(data);
+          setFileData(data.data);;
+          setFilePreviews(data.data.files);
         } else {
           console.log('🔧 Сервер вернул ошибку, используем мок-данные');
           setFileData({
@@ -127,21 +126,36 @@ function DownloadPage() {
     }
   }, [fileCode]);
 
-  // ===== СКАЧИВАНИЕ ФАЙЛА =====
   const handleDownload = async () => {
     try {
       const response = await fetch(`${API_URL}/droppage/download/${fileCode}/`);
       
       if (response.ok) {
         const blob = await response.blob();
+        const contentType = response.headers.get('content-type');
+        const isZip = contentType && (
+            contentType.includes('application/zip') || 
+            contentType.includes('application/x-zip-compressed')
+        );
+        if (isZip) {
         const url = window.URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
-        link.download = fileData?.filename || 'download';
+        link.download = `${fileData?.code}.zip` || 'archive.zip';
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
         window.URL.revokeObjectURL(url);
+    } else {
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = fileData?.name || 'download';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+    }
       } else {
         alert('⚠️ Сервер не отвечает, скачивается тестовый файл');
         const content = `Тестовый файл для демонстрации\n\nКод файла: ${fileCode}\nДата: ${new Date().toLocaleString()}`;
@@ -279,15 +293,19 @@ function DownloadPage() {
           margin: '0 auto',
           width: '100%'
         }}>
-          {/* ОСНОВНАЯ КАРТОЧКА С ФАЙЛОМ */}
           <div className="page-card" style={{ textAlign: 'center' }}>
-            <div style={{ fontSize: '64px', marginBottom: '20px' }}>
-              <FaFileAlt size={64} style={{ opacity: 0.7 }} />
-            </div>
-            
-            <h2 style={{ fontSize: '22px', marginBottom: '8px', wordBreak: 'break-all' }}>
-              {fileData?.filename || 'Файл'}
-            </h2>
+            {filePreviews.map((file, index) => (
+                  <div key={index} className="file-preview-item">
+                    <div className="file-icon"><FaFileAlt size={20} /></div>
+                    <div className="file-info">
+                      <div className="file-name">{file.name}</div>
+                      <div className="file-details">
+                        <span className="file-format">{file.format?.toUpperCase()}</span>
+                        <span className="file-size">{formatFileSize(file.size)}</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
             
             <div style={{ 
               display: 'flex', 
@@ -302,10 +320,10 @@ function DownloadPage() {
                 <FaFileAlt size={14} /> {formatFileSize(fileData?.size)}
               </span>
               <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                <CiCalendarDate size={16} /> {formatDate(fileData?.upload_date)}
+                <CiCalendarDate size={16} /> {fileData?.created_at}
               </span>
               <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                <MdPerson size={16} /> {fileData?.uploader || 'Аноним'}
+                <MdPerson size={16} /> {fileData?.user || 'Аноним'}
               </span>
             </div>
 
@@ -325,7 +343,7 @@ function DownloadPage() {
 
             <div style={{ marginTop: '20px', fontSize: '12px', color: '#aaa' }}>
               <CiCalendarDate size={14} style={{ marginRight: '4px' }} /> 
-              Ссылка действительна до {formatDate(fileData?.expires_at || Date.now() + 7 * 24 * 60 * 60 * 1000)}
+              Ссылка действительна до {fileData?.expires_at || Date.now() + 7 * 24 * 60 * 60 * 1000}
             </div>
           </div>
 
@@ -344,8 +362,8 @@ function DownloadPage() {
             
             <div className="info-list">
               <div className="info-item">
-                <span><FaFileAlt size={12} style={{ marginRight: '6px' }} /> Имя файла</span>
-                <span style={{ wordBreak: 'break-all' }}>{fileData?.filename || '—'}</span>
+                <span><FaFileAlt size={12} style={{ marginRight: '6px' }} /> Количество файлов</span>
+                <span style={{ wordBreak: 'break-all' }}>{fileData?.count || '—'}</span>
               </div>
               <div className="info-item">
                 <span><FaFileAlt size={12} style={{ marginRight: '6px' }} /> Размер</span>
@@ -353,15 +371,15 @@ function DownloadPage() {
               </div>
               <div className="info-item">
                 <span><MdPerson size={12} style={{ marginRight: '6px' }} /> Загрузил</span>
-                <span>{fileData?.uploader || 'Аноним'}</span>
+                <span>{fileData?.user || 'Аноним'}</span>
               </div>
               <div className="info-item">
                 <span><CiCalendarDate size={12} style={{ marginRight: '6px' }} /> Дата загрузки</span>
-                <span>{formatDate(fileData?.upload_date)}</span>
+                <span>{fileData?.created_at}</span>
               </div>
               <div className="info-item">
                 <span><CiCalendarDate size={12} style={{ marginRight: '6px' }} /> Срок действия</span>
-                <span>{formatDate(fileData?.expires_at)}</span>
+                <span>{fileData?.expires_at}</span>
               </div>
             </div>
             
@@ -379,25 +397,11 @@ function DownloadPage() {
             }}>
               <MdErrorOutline size={14} /> Файл будет автоматически удален после истечения срока
             </p>
-            <p className="info-note" style={{ 
-              marginTop: '10px',
-              padding: '12px',
-              borderLeft: '2px solid #ff9800',
-              fontSize: '11px',
-              textTransform: 'uppercase',
-              letterSpacing: '1px',
-              color: '#e65100',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px'
-            }}>
-              <MdErrorOutline size={14} /> Демо-режим: сервер не подключен, скачивается тестовый файл
-            </p>
+            
           </div>
         </div>
       </main>
 
-      {/* ПОДВАЛ */}
       <footer className="bottom-footer">
         <div className="footer-buttons">
           <button className="footer-btn">Политика</button>
