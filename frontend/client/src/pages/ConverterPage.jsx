@@ -29,7 +29,6 @@ function ConverterPage({ changePage }) {
   const [isConverting, setIsConverting] = useState(false);
   const [convertedFile, setConvertedFile] = useState(null);
   
-  // ===== АВТОРИЗАЦИЯ =====
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
@@ -52,7 +51,6 @@ function ConverterPage({ changePage }) {
     isHoveredRef.current = isHovered;
   }, [isHovered]);
 
-  // Проверка авторизации
   useEffect(() => {
     const checkAuth = async () => {
       const savedToken = localStorage.getItem('token');
@@ -151,7 +149,6 @@ function ConverterPage({ changePage }) {
     }
   };
 
-  // Эффект анимации матрицы/глитча
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -246,38 +243,35 @@ function ConverterPage({ changePage }) {
     };
   }, []);
 
-  // === ФОРМАТЫ ===
   const formats = {
-    pdf: ['docx', 'txt', 'jpg', 'png', 'pptx'],
+    pdf: ['docx', 'txt', 'jpg', 'png', 'jpeg', 'pptx'],
     docx: ['pdf', 'txt', 'odt'],
-    jpg: ['png', 'pdf', 'webp'],
-    png: ['jpg', 'pdf', 'webp'],
-    txt: ['pdf', 'docx', 'xml', 'csv'],
+    jpg: ['png', 'pdf', 'webp', 'jpeg'],
+    jpeg: ['png', 'pdf', 'webp', 'jpg'],
+    png: ['jpg', 'pdf', 'webp', 'jpeg'],
+    txt: ['pdf', 'docx', 'csv'],
     pptx: ['pdf', 'jpg', 'png'],
-    xml: ['txt', 'csv'],
     csv: ['txt'],
-    webp: ['jpg', 'png', 'pdf'],
+    webp: ['jpg', 'png', 'pdf', 'jpeg'],
     odt: ['docx', 'pdf', 'txt'],
   };
 
-  // Поддерживаемые расширения для валидации
   const validExtensions = [
     'pdf', 'docx', 'jpg', 'jpeg', 'png', 'txt',
-    'pptx', 'xml', 'csv', 'webp', 'odt'
+    'pptx', 'csv', 'webp', 'odt'
   ];
 
-  // ===== ИКОНКИ =====
   const getFileIcon = (format, size = 18) => {
     const icons = {
       pdf: <FaRegFilePdf size={size} />,
       docx: <FaRegFileWord size={size} />,
       odt: <FaRegFileWord size={size} />,
       jpg: <FaRegFileImage size={size} />,
+      jpeg: <FaRegFileImage size={size} />,
       png: <FaRegFileImage size={size} />,
       webp: <FaRegFileImage size={size} />,
       txt: <FaRegFileAlt size={size} />,
       pptx: <FaRegFilePowerpoint size={size} />,
-      xml: <FaRegFileCode size={size} />,
       csv: <BsFiletypeCsv size={size} />,
     };
     return icons[format] || <FaRegFileAlt size={size} />;
@@ -289,9 +283,9 @@ function ConverterPage({ changePage }) {
       docx: 'DOCX',
       jpg: 'JPG',
       png: 'PNG',
+      jpeg: 'JPEG',
       txt: 'TXT',
       pptx: 'PPTX',
-      xml: 'XML',
       csv: 'CSV',
       webp: 'WEBP',
       odt: 'ODT'
@@ -305,17 +299,16 @@ function ConverterPage({ changePage }) {
     const ext = file.name.split('.').pop().toLowerCase();
 
     if (!validExtensions.includes(ext)) {
-      setMessage(`> Поддерживаются только: PDF, DOCX, JPG, PNG, TXT, PPTX, XML, CSV, WEBP, ODT`);
+      setMessage(`> Поддерживаются только: PDF, DOCX, JPG, PNG, JPEG, TXT, PPTX, CSV, WEBP, ODT`);
       setTimeout(() => setMessage(''), 3000);
       return;
     }
 
     let format = ext;
-    if (ext === 'jpeg') format = 'jpg';
 
     setSelectedFile(file);
     setConvertFrom(format);
-    setConvertedFile(null); // Сбрасываем результат конвертации
+    setConvertedFile(null); 
 
     setFilePreview({
       name: file.name,
@@ -356,7 +349,6 @@ function ConverterPage({ changePage }) {
     handleFileSelect(file);
   };
 
-  // ===== ОТПРАВКА НА СЕРВЕР =====
   const handleConvert = async () => {
     if (!selectedFile) {
       setMessage('> Сначала загрузите файл!');
@@ -383,19 +375,47 @@ function ConverterPage({ changePage }) {
         } : {},
       });
 
-      const data = await response.json();
-
-      if (response.ok) {
+      const contentType = response.headers.get('content-type');
+      
+      if (response.ok && contentType && contentType.includes('application/octet-stream')) {
+        const originalSize = response.headers.get('X-Original-Size');
+        const convertedSize = response.headers.get('X-Converted-Size');
+        const fromFormat = response.headers.get('X-From-Format');
+        const toFormat = response.headers.get('X-To-Format');
+        
+        const contentDisposition = response.headers.get('content-disposition');
+        let filename = `${selectedFile.name.replace(/\.[^.]+$/, '')}.${convertTo}`;
+        if (contentDisposition) {
+          const match = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+          if (match && match[1]) {
+            filename = match[1].replace(/['"]/g, '');
+          }
+        }
+        
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        window.URL.revokeObjectURL(url);
+        
         setIsConverting(false);
-        setMessage(`+ Конвертация завершена! (${convertFrom.toUpperCase()} → ${convertTo.toUpperCase()})`);
+        setMessage(`✅ Файл сконвертирован! (${fromFormat || convertFrom.toUpperCase()} → ${toFormat || convertTo.toUpperCase()})`);
         
         setConvertedFile({
-          name: `converted_${selectedFile.name.replace(/\.[^.]+$/, '')}.${convertTo}`,
-          size: data.size || Math.floor(selectedFile.size * 0.8),
-          originalSize: data.original_size || selectedFile.size,
-          downloadUrl: data.download_url || null
+          name: filename,
+          size: parseInt(convertedSize) || blob.size,
+          originalSize: parseInt(originalSize) || selectedFile.size,
+          downloadUrl: url
         });
+        
       } else {
+        const data = await response.json();
         setIsConverting(false);
         setMessage(`❌ ${data.error || 'Ошибка конвертации'}`);
       }
@@ -406,14 +426,12 @@ function ConverterPage({ changePage }) {
     }
   };
 
-  // ===== СКАЧИВАНИЕ =====
   const handleDownload = () => {
     if (!convertedFile) return;
 
     if (convertedFile.downloadUrl) {
       window.open(convertedFile.downloadUrl, '_blank');
     } else {
-      // Тестовый файл (заглушка)
       const content = `Конвертированный файл: ${convertedFile.name}\nИсходный формат: ${convertFrom.toUpperCase()}\nЦелевой формат: ${convertTo.toUpperCase()}\nИсходный размер: ${formatFileSize(convertedFile.originalSize)}\nРазмер: ${formatFileSize(convertedFile.size)}\n\nЭто демонстрационный файл. Реальная конвертация будет добавлена позже.`;
       const blob = new Blob([content], { type: 'text/plain' });
       const url = window.URL.createObjectURL(blob);
@@ -495,7 +513,7 @@ function ConverterPage({ changePage }) {
               id="converterFileInput"
               style={{ display: 'none' }}
               onChange={handleFileInput}
-              accept=".pdf,.docx,.jpg,.jpeg,.png,.txt,.pptx,.xml,.csv,.webp,.odt"
+              accept=".pdf,.docx,.jpg,.jpeg,.png,.txt,.pptx,.csv,.webp,.odt"
             />
             
             {!selectedFile ? (
@@ -504,7 +522,7 @@ function ConverterPage({ changePage }) {
                 <h3>Перетащите файл сюда</h3>
                 <p>или нажмите для выбора</p>
                 <div className="supported-formats">
-                  Поддерживаемые форматы: PDF, DOCX, JPG, PNG, TXT, PPTX, XML, CSV, WEBP, ODT
+                  Поддерживаемые форматы: PDF, DOCX, JPG, PNG, JPEG, TXT, PPTX, CSV, WEBP, ODT
                 </div>
               </>
             ) : (
@@ -619,223 +637,20 @@ function ConverterPage({ changePage }) {
         <div className="info-card">
           <h3>Поддерживаемые форматы</h3>
           <div className="format-list">
-            <div className="info-item"><span>{getFileIcon('pdf')} PDF</span><span>→ DOCX, TXT, JPG, PNG, PPTX</span></div>
+            <div className="info-item"><span>{getFileIcon('pdf')} PDF</span><span>→ DOCX, TXT, JPG, PNG, PPTX, JPEG</span></div>
             <div className="info-item"><span>{getFileIcon('docx')} DOCX</span><span>→ PDF, TXT, ODT</span></div>
-            <div className="info-item"><span>{getFileIcon('jpg')} JPG</span><span>→ PNG, PDF, WEBP</span></div>
-            <div className="info-item"><span>{getFileIcon('png')} PNG</span><span>→ JPG, PDF, WEBP</span></div>
-            <div className="info-item"><span>{getFileIcon('txt')} TXT</span><span>→ PDF, DOCX, XML, CSV</span></div>
+            <div className="info-item"><span>{getFileIcon('jpg')} JPG</span><span>→ PNG, PDF, WEBP, JPEG</span></div>
+            <div className="info-item"><span>{getFileIcon('jpeg')} JPEG</span><span>→ PNG, PDF, WEBP</span></div>
+            <div className="info-item"><span>{getFileIcon('png')} PNG</span><span>→ JPG, PDF, WEBP, JPEG</span></div>
+            <div className="info-item"><span>{getFileIcon('txt')} TXT</span><span>→ PDF, DOCX, CSV</span></div>
             <div className="info-item"><span>{getFileIcon('pptx')} PPTX</span><span>→ PDF, JPG, PNG</span></div>
-            <div className="info-item"><span>{getFileIcon('xml')} XML</span><span>→ TXT, CSV</span></div>
             <div className="info-item"><span>{getFileIcon('csv')} CSV</span><span>→ TXT</span></div>
-            <div className="info-item"><span>{getFileIcon('webp')} WEBP</span><span>→ JPG, PNG, PDF</span></div>
+            <div className="info-item"><span>{getFileIcon('webp')} WEBP</span><span>→ JPG, PNG, PDF, JPEG</span></div>
             <div className="info-item"><span>{getFileIcon('odt')} ODT</span><span>→ DOCX, PDF, TXT</span></div>
           </div>
         </div>
       </div>
 
-      <style>{`
-        .glitch-bg-canvas {
-          position: fixed;
-          top: 0;
-          left: 0;
-          width: 100vw;
-          height: 100vh;
-          z-index: -1;
-          pointer-events: none;
-        }
-
-        .convert-result {
-          margin-top: 20px;
-          padding: 20px;
-          border: 1px solid #000;
-          border-radius: 8px;
-          background: #f9f9f9;
-        }
-
-        .result-info {
-          margin-bottom: 16px;
-        }
-
-        .result-row {
-          display: flex;
-          justify-content: space-between;
-          padding: 4px 0;
-          font-size: 14px;
-        }
-
-        .result-value {
-          font-weight: 600;
-        }
-
-        .result-success {
-          color: #2e7d32;
-        }
-
-        .download-btn {
-          width: 100%;
-          padding: 14px;
-          background: #000;
-          color: #fff;
-          border: none;
-          border-radius: 6px;
-          font-size: 15px;
-          font-weight: 600;
-          cursor: pointer;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          transition: all 0.3s;
-        }
-
-        .download-btn:hover {
-          background: #333;
-          transform: translateY(-2px);
-          box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-        }
-
-        .custom-select {
-          position: relative;
-          width: 100%;
-        }
-        .custom-select-trigger {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          padding: 8px 12px;
-          border: 1px solid #ddd;
-          border-radius: 8px;
-          background: #fff;
-          cursor: pointer;
-          font-size: 13px;
-          min-height: 38px;
-          box-sizing: border-box;
-        }
-        .custom-select-trigger:hover { border-color: #000; }
-        
-        .custom-select-value {
-          display: flex;
-          align-items: center;
-          gap: 6px;
-        }
-        .custom-select-arrow {
-          transition: transform 0.2s;
-          font-size: 16px;
-        }
-        .custom-select-arrow.open { transform: rotate(180deg); }
-        
-        .custom-select-options {
-          position: absolute;
-          top: calc(100% + 4px);
-          left: 0; right: 0;
-          background: #fff;
-          border: 1px solid #ddd;
-          border-radius: 8px;
-          height: 180px;
-          overflow-y: scroll;
-          z-index: 999;
-          box-shadow: 0 8px 24px rgba(229, 217, 217, 0.15);
-        }
-        
-        .custom-select-options::-webkit-scrollbar { width: 6px; }
-        .custom-select-options::-webkit-scrollbar-thumb { background: #ccc; border-radius: 4px; }
-        .custom-select-options::-webkit-scrollbar-track { background: #f1f1f1; }
-
-        .custom-select-option {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          padding: 8px 12px;
-          cursor: pointer;
-          font-size: 13px;
-          transition: background 0.15s;
-        }
-        .custom-select-option:hover { background: #f5f5f5; }
-        .custom-select-option.selected { background: #e8e8e8; font-weight: 600; }
-        
-        .form-row, .form-group, .create-paste, .main-content { overflow: visible !important; }
-      `}</style>
-
-      {/* Модальное окно авторизации */}
-      {showAuthModal && (
-        <div className="modal-overlay" onClick={() => setShowAuthModal(false)}>
-          <div className="modal-content auth-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h2>{isLoginMode ? 'Вход' : 'Регистрация'}</h2>
-              <button className="modal-close" onClick={() => setShowAuthModal(false)}>×</button>
-            </div>
-            <form onSubmit={isLoginMode ? handleLogin : handleRegister}>
-              {isLoginMode ? (
-                <div className="form-group">
-                  <label>Email или имя пользователя</label>
-                  <input
-                    type="text"
-                    placeholder="Введите email или username"
-                    value={authForm.login}
-                    onChange={(e) => setAuthForm({...authForm, login: e.target.value})}
-                    required
-                  />
-                </div>
-              ) : (
-                <>
-                  <div className="form-group">
-                    <label>Имя пользователя</label>
-                    <input
-                      type="text"
-                      placeholder="Придумайте имя"
-                      value={authForm.username}
-                      onChange={(e) => setAuthForm({...authForm, username: e.target.value})}
-                      required
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label>Email</label>
-                    <input
-                      type="email"
-                      placeholder="example@mail.com"
-                      value={authForm.email}
-                      onChange={(e) => setAuthForm({...authForm, email: e.target.value})}
-                      required
-                    />
-                  </div>
-                </>
-              )}
-              <div className="form-group">
-                <label>Пароль</label>
-                <input
-                  type="password"
-                  placeholder="Введите пароль"
-                  value={authForm.password}
-                  onChange={(e) => setAuthForm({...authForm, password: e.target.value})}
-                  required
-                />
-              </div>
-              {!isLoginMode && (
-                <div className="form-group">
-                  <label>Подтверждение пароля</label>
-                  <input
-                    type="password"
-                    placeholder="Повторите пароль"
-                    value={authForm.passwordConfirm}
-                    onChange={(e) => setAuthForm({...authForm, passwordConfirm: e.target.value})}
-                    required
-                  />
-                </div>
-              )}
-              {authError && <div className="message error">{authError}</div>}
-              <button type="submit" className="submit-btn">
-                {isLoginMode ? 'Войти' : 'Зарегистрироваться'}
-              </button>
-            </form>
-            <div className="auth-switch">
-              {isLoginMode ? (
-                <span>Нет аккаунта? <span onClick={() => { setIsLoginMode(false); setAuthError(''); }}>Зарегистрироваться</span></span>
-              ) : (
-                <span>Уже есть аккаунт? <span onClick={() => { setIsLoginMode(true); setAuthError(''); }}>Войти</span></span>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
     </>
   );
 }

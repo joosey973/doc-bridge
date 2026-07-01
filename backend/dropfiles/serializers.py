@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from userfiles.models import FileUpload
+from dropfiles.models import FileUpload
 
 
 class DroppageSerializer(serializers.ModelSerializer):

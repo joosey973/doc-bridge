@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.contrib.admin import ModelAdmin
-from userfiles.models import FileUpload
+from dropfiles.models import FileUpload
 
 class FileAdmin(ModelAdmin):
     model = FileUpload
