@@ -23,6 +23,12 @@ function DropPage() {
   const [isDragging, setIsDragging] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [code, setCode] = useState('');
+  const getAvatarUrl = () => {
+    if (user?.avatar) {
+      return `http://localhost:8000${user?.avatar}`;
+    }
+    return null;
+  };
 
   const [isOpen, setIsOpen] = useState(false);
   const canvasRef = useRef(null);
@@ -303,7 +309,41 @@ function DropPage() {
               <span className="notification-badge"></span>
               ➤
             </button>
-            <Link to="/api/profile/" className="auth-btn" style={{ textDecoration: 'none', color: 'inherit' }}>Личный кабинет</Link>
+            <Link to="/api/profile/" style={{ textDecoration: 'none', color: 'inherit' }}>
+                      {user ? (
+                        <>
+                          {getAvatarUrl() ? (
+                            <img 
+                              src={getAvatarUrl()} 
+                              alt="Аватар пользователя" 
+                              className="profile-avatar-img"
+                              style={{
+                                width: '40px',
+                                height: '40px',
+                                borderRadius: '50%',
+                                objectFit: 'cover',
+                                border: '2px solid rgba(255,255,255,0.8)'
+                              }}
+                            />
+                          ) : (
+                            <div className="profile-avatar-default" style={{
+                              width: '40px',
+                              height: '40px',
+                              borderRadius: '50%',
+                              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontSize: '18px',
+                              fontWeight: '700',
+                              color: 'white'
+                            }}>
+                              {user?.username?.charAt(0)?.toUpperCase() || 'U'}
+                            </div>
+                          )}
+                        </>
+                      ) : (user?.username?.charAt(0)?.toUpperCase() || 'U')}
+                    </Link>
           </div>
         </header>
     <div className="page-container drop-container">

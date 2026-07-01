@@ -1,3 +1,4 @@
+import datetime
 import os
 import shutil
 import zipfile
@@ -16,6 +17,7 @@ from rest_framework.permissions import AllowAny
 from rest_framework.views import APIView
 
 import utils
+from userfiles.models import FileUpload
 
 
 class CompressView(APIView):
@@ -91,6 +93,16 @@ class CompressView(APIView):
             f'/api/compress/download/{code}/{compressed_filename}/'
         )
 
+        user = request.user
+        user = user if user.is_authenticated else None
+        print(user)
+        obj = FileUpload.objects.create(
+            size=compressed_size,
+            created_at=datetime.datetime.now(),
+            user=user,
+            files=[1],
+            code=None,
+        )
         return Response({
             'compressed_size': compressed_size,
             'original_size': original_size,

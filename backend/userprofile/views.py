@@ -21,6 +21,8 @@ class ProfileView(APIView):
         user = User.objects.get(username=request.user)
         pastes = Pastes.objects.filter(user=user.id).all()
         files = FileUpload.objects.filter(user=user.id).all()
+        for file in files:
+            print(len(file.files), file.files)
         files_count = sum(len(file.files) for file in files)
         files_size = sum(file.size for file in files)
 

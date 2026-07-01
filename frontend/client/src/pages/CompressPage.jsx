@@ -35,9 +35,13 @@ function CompressPage({ changePage }) {
   const canvasRef = useRef(null);
   const [isHovered, setIsHovered] = useState(false);
   const isHoveredRef = useRef(isHovered);
-  const fileInputRef = useRef(null); // Добавляем реф для файлового инпута
-  
-  // ===== АВТОРИЗАЦИЯ =====
+  const fileInputRef = useRef(null);
+  const getAvatarUrl = () => {
+    if (user?.avatar) {
+      return `http://localhost:8000${user?.avatar}`;
+    }
+    return null;
+  };
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
@@ -480,7 +484,41 @@ function CompressPage({ changePage }) {
         </h1>
         <div className="header-right">
           <button className="icon-btn" title="Уведомления">➤</button>
-          <Link to="/api/profile/" className="auth-btn" style={{ textDecoration: 'none', color: 'inherit' }}>Личный кабинет</Link>
+          <Link to="/api/profile/" style={{ textDecoration: 'none', color: 'inherit' }}>
+                    {user ? (
+                      <>
+                        {getAvatarUrl() ? (
+                          <img 
+                            src={getAvatarUrl()} 
+                            alt="Аватар пользователя" 
+                            className="profile-avatar-img"
+                            style={{
+                              width: '40px',
+                              height: '40px',
+                              borderRadius: '50%',
+                              objectFit: 'cover',
+                              border: '2px solid rgba(255,255,255,0.8)'
+                            }}
+                          />
+                        ) : (
+                          <div className="profile-avatar-default" style={{
+                            width: '40px',
+                            height: '40px',
+                            borderRadius: '50%',
+                            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: '18px',
+                            fontWeight: '700',
+                            color: 'white'
+                          }}>
+                            {user?.username?.charAt(0)?.toUpperCase() || 'U'}
+                          </div>
+                        )}
+                      </>
+                    ) : (user?.username?.charAt(0)?.toUpperCase() || 'U')}
+                  </Link>
         </div>
       </header>
 

@@ -68,6 +68,7 @@ function ProfilePage({ changePage }) {
     });
   };
   
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(localStorage.getItem('token') || '');
   const [showAuthModal, setShowAuthModal] = useState(false);
@@ -159,22 +160,26 @@ function ProfilePage({ changePage }) {
             const data = await response.json();
             setToken(savedToken);
             setUser(data.user);
+            setIsAuthenticated(true);
             localStorage.setItem('userData', JSON.stringify(data.user));
           } else {
             localStorage.removeItem('token');
             localStorage.removeItem('userData');
             setToken('');
             setUser(null);
+            setIsAuthenticated(false);
           }
         } catch (error) {
           localStorage.removeItem('token');
           localStorage.removeItem('userData');
           setToken('');
           setUser(null);
+          setIsAuthenticated(false);
         }
       } else {
         setToken('');
         setUser(null);
+        setIsAuthenticated(false);
       }
       
       setLoadingAuth(false);
@@ -317,6 +322,7 @@ function ProfilePage({ changePage }) {
     setUser(null);
     setMessage('Вы вышли');
     setMessageType('success');
+    setIsAuthenticated(false);
     setTimeout(() => setMessage(''), 3000);
   };
 
@@ -619,7 +625,18 @@ function ProfilePage({ changePage }) {
           <h1 className="logo"><Link to="/" style={{ textDecoration: 'none', color: 'inherit' }}>DocBridge</Link></h1>
           <div className="header-right">
             <button className="icon-btn" title="Уведомления">➤</button>
-            <Link to="/api/profile/" className="auth-btn" style={{ textDecoration: 'none', color: 'inherit', alignSelf: 'center'}}>Личный кабинет</Link>
+            {isAuthenticated ?
+            <button 
+            className="auth-btn"
+            onClick={handleLogout}
+          >
+            Выйти
+          </button> :
+          <Link to="/api/profile/" style={{ textDecoration: 'none', color: 'inherit' }}>
+                    {user?.username?.charAt(0)?.toUpperCase() || 'U'}
+          </Link>
+            }
+            
           </div>
         </header>
 
@@ -779,7 +796,17 @@ function ProfilePage({ changePage }) {
             <span className="notification-badge"></span>
             ➤
           </button>
-          <Link to="/api/profile/" className="auth-btn" style={{ textDecoration: 'none', color: 'inherit' }}>Личный кабинет</Link>
+          {isAuthenticated ?
+            <button 
+            className="auth-btn"
+            onClick={handleLogout}
+          >
+            Выйти
+          </button> :
+          <Link to="/api/profile/" style={{ textDecoration: 'none', color: 'inherit' }}>
+                    {user?.username?.charAt(0)?.toUpperCase() || 'U'}
+          </Link>
+            }
         </div>
       </header>
 

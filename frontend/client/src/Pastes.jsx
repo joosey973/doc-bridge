@@ -38,6 +38,9 @@ import {
   DiGo} from "react-icons/di";
 import { SiSqlite } from "react-icons/si";
 import { FaFileAlt, FaLock } from "react-icons/fa";
+import { 
+  IoTrashOutline 
+} from "react-icons/io5";
 
 const API_URL = 'http://localhost:8000/api';
 
@@ -675,7 +678,41 @@ function Pastes() {
             <span className="notification-badge"></span>
             ➤
           </button>
-          <Link to="/api/profile/" className="auth-btn" style={{ textDecoration: 'none', color: 'inherit' }}>Личный кабинет</Link>
+          <Link to="/api/profile/" style={{ textDecoration: 'none', color: 'inherit' }}>
+                    {user ? (
+                      <>
+                        {getAvatarUrl() ? (
+                          <img 
+                            src={getAvatarUrl()} 
+                            alt="Аватар пользователя" 
+                            className="profile-avatar-img"
+                            style={{
+                              width: '40px',
+                              height: '40px',
+                              borderRadius: '50%',
+                              objectFit: 'cover',
+                              border: '2px solid rgba(255,255,255,0.8)'
+                            }}
+                          />
+                        ) : (
+                          <div className="profile-avatar-default" style={{
+                            width: '40px',
+                            height: '40px',
+                            borderRadius: '50%',
+                            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: '18px',
+                            fontWeight: '700',
+                            color: 'white'
+                          }}>
+                            {user?.username?.charAt(0)?.toUpperCase() || 'U'}
+                          </div>
+                        )}
+                      </>
+                    ) : (user?.username?.charAt(0)?.toUpperCase() || 'U')}
+                  </Link>
         </div>
       </header>
 
@@ -896,7 +933,8 @@ function Pastes() {
                                   onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(220, 53, 69, 0.1)'}
                                   onMouseLeave={(e) => e.currentTarget.style.background = 'none'}
                                 >
-                                  <MdDelete size={18} />
+                                                              <IoTrashOutline size={16} />
+                                  
                                 </button>
                               </>
                             )}
