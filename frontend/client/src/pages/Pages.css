@@ -1,7 +1,7 @@
 :root {
   --bg-color: #ffffff;
   --text-color: #000000;
-  --panel-bg: rgba(0, 0, 0, 0.03);
+  --panel-bg: #ffffff;
   --border-style: 0.5px solid #c4c4c4;
 }
 
@@ -212,6 +212,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  background-color: #ffffff;
 }
 .drop-zone:hover, .drop-zone.dragging, .drop-zone.has-file { border-style: solid; background: rgba(0, 0, 0, 0.158); }
 .drop-zone-icon { font-size: 36px; margin-bottom: 15px; filter: grayscale(1); }
@@ -267,6 +268,26 @@
 .converter-field label, .form-group label { display: block; font-size: 13px; text-transform: uppercase; letter-spacing: 2px; color: #000000; margin-bottom: 8px; font-weight: 500; }
 .format-badge { display: inline-block; padding: 12px 20px; font-weight: 600; font-size: 13px; border: 0.5px solid var(--text-color); text-transform: uppercase; }
 .converter-arrow { font-size: 18px; }
+.link-section {
+  margin-top: 30px;
+  padding: 24px 20px;
+  border-top: 0.5px solid #e2e2e2;
+  border-bottom: 0.5px solid #e2e2e2;
+  background: rgba(255, 255, 255, 0.5);
+}
+.link-label {
+  display: block;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  margin-bottom: 12px;
+  font-weight: 500;
+}
+.link-copy-box {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
 .format-select, .link-input, .form-input { 
   width: 100% !important; 
   padding: 12px !important; 
@@ -283,6 +304,7 @@
 .link-container { margin-top: 20px; padding: 20px; border: 0.5px dashed var(--text-color); }
 .link-box { display: flex; align-items: center; gap: 15px; flex-wrap: wrap; }
 .copy-btn { width: auto; margin-top: 0; padding: 10px 20px; }
+.send-btn { margin-top: 20px; }
 
 /* СИСТЕМНЫЕ СООБЩЕНИЯ */
 .message { padding: 14px 20px; margin-top: 20px; border: var(--border-style); font-size: 12px; text-transform: uppercase; letter-spacing: 1px; }
@@ -407,7 +429,6 @@
   line-height: 1.5;
 }
 
-/* ===== ДЛЯ КОГО ===== */
 .audience-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -1268,6 +1289,20 @@
   font-family: monospace;
 }
 
+.glitch-bg-canvas {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 0;         
+  pointer-events: none; 
+}
+
+.converter-container {
+  position: relative;
+  z-index: 1;
+}
 @media (max-width: 768px) {
   .about-page-grid { grid-template-columns: 1fr; gap: 30px; }
   .about-glass-card { padding: 25px 20px; }

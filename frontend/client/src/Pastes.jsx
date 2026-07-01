@@ -4,7 +4,6 @@ import './Pastes.css';
 import './MainPage.css';
 import { Light as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { atomOneDark } from 'react-syntax-highlighter/dist/esm/styles/hljs';
-import { SlLock } from "react-icons/sl";
 import { ImFileText2 } from "react-icons/im";
 import { VscFolderLibrary } from "react-icons/vsc";
 import { BsPersonWorkspace } from "react-icons/bs";
@@ -71,6 +70,7 @@ function Pastes() {
   const canvasRef = useRef(null);
   const [isHovered, setIsHovered] = useState(false);
   const isHoveredRef = useRef(isHovered);
+ 
   
   useEffect(() => {
     isHoveredRef.current = isHovered;

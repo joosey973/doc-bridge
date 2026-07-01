@@ -1,9 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import './Pages.css';
 import { 
   FaFileAlt, 
   FaFilePdf, 
-  FaFileWord, 
   FaFileImage, 
   FaFileArchive, 
   FaBalanceScale 
@@ -16,15 +15,115 @@ import {
   MdAutorenew, 
   MdInfoOutline 
 } from "react-icons/md";
-import { BsBarChartSteps } from "react-icons/bs";
 
-function CompressPage() {
+function CompressPage({ changePage }) {
   const [selectedFile, setSelectedFile] = useState(null);
   const [filePreview, setFilePreview] = useState(null);
   const [compressLevel, setCompressLevel] = useState('medium');
   const [isDragging, setIsDragging] = useState(false);
   const [message, setMessage] = useState('');
   const [isCompressing, setIsCompressing] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const canvasRef = useRef(null);
+  const [isHovered, setIsHovered] = useState(false);
+  const isHoveredRef = useRef(isHovered);
+  
+    useEffect(() => {
+      isHoveredRef.current = isHovered;
+    }, [isHovered]);
+    useEffect(() => {
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        
+        let animationFrameId;
+        let width = (canvas.width = window.innerWidth);
+        let height = (canvas.height = window.innerHeight);
+    
+        const numDigits = 100; 
+        const digits = [];
+    
+        for (let i = 0; i < numDigits; i++) {
+          digits.push({
+            x: Math.random() * width,
+            y: Math.random() * height,
+            char: Math.random() > 0.5 ? '1' : '0',
+            size: Math.floor(Math.random() * 6) + 12, 
+            glitchX: (Math.random() - 0.5) * 20,
+            glitchY: (Math.random() - 0.5) * 20,
+            tick: 0,
+            tickMax: Math.floor(Math.random() * 15) + 5,
+            speedX: (Math.random() - 0.5) * 2,
+            speedY: (Math.random() - 0.5) * 2
+          });
+        }
+    
+        const handleResize = () => {
+          if (!canvas) return;
+          width = canvas.width = window.innerWidth;
+          height = canvas.height = window.innerHeight;
+        };
+        window.addEventListener('resize', handleResize);
+    
+        const animate = () => {
+          ctx.clearRect(0, 0, width, height);
+          ctx.fillStyle = 'rgba(0, 0, 0, 0.56)'; 
+          
+          const hovered = isHoveredRef.current;
+    
+          digits.forEach((d, idx) => {
+            ctx.font = `700 ${d.size}px monospace`; 
+            
+            if (hovered) {
+              const rows = 8; 
+              const targetY = (idx % rows) * (height / rows) + (height / (rows * 2));
+              
+              d.y += (targetY - d.y) * 0.1;
+              
+              d.tick++;
+              if (d.tick > 5) {
+                d.x += 12;
+                if (Math.random() > 0.85) d.char = d.char === '1' ? '0' : '1';
+                d.tick = 0;
+              }
+    
+              if (idx % rows === 0) {
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.03)';
+                ctx.fillRect(0, targetY + 2, width, 1);
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.22)'; 
+              }
+            } else {
+              d.x += d.speedX;
+              d.y += d.speedY;
+    
+              d.tick++;
+              if (d.tick >= d.tickMax) {
+                d.speedX = (Math.random() - 0.5) * 2;
+                d.speedY = (Math.random() - 0.5) * 2;
+                if (Math.random() > 0.5) d.char = Math.random() > 0.5 ? '1' : '0';
+                d.tick = 0;
+                d.tickMax = Math.floor(Math.random() * 40) + 20;
+              }
+            }
+    
+            if (d.x < 0) d.x = width;
+            if (d.x > width) d.x = 0;
+            if (d.y < 0) d.y = height;
+            if (d.y > height) d.y = 0;
+    
+            ctx.fillText(d.char, d.x, d.y);
+          });
+    
+          animationFrameId = requestAnimationFrame(animate);
+        };
+    
+        animate();
+    
+        return () => {
+          window.removeEventListener('resize', handleResize);
+          cancelAnimationFrame(animationFrameId);
+        };
+      }, []);
 
   // Степени сжатия
   const compressLevels = [
@@ -110,15 +209,52 @@ function CompressPage() {
     return selectedFile.size * (sizes[compressLevel] || 0.7);
   };
 
-  return (
-    <div className="page-container compress-container">
-      <div className="page-card compress-card">
-        <div className="page-header">
-          <h2>Сжатие файлов</h2>
-          <p className="page-subtitle">Загрузите файл и выберите степень сжатия</p>
-        </div>
+  const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
+  const closeSidebar = () => setIsSidebarOpen(false);
 
-        {/* DRAG-AND-DROP ЗОНА */}
+  return (
+    <>
+      <canvas ref={canvasRef} className="glitch-bg-canvas" />
+
+      <header className="page-header-wrapper">
+        <div className="page-header-left">
+          <button 
+            className={`burger-btn-page ${isSidebarOpen ? 'open' : ''}`} 
+            onClick={toggleSidebar}
+          >
+            <span></span>
+            <span></span>
+            <span></span>
+          </button>
+          <h1 className="page-logo" onClick={() => changePage && changePage('main')}>
+            DocBridge
+          </h1>
+        </div>
+        <div className="page-header-right">
+          <button className="page-icon-btn" title="Уведомления">[•]</button>
+          <button className="page-auth-btn">Войти</button>
+        </div>
+      </header>
+
+      <div className={`page-sidebar-overlay ${isSidebarOpen ? 'active' : ''}`} onClick={closeSidebar}></div>
+      <nav className={`page-sidebar ${isSidebarOpen ? 'active' : ''}`}>
+        <button className="page-sidebar-close" onClick={closeSidebar}>✕</button>
+        <ul>
+          <li><a href="#" onClick={(e) => { e.preventDefault(); closeSidebar(); changePage && changePage('main'); }}>Главная</a></li>
+          <li><a href="#">Личный кабинет</a></li>
+          <li><a href="#">О нас</a></li>
+          <li><a href="#">Хранилище</a></li>
+        </ul>
+      </nav>
+
+      <div className="page-container converter-container">
+        <div className="page-card converter-card">
+          <div className="page-header">
+            <h2>Сжатие файлов</h2>
+            <p className="page-subtitle">Загрузите файл и выберите степень сжатия</p>
+          </div>
+
+          {/* DRAG-AND-DROP ЗОНА */}
         <div 
           className={`drop-zone ${isDragging ? 'dragging' : ''} ${selectedFile ? 'has-file' : ''}`}
           onDragOver={handleDragOver}
@@ -223,51 +359,121 @@ function CompressPage() {
           </div>
         )}
 
-        {message && <div className={`message ${message.includes('успешно') || message.includes('завершено') ? 'success' : 'error'}`}>{message}</div>}
-      </div>
-
-      {/* ИНФОРМАЦИОННАЯ КАРТОЧКА */}
-      <div className="info-card">
-        <h3><MdInfoOutline size={20} style={{ marginRight: '6px', verticalAlign: 'middle' }} /> Информация о сжатии</h3>
-        <div className="info-list">
-          <div className="info-item">
-            <span>Максимальный размер</span>
-            <span>100 МБ</span>
-          </div>
-          <div className="info-item">
-            <span>Поддерживаемые форматы</span>
-            <span>PDF, DOCX, JPG, PNG, ZIP</span>
-          </div>
-          <div className="info-item">
-            <span>Степени сжатия</span>
-            <span>Низкая / Средняя / Высокая</span>
-          </div>
+          {message && <div className={`message ${message.includes('успешно') || message.includes('завершено') ? 'success' : 'error'}`}>{message}</div>}
         </div>
 
-        <h4 style={{ marginTop: '16px', color: '#1a1a1a', fontSize: '14px', fontWeight: '500' }}>
-           Рекомендации:
-        </h4>
-        <div className="info-list" style={{ marginTop: '8px' }}>
-          <div className="info-item" style={{ fontSize: '12px' }}>
-            <span><FaFileImage size={14} style={{ marginRight: '6px', verticalAlign: 'middle' ,color: "blue"}} /> Изображения (JPG/PNG)</span>
-            <span>Среднее или высокое</span>
+        {/* ИНФОРМАЦИОННАЯ КАРТОЧКА */}
+        <div className="info-card">
+          <h3><MdInfoOutline size={20} style={{ marginRight: '6px', verticalAlign: 'middle' }} /> Информация о сжатии</h3>
+          <div className="info-list">
+            <div className="info-item">
+              <span>Максимальный размер</span>
+              <span>100 МБ</span>
+            </div>
+            <div className="info-item">
+              <span>Поддерживаемые форматы</span>
+              <span>PDF, DOCX, JPG, PNG, ZIP</span>
+            </div>
+            <div className="info-item">
+              <span>Степени сжатия</span>
+              <span>Низкая / Средняя / Высокая</span>
+            </div>
           </div>
-          <div className="info-item" style={{ fontSize: '12px' }}>
-            <span><FaFilePdf size={14} style={{ marginRight: '6px', verticalAlign: 'middle',color: "red" }} /> Документы (PDF/DOCX)</span>
-            <span>Низкое или среднее</span>
-          </div>
-          <div className="info-item" style={{ fontSize: '12px' }}>
-            <span><FaFileArchive size={14} style={{ marginRight: '6px', verticalAlign: 'middle',color: "orange" }} /> Архивы (ZIP/RAR)</span>
-            <span>Низкое сжатие</span>
+
+          <h4 style={{ marginTop: '16px', color: '#1a1a1a', fontSize: '14px', fontWeight: '500' }}>
+             Рекомендации:
+          </h4>
+          <div className="info-list" style={{ marginTop: '8px' }}>
+            <div className="info-item" style={{ fontSize: '12px' }}>
+              <span><FaFileImage size={14} style={{ marginRight: '6px', verticalAlign: 'middle' ,color: "blue"}} /> Изображения (JPG/PNG)</span>
+              <span>Среднее или высокое</span>
+            </div>
+            <div className="info-item" style={{ fontSize: '12px' }}>
+              <span><FaFilePdf size={14} style={{ marginRight: '6px', verticalAlign: 'middle',color: "red" }} /> Документы (PDF/DOCX)</span>
+              <span>Низкое или среднее</span>
+            </div>
+            <div className="info-item" style={{ fontSize: '12px' }}>
+              <span><FaFileArchive size={14} style={{ marginRight: '6px', verticalAlign: 'middle',color: "orange" }} /> Архивы (ZIP/RAR)</span>
+              <span>Низкое сжатие</span>
+            </div>
           </div>
         </div>
-
-        <p className="info-note">
-          Конвертация пока в разработке — интерфейс готов!
-        </p>
       </div>
-    </div>
+    </>
   );
 }
+      <style>{`
+        /* Стили для холста анимации, чтобы он фиксировался сзади всей страницы */
+        .glitch-bg-canvas {
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100vw;
+          height: 100vh;
+          z-index: -1;
+          pointer-events: none;
+        }
+
+        .custom-select {
+          position: relative;
+          width: 100%;
+        }
+        .custom-select-trigger {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 8px 12px;
+          border: 1px solid #ddd;
+          border-radius: 8px;
+          background: #fff;
+          cursor: pointer;
+          font-size: 13px;
+          min-height: 38px;
+          box-sizing: border-box;
+        }
+        .custom-select-trigger:hover { border-color: #000; }
+        
+        .custom-select-value {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+        }
+        .custom-select-arrow {
+          transition: transform 0.2s;
+          font-size: 16px;
+        }
+        .custom-select-arrow.open { transform: rotate(180deg); }
+        
+        .custom-select-options {
+          position: absolute;
+          top: calc(100% + 4px);
+          left: 0; right: 0;
+          background: #fff;
+          border: 1px solid #ddd;
+          border-radius: 8px;
+          height: 180px;
+          overflow-y: scroll;
+          z-index: 999;
+          box-shadow: 0 8px 24px rgba(229, 217, 217, 0.15);
+        }
+        
+        .custom-select-options::-webkit-scrollbar { width: 6px; }
+        .custom-select-options::-webkit-scrollbar-thumb { background: #ccc; border-radius: 4px; }
+        .custom-select-options::-webkit-scrollbar-track { background: #f1f1f1; }
+
+        .custom-select-option {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          padding: 8px 12px;
+          cursor: pointer;
+          font-size: 13px;
+          transition: background 0.15s;
+        }
+        .custom-select-option:hover { background: #f5f5f5; }
+        .custom-select-option.selected { background: #e8e8e8; font-weight: 600; }
+        
+        .form-row, .form-group, .create-paste, .main-content { overflow: visible !important; }
+      `}</style>
 
 export default CompressPage;

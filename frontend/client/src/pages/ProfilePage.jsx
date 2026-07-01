@@ -8,7 +8,7 @@ import {
 import {  IoIosStarOutline } from "react-icons/io";
 import { GoPencil } from "react-icons/go";
 import { IoTrashOutline } from "react-icons/io5";
-import { CiInboxIn } from "react-icons/ci";
+import { CiInboxIn, CiLock } from "react-icons/ci";
 import { VscDeviceCamera } from "react-icons/vsc";
 const API_URL = 'http://localhost:8000/api';
 
@@ -406,7 +406,7 @@ function ProfilePage({ changePage }) {
       work: '💼', personal: '👤', food: '🍕', study: '📚',
       travel: '✈️', health: '💪', entertainment: '🎬', other: '📌'
     };
-    return icons[catId] || '📌';
+    return icons[catId] || '';
   };
 
   const getCategoryName = (catId) => {
@@ -569,7 +569,7 @@ function ProfilePage({ changePage }) {
 
         <main className="main-content" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
           <div className="profile-card glass-panel" style={{ textAlign: 'center', padding: '60px 20px', maxWidth: '500px', width: '100%' }}>
-            <div style={{ fontSize: '64px', marginBottom: '20px' }}><CiLock><CiLock/></CiLock></div>
+            <div style={{ fontSize: '64px', marginBottom: '20px' }}><CiLock></CiLock></div>
             <h2 style={{ color: '#1a1a1a', marginBottom: '10px' }}>Войдите в аккаунт</h2>
             <p style={{ color: '#666', marginBottom: '24px' }}>Чтобы просмотреть профиль, необходимо авторизоваться</p>
             <button 

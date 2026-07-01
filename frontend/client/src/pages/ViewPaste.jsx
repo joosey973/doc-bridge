@@ -42,14 +42,14 @@ const ViewPastePage = () => {
   const user = location.state?.usr || 'null';
 
   const categories = [
-    { id: 'work', name: '💼 Работа' },
-    { id: 'personal', name: '👤 Личная жизнь' },
-    { id: 'food', name: '🍕 Еда' },
-    { id: 'study', name: '📚 Учеба' },
-    { id: 'travel', name: '✈️ Путешествия' },
-    { id: 'health', name: '💪 Здоровье' },
-    { id: 'entertainment', name: '🎬 Развлечения' },
-    { id: 'other', name: '📌 Другое' },
+    { id: 'work', name: ' Работа' },
+    { id: 'personal', name: ' Личная жизнь' },
+    { id: 'food', name: ' Еда' },
+    { id: 'study', name: 'Учеба' },
+    { id: 'travel', name: ' Путешествия' },
+    { id: 'health', name: ' Здоровье' },
+    { id: 'entertainment', name: ' Развлечения' },
+    { id: 'other', name: ' Другое' },
   ];
 
   const copyToClipboard = async () => {
