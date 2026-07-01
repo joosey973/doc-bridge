@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { Link } from 'react-router-dom';
 import './Pages.css';
 import '../MainPage.css';import { 
   FaFileAlt,
@@ -267,6 +268,44 @@ function DropPage() {
   };
 
   return (
+    <>
+    <canvas ref={canvasRef} className="glitch-bg-canvas" />
+    {isOpen && <div className="background-overlay" onClick={closeMenu}></div>}
+    <button 
+        className={`burger-btn ${isOpen ? 'open' : ''}`} 
+        onClick={() => setIsOpen(!isOpen)}
+      >
+        <span></span><span></span><span></span>
+      </button>
+    
+    <nav className={`sidebar ${isOpen ? 'active' : ''}`}>
+        <ul>
+          <li><a href="/api/profile/" onClick={closeMenu}>Личный кабинет</a></li>
+          <li><a href="/api/converter/" onClick={closeMenu}>Конвертер</a></li>
+          <li><a href="/api/compress/" onClick={closeMenu}>Сжатие</a></li>
+          <li><a href="/api/pastes/" onClick={closeMenu}>Заметки</a></li>
+          {isAuthenticated ? (
+            <li><a href="#" onClick={(e) => { e.preventDefault(); closeMenu(); handleLogout(); }}>Выйти</a></li>
+          ) : (
+            <li><Link to="/" onClick={closeMenu}>Главная</Link></li>
+          )}
+          <li><a href="/api/about/" onClick={closeMenu}>О нас</a></li>
+        </ul>
+      </nav>
+    <div className="drop-page-wrapper" style={{ position: 'relative', zIndex: 1 }}>
+      <header className="top-header">
+          <div className="header-left"></div>
+          <h1 className="logo">
+            <Link to="/" style={{ textDecoration: 'none', color: 'inherit' }}>DocBridge</Link>
+          </h1>
+          <div className="header-right">
+            <button className="icon-btn" title="Уведомления">
+              <span className="notification-badge"></span>
+              ➤
+            </button>
+            <Link to="/api/profile/" className="auth-btn" style={{ textDecoration: 'none', color: 'inherit' }}>Личный кабинет</Link>
+          </div>
+        </header>
     <div className="page-container drop-container">
       <div className="page-card drop-card">
         <div className="page-header">
@@ -401,6 +440,8 @@ function DropPage() {
         </p>
       </div>
     </div>
+    </div>
+    </>
   );
 }
 

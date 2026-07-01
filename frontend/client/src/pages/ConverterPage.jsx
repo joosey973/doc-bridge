@@ -1,75 +1,39 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
 import './Pages.css';
-import '../MainPage.css'; // Подключаем стили MainPage для точного совпадения верстки
-
-const API_URL = 'http://localhost:8000/api';
+import { BsFiletypeCsv } from "react-icons/bs";
+import { 
+  FaRegFilePdf, 
+  FaRegFileWord, 
+  FaRegFileImage, 
+  FaRegFileAlt,
+  FaRegFilePowerpoint,
+  FaRegFileCode,
+  FaFileCsv
+} from "react-icons/fa";
+import { 
+  MdCloudUpload, 
+  MdArrowForward, 
+  MdClose 
+} from "react-icons/md";
 
 function ConverterPage({ changePage }) {
-  // --- Состояния из оригинального ConverterPage ---
   const [selectedFile, setSelectedFile] = useState(null);
   const [filePreview, setFilePreview] = useState(null);
   const [convertFrom, setConvertFrom] = useState('pdf');
   const [convertTo, setConvertTo] = useState('docx');
   const [isDragging, setIsDragging] = useState(false);
   const [message, setMessage] = useState('');
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const canvasRef = useRef(null);
   const [isHovered, setIsHovered] = useState(false);
   const isHoveredRef = useRef(isHovered);
 
-  // --- Состояния синхронизации с MainPage (Header / Меню / Авторизация) ---
-  const [isOpen, setIsOpen] = useState(false); // Состояние бургер-меню из MainPage
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [user, setUser] = useState(null);
-  const navigate = useNavigate();
-
-  const getAvatarUrl = () => {
-    if (user?.avatar) return `http://localhost:8000${user.avatar}`;
-    return null;
-  };
-
   useEffect(() => {
     isHoveredRef.current = isHovered;
   }, [isHovered]);
 
-  // Проверка авторизации (копия логики из MainPage)
-  useEffect(() => {
-    const checkAuth = async () => {
-      const savedToken = localStorage.getItem('token');
-      if (savedToken) {
-        try {
-          const response = await fetch(`${API_URL}/auth/me/`, {
-            headers: { 'Authorization': `Bearer ${savedToken}` }
-          });
-          if (response.ok) {
-            const data = await response.json();
-            setIsAuthenticated(true);
-            setUser(data.user);
-          } else {
-            localStorage.removeItem('token');
-            localStorage.removeItem('userData');
-          }
-        } catch (error) {
-          console.error('❌ Ошибка проверки авторизации:', error);
-        }
-      }
-    };
-    checkAuth();
-  }, []);
-
-  const closeMenu = () => setIsOpen(false);
-
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('userData');
-    setIsAuthenticated(false);
-    setUser(null);
-    navigate('/');
-    window.location.reload();
-  };
-
-  // --- Анимация Канваса (оставлена оригинальная из ConverterPage) ---
+  // Эффект анимации матрицы/глитча
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -164,23 +128,66 @@ function ConverterPage({ changePage }) {
     };
   }, []);
 
-  // --- Логика работы с форматами и файлами (оставлена без изменений) ---
+  // === ФОРМАТЫ ===
   const formats = {
-    pdf: ['docx', 'txt', 'jpg', 'png'],
-    docx: ['pdf', 'txt'],
-    jpg: ['png', 'pdf'],
-    png: ['jpg', 'pdf'],
-    txt: ['pdf', 'docx'],
+    pdf: ['docx', 'txt', 'jpg', 'png', 'pptx'],
+    docx: ['pdf', 'txt', 'odt'],
+    jpg: ['png', 'pdf', 'webp'],
+    png: ['jpg', 'pdf', 'webp'],
+    txt: ['pdf', 'docx', 'xml', 'csv'],
+    pptx: ['pdf', 'jpg', 'png'],
+    xml: ['txt', 'csv'],
+    csv: ['txt'],
+    webp: ['jpg', 'png', 'pdf'],
+    odt: ['docx', 'pdf', 'txt'],
+  };
+
+  // Поддерживаемые расширения для валидации
+  const validExtensions = [
+    'pdf', 'docx', 'jpg', 'jpeg', 'png', 'txt',
+    'pptx', 'xml', 'csv', 'webp', 'odt'
+  ];
+
+  // ===== ИКОНКИ =====
+  const getFileIcon = (format, size = 18) => {
+    const icons = {
+      pdf: <FaRegFilePdf size={size} />,
+      docx: <FaRegFileWord size={size} />,
+      odt: <FaRegFileWord size={size} />,
+      jpg: <FaRegFileImage size={size} />,
+      png: <FaRegFileImage size={size} />,
+      webp: <FaRegFileImage size={size} />,
+      txt: <FaRegFileAlt size={size} />,
+      pptx: <FaRegFilePowerpoint size={size} />,
+      xml: <FaRegFileCode size={size} />,
+      csv: <BsFiletypeCsv size={size} />,  // ← только эта не Regular
+    };
+    return icons[format] || <FaRegFileAlt size={size} />;
+  };
+
+  const getFormatLabel = (format) => {
+    const labels = {
+      pdf: 'PDF',
+      docx: 'DOCX',
+      jpg: 'JPG',
+      png: 'PNG',
+      txt: 'TXT',
+      pptx: 'PPTX',
+      xml: 'XML',
+      csv: 'CSV',
+      webp: 'WEBP',
+      odt: 'ODT'
+    };
+    return labels[format] || format.toUpperCase();
   };
 
   const handleFileSelect = (file) => {
     if (!file) return;
 
-    const validExtensions = ['pdf', 'docx', 'jpg', 'jpeg', 'png', 'txt'];
     const ext = file.name.split('.').pop().toLowerCase();
 
     if (!validExtensions.includes(ext)) {
-      setMessage('> Поддерживаются только: PDF, DOCX, JPG, PNG, TXT');
+      setMessage(`> Поддерживаются только: PDF, DOCX, JPG, PNG, TXT, PPTX, XML, CSV, WEBP, ODT`);
       setTimeout(() => setMessage(''), 3000);
       return;
     }
@@ -239,7 +246,7 @@ function ConverterPage({ changePage }) {
 
     setMessage(`~ Конвертация ${selectedFile.name} из ${convertFrom.toUpperCase()} в ${convertTo.toUpperCase()}... (заглушка)`);
     setTimeout(() => {
-      setMessage(`+ Конвертация завершена! (UI-заглушка, логику добавит другой разработчик)`);
+      setMessage(`+ Конвертация завершена! (UI-заглушка)`);
     }, 2000);
   };
 
@@ -249,192 +256,154 @@ function ConverterPage({ changePage }) {
     return (bytes / 1048576).toFixed(1) + ' MB';
   };
 
-  const getFileIcon = (format) => {
-    const icons = {
-      pdf: '[PDF]',
-      docx: '[DOC]',
-      jpg: '[JPG]',
-      png: '[PNG]',
-      txt: '[TXT]'
-    };
-    return icons[format] || '[FILE]';
-  };
+  const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
+  const closeSidebar = () => setIsSidebarOpen(false);
 
   return (
     <>
-      {/* КАНВАС С ЦИФРАМИ - НА ФОНЕ */}
       <canvas ref={canvasRef} className="glitch-bg-canvas" />
 
-      {/* Оверлей для сайдбара из MainPage */}
-      {isOpen && <div className="background-overlay" onClick={closeMenu}></div>}
+      <header className="page-header-wrapper">
+        <div className="page-header-left">
+          <button 
+            className={`burger-btn-page ${isSidebarOpen ? 'open' : ''}`} 
+            onClick={toggleSidebar}
+          >
+            <span></span>
+            <span></span>
+            <span></span>
+          </button>
+          <h1 className="page-logo" onClick={() => changePage && changePage('main')}>
+            DocBridge
+          </h1>
+        </div>
+        <div className="page-header-right">
+          <button className="page-icon-btn" title="Уведомления">[•]</button>
+          <button className="page-auth-btn">Войти</button>
+        </div>
+      </header>
 
-      {/* ТОЧНО ТАКАЯ ЖЕ БУРГЕР-КНОПКА КАК В MAIN PAGE */}
-      <button 
-        className={`burger-btn ${isOpen ? 'open' : ''}`} 
-        onClick={() => setIsOpen(!isOpen)}
-      >
-        <span></span><span></span><span></span>
-      </button>
-
-      {/* ТОЧНО ТАКОЙ ЖЕ САЙДБАР КАК В MAIN PAGE (с заменой Конвертера на переходы на Главную) */}
-      <nav className={`sidebar ${isOpen ? 'active' : ''}`}>
+      <div className={`page-sidebar-overlay ${isSidebarOpen ? 'active' : ''}`} onClick={closeSidebar}></div>
+      <nav className={`page-sidebar ${isSidebarOpen ? 'active' : ''}`}>
+        <button className="page-sidebar-close" onClick={closeSidebar}>✕</button>
         <ul>
-          <li><a href="/api/profile/" onClick={closeMenu}>Личный кабинет</a></li>
-          {isAuthenticated ? (
-            <li><a href="#" onClick={(e) => { e.preventDefault(); closeMenu(); handleLogout(); }}>Выйти</a></li>
-          ) : (
-            <li><Link to="/" onClick={closeMenu}>Главная</Link></li>
-          )}
-          <li><a href="/api/compress/" onClick={closeMenu}>Сжатие</a></li>
-          <li><a href="/api/pastes/" onClick={closeMenu}>Заметки</a></li>
-          <li><a href="/api/droppage/" onClick={closeMenu}>Файлообменник</a></li>
-          <li><a href="/api/about/" onClick={closeMenu}>О нас</a></li>
+          <li><a href="#" onClick={(e) => { e.preventDefault(); closeSidebar(); changePage && changePage('main'); }}>Главная</a></li>
+          <li><a href="#">Личный кабинет</a></li>
+          <li><a href="#">О нас</a></li>
+          <li><a href="#">Хранилище</a></li>
         </ul>
       </nav>
 
-      {/* ВСЁ ОСТАЛЬНОЕ ПОВЕРХ */}
-      <div className="converter-page-wrapper" style={{ position: 'relative', zIndex: 1 }}>
-
-        {/* ТОЧНО ТАКОЙ ЖЕ HEADER КАК В MAIN PAGE */}
-        <header className="top-header">
-          <div className="header-left"></div>
-          <h1 className="logo">
-            <Link to="/" style={{ textDecoration: 'none', color: 'inherit' }}>DocBridge</Link>
-          </h1>
-          <div className="header-right">
-            <button className="icon-btn" title="Уведомления">
-              <span className="notification-badge"></span>
-              ➤
-            </button>
-            <Link to="/api/profile/" className="auth-btn" style={{ textDecoration: 'none', color: 'inherit' }}>Личный кабинет</Link>
+      <div className="page-container converter-container">
+        <div className="page-card converter-card">
+          <div className="page-header">
+            <h2>Конвертер файлов</h2>
+            <p className="page-subtitle">Загрузите файл и выберите формат для конвертации</p>
           </div>
-        </header>
 
-        {/* ОСНОВНОЙ КОНТЕНТ CONVERTER PAGE БЕЗ ИЗМЕНЕНИЙ */}
-        <div className="page-container converter-container">
-          <div className="page-card converter-card">
-            <div className="page-header">
-              <h2>Конвертер файлов</h2>
-              <p className="page-subtitle">Загрузите файл и выберите формат для конвертации</p>
-            </div>
-
-            <div 
-              className={`drop-zone ${isDragging ? 'dragging' : ''} ${selectedFile ? 'has-file' : ''}`}
-              onDragOver={handleDragOver}
-              onDragLeave={handleDragLeave}
-              onDrop={handleDrop}
-              onClick={() => document.getElementById('converterFileInput').click()}
-            >
-              <input
-                type="file"
-                id="converterFileInput"
-                style={{ display: 'none' }}
-                onChange={handleFileInput}
-                accept=".pdf,.docx,.jpg,.jpeg,.png,.txt"
-              />
-              
-              {!selectedFile ? (
-                <>
-                  <div className="drop-zone-icon">[+]</div>
-                  <h3>Перетащите файл сюда</h3>
-                  <p>или нажмите для выбора</p>
-                  <div className="supported-formats">
-                    Поддерживаемые форматы: PDF, DOCX, JPG, PNG, TXT
-                  </div>
-                </>
-              ) : (
-                <div className="file-preview">
-                  <div className="file-icon" style={{ color: '#666' }}>
-                    {getFileIcon(filePreview?.format)}
-                  </div>
-                  <div className="file-info">
-                    <div className="file-name">{filePreview?.name}</div>
-                    <div className="file-details">
-                      <span className="file-format">{filePreview?.format?.toUpperCase()}</span>
-                      <span className="file-size">{formatFileSize(filePreview?.size)}</span>
-                    </div>
-                  </div>
-                  <button 
-                    className="file-remove"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setSelectedFile(null);
-                      setFilePreview(null);
-                    }}
-                  >
-                    ✕
-                  </button>
+          <div 
+            className={`drop-zone ${isDragging ? 'dragging' : ''} ${selectedFile ? 'has-file' : ''}`}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+            onClick={() => document.getElementById('converterFileInput').click()}
+          >
+            <input
+              type="file"
+              id="converterFileInput"
+              style={{ display: 'none' }}
+              onChange={handleFileInput}
+              accept=".pdf,.docx,.jpg,.jpeg,.png,.txt,.pptx,.xml,.csv,.webp,.odt"
+            />
+            
+            {!selectedFile ? (
+              <>
+                <div className="drop-zone-icon"><MdCloudUpload size={48} style={{ color: '#667eea' }} /></div>
+                <h3>Перетащите файл сюда</h3>
+                <p>или нажмите для выбора</p>
+                <div className="supported-formats">
+                  Поддерживаемые форматы: PDF, DOCX, JPG, PNG, TXT, PPTX, XML, CSV, WEBP, ODT
                 </div>
-              )}
-            </div>
-
-            {selectedFile && (
-              <div className="converter-options">
-                <div className="converter-row">
-                  <div className="converter-field">
-                    <label>Исходный формат</label>
-                    <div className="format-badge from">
-                      {getFileIcon(convertFrom)} {convertFrom.toUpperCase()}
-                    </div>
-                  </div>
-
-                  <div className="converter-arrow">→</div>
-
-                  <div className="converter-field">
-                    <label>Формат для конвертации</label>
-                    <select 
-                      value={convertTo} 
-                      onChange={(e) => setConvertTo(e.target.value)}
-                      className="format-select"
-                    >
-                      {formats[convertFrom]?.map((fmt) => (
-                        <option key={fmt} value={fmt}>
-                          {getFileIcon(fmt)} {fmt.toUpperCase()}
-                        </option>
-                      ))}
-                      {(!formats[convertFrom] || formats[convertFrom].length === 0) && (
-                        <option value="txt">[TXT] TXT</option>
-                      )}
-                    </select>
+              </>
+            ) : (
+              <div className="file-preview">
+                <div className="file-icon" style={{ color: '#666' }}>
+                  {getFileIcon(filePreview?.format, 32)}
+                </div>
+                <div className="file-info">
+                  <div className="file-name">{filePreview?.name}</div>
+                  <div className="file-details">
+                    <span className="file-format">{filePreview?.format?.toUpperCase()}</span>
+                    <span className="file-size">{formatFileSize(filePreview?.size)}</span>
                   </div>
                 </div>
-
-                <button className="convert-btn" onClick={handleConvert}>
-                  [→] Конвертировать
+                <button 
+                  className="file-remove"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSelectedFile(null);
+                    setFilePreview(null);
+                  }}
+                >
+                  <MdClose size={18} />
                 </button>
               </div>
             )}
-
-            {message && <div className={`message ${message.includes('+') ? 'success' : 'error'}`}>{message}</div>}
           </div>
 
-          <div className="info-card">
-            <h3>Поддерживаемые форматы</h3>
-            <div className="format-list">
-              <div className="info-item">
-                <span>PDF</span>
-                <span>→ DOCX, TXT, JPG, PNG</span>
+          {selectedFile && (
+            <div className="converter-options">
+              <div className="converter-row">
+                <div className="converter-field">
+                  <label>Исходный формат</label>
+                  <div className="format-badge from" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                    {getFileIcon(convertFrom)} {getFormatLabel(convertFrom)}
+                  </div>
+                </div>
+
+                <div className="converter-arrow"><MdArrowForward size={20} style={{ color: '#888' }} /></div>
+
+                <div className="converter-field">
+                  <label>Формат для конвертации</label>
+                  <select 
+                    value={convertTo} 
+                    onChange={(e) => setConvertTo(e.target.value)}
+                    className="format-select"
+                  >
+                    {formats[convertFrom]?.map((fmt) => (
+                      <option key={fmt} value={fmt}>
+                        {getFileIcon(fmt)} {getFormatLabel(fmt)}
+                      </option>
+                    ))}
+                    {(!formats[convertFrom] || formats[convertFrom].length === 0) && (
+                      <option value="txt">{getFileIcon('txt')} TXT</option>
+                    )}
+                  </select>
+                </div>
               </div>
-              <div className="info-item">
-                <span>DOCX</span>
-                <span>→ PDF, TXT</span>
-              </div>
-              <div className="info-item">
-                <span>JPG</span>
-                <span>→ PNG, PDF</span>
-              </div>
-              <div className="info-item">
-                <span>PNG</span>
-                <span>→ JPG, PDF</span>
-              </div>
-              <div className="info-item">
-                <span>TXT</span>
-                <span>→ PDF, DOCX</span>
-              </div>
+
+              <button className="convert-btn" onClick={handleConvert} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                <MdArrowForward size={18} /> Конвертировать
+              </button>
             </div>
-            <p className="info-note">
-              * Конвертация пока в разработке — интерфейс готов!
-            </p>
+          )}
+
+          {message && <div className={`message ${message.includes('+') ? 'success' : 'error'}`}>{message}</div>}
+        </div>
+
+        <div className="info-card">
+          <h3>Поддерживаемые форматы</h3>
+          <div className="format-list">
+            <div className="info-item"><span>{getFileIcon('pdf')} PDF</span><span>→ DOCX, TXT, JPG, PNG, PPTX</span></div>
+            <div className="info-item"><span>{getFileIcon('docx')} DOCX</span><span>→ PDF, TXT, ODT</span></div>
+            <div className="info-item"><span>{getFileIcon('jpg')} JPG</span><span>→ PNG, PDF, WEBP</span></div>
+            <div className="info-item"><span>{getFileIcon('png')} PNG</span><span>→ JPG, PDF, WEBP</span></div>
+            <div className="info-item"><span>{getFileIcon('txt')} TXT</span><span>→ PDF, DOCX, XML, CSV</span></div>
+            <div className="info-item"><span>{getFileIcon('pptx')} PPTX</span><span>→ PDF, JPG, PNG</span></div>
+            <div className="info-item"><span>{getFileIcon('xml')} XML</span><span>→ TXT, CSV</span></div>
+            <div className="info-item"><span>{getFileIcon('csv')} CSV</span><span>→ TXT</span></div>
+            <div className="info-item"><span>{getFileIcon('webp')} WEBP</span><span>→ JPG, PNG, PDF</span></div>
+            <div className="info-item"><span>{getFileIcon('odt')} ODT</span><span>→ DOCX, PDF, TXT</span></div>
           </div>
         </div>
       </div>

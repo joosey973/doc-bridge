@@ -602,15 +602,24 @@ function ProfilePage({ changePage }) {
           <span></span>
         </button>
 
+      <nav className={`sidebar ${isOpen ? 'active' : ''}`}>
+        <ul>
+          <li><Link to="/" onClick={closeMenu}>Главная</Link></li>
+          <li><Link to="/api/converter/" onClick={closeMenu}>Конвертер</Link></li>
+          <li><Link to="/api/compress/" onClick={closeMenu}>Сжатие</Link></li>
+          <li><Link to="/api/pastes/" onClick={closeMenu}>Заметки</Link></li>
+          <li><Link to="/api/droppage/" onClick={closeMenu}>Файлообменник</Link></li>
+          <li><Link to="/api/about/" onClick={closeMenu}>О нас</Link></li>
+        </ul>
+      </nav>
+
+
         <header className="top-header">
           <div className="header-left"></div>
           <h1 className="logo"><Link to="/" style={{ textDecoration: 'none', color: 'inherit' }}>DocBridge</Link></h1>
           <div className="header-right">
-            <button className="icon-btn" title="Уведомления">
-              <span className="notification-badge"></span>
-              <MdNotifications size={18} />
-            </button>
-            <Link to="/api/profile/" className="auth-btn" style={{ textDecoration: 'none', color: 'inherit' }}>Личный кабинет</Link>
+            <button className="icon-btn" title="Уведомления">➤</button>
+            <Link to="/api/profile/" className="auth-btn" style={{ textDecoration: 'none', color: 'inherit', alignSelf: 'center'}}>Личный кабинет</Link>
           </div>
         </header>
 

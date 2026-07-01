@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { Link } from 'react-router-dom';
 import './Pages.css';
 import { 
   FaRegFileAlt, 
@@ -448,37 +449,49 @@ function CompressPage({ changePage }) {
   return (
     <>
       <canvas ref={canvasRef} className="glitch-bg-canvas" />
-
-      <header className="page-header-wrapper">
-        <div className="page-header-left">
-          <button 
-            className={`burger-btn-page ${isSidebarOpen ? 'open' : ''}`} 
-            onClick={toggleSidebar}
-          >
-            <span></span>
-            <span></span>
-            <span></span>
-          </button>
-          <h1 className="page-logo" onClick={() => changePage && changePage('main')}>
-            DocBridge
-          </h1>
+      {/* <header className="top-header">
+        <div className="header-left"></div>
+        <h1 className="logo">
+          <Link to="/" style={{ textDecoration: 'none', color: 'inherit' }}>DocBridge</Link>
+        </h1>
+        <div className="header-right">
+          <button className="icon-btn" title="Уведомления">➤</button>
+          <Link to="/api/profile/" className="auth-btn" style={{ textDecoration: 'none', color: 'inherit' }}>Личный кабинет</Link>
         </div>
-        <div className="page-header-right">
-          <button className="page-icon-btn" title="Уведомления">[•]</button>
-          <button className="page-auth-btn" onClick={isAuthenticated ? handleLogout : () => setShowAuthModal(true)}>
-            {isAuthenticated ? 'Выйти' : 'Войти'}
-          </button>
+      </header> */}
+
+       <canvas ref={canvasRef} className="glitch-bg-canvas" />
+
+      {isSidebarOpen && <div className="background-overlay" onClick={closeSidebar}></div>}
+
+      <button 
+        className={`burger-btn ${isSidebarOpen ? 'open' : ''}`} 
+        onClick={toggleSidebar}
+      >
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+
+      <header className="top-header">
+        <div className="header-left"></div>
+        <h1 className="logo">
+          <Link to="/" style={{ textDecoration: 'none', color: 'inherit' }}>DocBridge</Link>
+        </h1>
+        <div className="header-right">
+          <button className="icon-btn" title="Уведомления">➤</button>
+          <Link to="/api/profile/" className="auth-btn" style={{ textDecoration: 'none', color: 'inherit' }}>Личный кабинет</Link>
         </div>
       </header>
 
-      <div className={`page-sidebar-overlay ${isSidebarOpen ? 'active' : ''}`} onClick={closeSidebar}></div>
-      <nav className={`page-sidebar ${isSidebarOpen ? 'active' : ''}`}>
-        <button className="page-sidebar-close" onClick={closeSidebar}><MdClose size={20} /></button>
+      <nav className={`sidebar ${isSidebarOpen ? 'active' : ''}`}>
         <ul>
-          <li><a href="#" onClick={(e) => { e.preventDefault(); closeSidebar(); changePage && changePage('main'); }}>Главная</a></li>
-          <li><a href="#">Личный кабинет</a></li>
-          <li><a href="#">О нас</a></li>
-          <li><a href="#">Хранилище</a></li>
+          <li><Link to="/api/profile/" onClick={closeSidebar}>Личный кабинет</Link></li>
+          <li><Link to="/" onClick={closeSidebar}>Главная</Link></li>
+          <li><Link to="/api/converter/" onClick={closeSidebar}>Конвертер</Link></li>
+          <li><Link to="/api/compress/" onClick={closeSidebar}>Сжатие</Link></li>
+          <li><Link to="/api/droppage/" onClick={closeSidebar}>Файлообменник</Link></li>
+          <li><Link to="/api/about/" onClick={closeSidebar}>О нас</Link></li>
         </ul>
       </nav>
 
@@ -499,7 +512,7 @@ function CompressPage({ changePage }) {
             <input
               type="file"
               id="compressFileInput"
-              ref={fileInputRef} // Добавляем реф
+              ref={fileInputRef}
               style={{ display: 'none' }}
               onChange={handleFileInput}
             />
