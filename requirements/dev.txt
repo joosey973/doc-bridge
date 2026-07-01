@@ -2,4 +2,7 @@ Django==6.0.6
 django-cors-headers==4.9.0
 djangorestframework==3.17.1
 djangorestframework_simplejwt==5.5.1
+python-docx==1.2.0
+dotenv==0.9.9
 pillow==12.2.0
+PyPDF2==3.0.1

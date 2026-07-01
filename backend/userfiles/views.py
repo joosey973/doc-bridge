@@ -104,7 +104,7 @@ class ViewFiles(APIView):
                 except FileNotFoundError:
                     pass
                 except OSError as e:
-                    print(f"Ошибка при удалении папки: {e}")
+                    raise ValueError(f"Ошибка при удалении папки: {e}")
                 return Response(
                     {'error': 'Не удалось загрузить файлы'},
                     status=status.HTTP_400_BAD_REQUEST
@@ -160,7 +160,7 @@ class DownloadFiles(APIView):
                         if file_path.exists():
                             myzip.write(file_path, arcname=file_info['name'])
                         else:
-                            print(f"File not found: {file_path}")
+                            raise (f"File not found: {file_path}")
             else:
                 with open(zip_path, 'rb') as existing_zip:
                     zip_buffer.write(existing_zip.read())

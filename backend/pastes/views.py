@@ -62,7 +62,6 @@ class PasteViewPaste(PasteEditDelete, APIView):
         pass
 
 
-
 class IncrementView(APIView):
     permission_classes = [AllowAny]
     authentication_classes = [JWTAuthentication]
@@ -70,7 +69,6 @@ class IncrementView(APIView):
     def post(self, request, paste_id):
         try:
             paste = get_object_or_404(Pastes, id=paste_id)
-            print(request.user, paste.user)
             if request.user != paste.user:
                 paste.views = (paste.views or 0) + 1
                 paste.save(update_fields=['views'])

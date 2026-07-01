@@ -1095,69 +1095,6 @@ function Pastes() {
           </div>
         </div>
       )}
-      
-<style>{`
-        .custom-select {
-          position: relative;
-          width: 100%;
-        }
-        .custom-select-trigger {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          padding: 8px 12px;
-          border: 1px solid #ddd;
-          border-radius: 8px;
-          background: #fff;
-          cursor: pointer;
-          font-size: 13px;
-          min-height: 38px;
-          box-sizing: border-box;
-        }
-        .custom-select-trigger:hover { border-color: #000; }
-        
-        .custom-select-value {
-          display: flex;
-          align-items: center;
-          gap: 6px;
-        }
-        .custom-select-arrow {
-          transition: transform 0.2s;
-          font-size: 16px;
-        }
-        .custom-select-arrow.open { transform: rotate(180deg); }
-        
-        .custom-select-options {
-          position: absolute;
-          top: calc(100% + 4px);
-          left: 0; right: 0;
-          background: #fff;
-          border: 1px solid #ddd;
-          border-radius: 8px;
-          height: 180px;
-          overflow-y: scroll;
-          z-index: 999;
-          box-shadow: 0 8px 24px rgba(0,0,0,0.15);
-        }
-        
-        .custom-select-options::-webkit-scrollbar { width: 6px; }
-        .custom-select-options::-webkit-scrollbar-thumb { background: #ccc; border-radius: 4px; }
-        .custom-select-options::-webkit-scrollbar-track { background: #f1f1f1; }
-
-        .custom-select-option {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          padding: 8px 12px;
-          cursor: pointer;
-          font-size: 13px;
-          transition: background 0.15s;
-        }
-        .custom-select-option:hover { background: #f5f5f5; }
-        .custom-select-option.selected { background: #e8e8e8; font-weight: 600; }
-        
-        .form-row, .form-group, .create-paste, .main-content { overflow: visible !important; }
-      `}</style>
     </div>
   );
 }

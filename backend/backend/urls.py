@@ -10,6 +10,7 @@ urlpatterns = [
     path('api/auth/', include('users.urls')),
     path('api/profile/', include('userprofile.urls')),
     path('api/droppage/', include('userfiles.urls')),
+    path('api/compress/', include('compress.urls')),
     path('admin/', admin.site.urls),
 ]
 

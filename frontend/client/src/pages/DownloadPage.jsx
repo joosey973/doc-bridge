@@ -149,7 +149,7 @@ function DownloadPage() {
         window.URL.revokeObjectURL(url);
     }
       } else {
-        alert('⚠️ Сервер не отвечает, скачивается тестовый файл');
+        alert('Сервер не отвечает, скачивается тестовый файл');
         const content = `Тестовый файл для демонстрации\n\nКод файла: ${fileCode}\nДата: ${new Date().toLocaleString()}`;
         const blob = new Blob([content], { type: 'text/plain' });
         const url = window.URL.createObjectURL(blob);
@@ -162,7 +162,7 @@ function DownloadPage() {
         window.URL.revokeObjectURL(url);
       }
     } catch (err) {
-      alert('⚠️ Ошибка скачивания, создаётся тестовый файл');
+      alert('Ошибка скачивания, создаётся тестовый файл');
       const content = `Тестовый файл для демонстрации\n\nКод файла: ${fileCode}\nДата: ${new Date().toLocaleString()}`;
       const blob = new Blob([content], { type: 'text/plain' });
       const url = window.URL.createObjectURL(blob);
