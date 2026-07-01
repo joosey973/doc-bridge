@@ -46,105 +46,105 @@ function DropPage() {
   const [authError, setAuthError] = useState('');
   const [loadingAuth, setLoadingAuth] = useState(true);
   
-    const handleLogout = () => {
-      localStorage.removeItem('token');
-      localStorage.removeItem('userData');
-      setIsAuthenticated(false);
-      setUser(null);
-      window.location.reload();
-    };
-  
-    const handleLogin = async (e) => {
-      e.preventDefault();
-      setAuthError('');
-      try {
-        const isEmail = authForm.login.includes('@');
-        const loginData = { password: authForm.password };
-        if (isEmail) loginData.email = authForm.login;
-        else loginData.username = authForm.login;
-        
-        const response = await fetch(`${API_URL}/auth/login/`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(loginData)
-        });
-        
-        if (response.ok) {
-          const data = await response.json();
-          localStorage.setItem('token', data.token);
-          localStorage.setItem('userData', JSON.stringify(data.user));
-          window.location.reload();
-        } else {
-          const error = await response.json();
-          setAuthError(error.message || 'Неверный логин или пароль');
-        }
-      } catch (error) {
-        setAuthError('Ошибка при входе');
-      }
-    };
-  
-    const handleRegister = async (e) => {
-      e.preventDefault();
-      setAuthError('');
-      if (authForm.password !== authForm.passwordConfirm) {
-        setAuthError('❌ Пароли не совпадают!');
-        return;
-      }
-      try {
-        const response = await fetch(`${API_URL}/auth/register/`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            username: authForm.username,
-            email: authForm.email,
-            password: authForm.password,
-            password_confirm: authForm.passwordConfirm 
-          })
-        });
-        if (response.ok) {
-          const data = await response.json();
-          localStorage.setItem('token', data.token);
-          localStorage.setItem('userData', JSON.stringify(data.user));
-          window.location.reload();
-        } else {
-          const error = await response.json();
-          const errorMessages = Object.values(error.errors).flat().join(', ');
-          setAuthError(errorMessages || 'Ошибка регистрации');
-        }
-      } catch (error) {
-        setAuthError('Ошибка при регистрации');
-      }
-    };
-  
   useEffect(() => {
-          const checkAuth = async () => {
-            const savedToken = localStorage.getItem('token');
-            if (savedToken) {
-              try {
-                const response = await fetch(`${API_URL}/auth/me/`, {
-                  headers: { 'Authorization': `Bearer ${savedToken}` }
-                });
-                if (response.ok) {
-                  const data = await response.json();
-                  setIsAuthenticated(true);
-                  setUser(data.user);
-                  localStorage.setItem('userData', JSON.stringify(data.user));
-                } else {
-                  localStorage.removeItem('token');
-                  localStorage.removeItem('userData');
-                }
-              } catch (error) {
-                console.error('❌ Ошибка проверки авторизации:', error);
+        const checkAuth = async () => {
+          const savedToken = localStorage.getItem('token');
+          if (savedToken) {
+            try {
+              const response = await fetch(`${API_URL}/auth/me/`, {
+                headers: { 'Authorization': `Bearer ${savedToken}` }
+              });
+              if (response.ok) {
+                const data = await response.json();
+                setIsAuthenticated(true);
+                setUser(data.user);
+                localStorage.setItem('userData', JSON.stringify(data.user));
+              } else {
                 localStorage.removeItem('token');
                 localStorage.removeItem('userData');
               }
+            } catch (error) {
+              console.error('❌ Ошибка проверки авторизации:', error);
+              localStorage.removeItem('token');
+              localStorage.removeItem('userData');
             }
-            setLoadingAuth(false);
-          };
-          checkAuth();
-        }, []);
-
+          }
+          setLoadingAuth(false);
+        };
+        checkAuth();
+      }, []);
     
+      const closeMenu = () => setIsOpen(false);
+    
+      const handleLogout = () => {
+        localStorage.removeItem('token');
+        localStorage.removeItem('userData');
+        setIsAuthenticated(false);
+        setUser(null);
+        window.location.reload();
+      };
+    
+      const handleLogin = async (e) => {
+        e.preventDefault();
+        setAuthError('');
+        try {
+          const isEmail = authForm.login.includes('@');
+          const loginData = { password: authForm.password };
+          if (isEmail) loginData.email = authForm.login;
+          else loginData.username = authForm.login;
+          
+          const response = await fetch(`${API_URL}/auth/login/`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(loginData)
+          });
+          
+          if (response.ok) {
+            const data = await response.json();
+            localStorage.setItem('token', data.token);
+            localStorage.setItem('userData', JSON.stringify(data.user));
+            window.location.reload();
+          } else {
+            const error = await response.json();
+            setAuthError(error.message || 'Неверный логин или пароль');
+          }
+        } catch (error) {
+          setAuthError('Ошибка при входе');
+        }
+      };
+    
+      const handleRegister = async (e) => {
+        e.preventDefault();
+        setAuthError('');
+        if (authForm.password !== authForm.passwordConfirm) {
+          setAuthError('❌ Пароли не совпадают!');
+          return;
+        }
+        try {
+          const response = await fetch(`${API_URL}/auth/register/`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              username: authForm.username,
+              email: authForm.email,
+              password: authForm.password,
+              password_confirm: authForm.passwordConfirm 
+            })
+          });
+          if (response.ok) {
+            const data = await response.json();
+            localStorage.setItem('token', data.token);
+            localStorage.setItem('userData', JSON.stringify(data.user));
+            window.location.reload();
+          } else {
+            const error = await response.json();
+            const errorMessages = Object.values(error.errors).flat().join(', ');
+            setAuthError(errorMessages || 'Ошибка регистрации');
+          }
+        } catch (error) {
+          setAuthError('Ошибка при регистрации');
+        }
+      };
 
   const handleFilesSelect = (files) => {
     if (!files || files.length === 0) return;
@@ -218,37 +218,44 @@ function DropPage() {
   };
 
   const handleUpload = async (files) => {
-    if (selectedFiles.length === 0) return;
-    setUploading(true);
-    setMessage('Загрузка файлов на сервер...');
+  if (selectedFiles.length === 0) return;
+  setUploading(true);
+  setMessage('Загрузка файлов на сервер...');
 
-    const formData = new FormData();
+  const formData = new FormData();
+  files.forEach((file, index) => {
+    formData.append(`file_${index + 1}`, file);
+  });
 
-    files.forEach((file, index) => {
-      formData.append(`file_${index + 1}`, file);
+  // Получаем токен из localStorage
+  const token = localStorage.getItem('token');
+  
+  try {
+    const response = await fetch(`${API_URL}/droppage/`, {
+      method: 'POST',
+      body: formData,
+      headers: token ? {
+        'Authorization': `Bearer ${token}`
+      } : {}, // Если нет токена, отправляем без заголовка
     });
-
-    formData.append('user', user || 'Аноним');
-    try {
-      const response = await fetch(`${API_URL}/droppage/`, {
-        method: 'POST',
-        body: formData,
-      });
-      const data = await response.json();
-      if (response.ok)
-      {
-        setTimeout(() => {
+    
+    const data = await response.json();
+    if (response.ok) {
+      setTimeout(() => {
         setUploading(false);
         setFileLink(`${WEBPAGE_URL}${data.code}/`);
         setMessage(`${selectedFiles.length} файл(ов) успешно загружены! Ссылка сгенерирована.`);
       }, 2000);
-      }
-      
-    } catch (error)
-    {
-
+    } else {
+      setUploading(false);
+      setMessage(data.error || 'Ошибка загрузки');
     }
-  };
+  } catch (error) {
+    setUploading(false);
+    setMessage('Ошибка при загрузке файлов');
+    console.error('Upload error:', error);
+  }
+};
 
   const handleSendEmail = () => {
     if (!recipient) {
@@ -372,7 +379,7 @@ function DropPage() {
 
         {fileLink && (
           <div className="link-section">
-            <div className="link-label">Ваша ссылка готова:</div>
+            <div className="link-label" style={{marginTop: '10px', marginBottom: '10px'}}>Ваша ссылка готова:</div>
             <div className="link-copy-box">
               <input type="text" className="link-input" value={fileLink} readOnly />
               <button 
@@ -386,36 +393,6 @@ function DropPage() {
                 Копировать
               </button>
             </div>
-
-            <div className="form-group" style={{ marginTop: '20px' }}>
-              <label>КОМУ ОТПРАВИТЬ:</label>
-              <input
-                type="text"
-                className="form-input"
-                value={recipient}
-                onChange={(e) => setRecipient(e.target.value)}
-                placeholder="E-mail или SMS-номер"
-              />
-            </div>
-
-            <div className="form-group">
-              <label>ОТ КОГО:</label>
-              <input
-                type="text"
-                className="form-input"
-                value={sender}
-                onChange={(e) => setSender(e.target.value)}
-                placeholder="Имя или E-mail"
-              />
-            </div>
-
-          <button 
-            className="send-btn" 
-            onClick={handleSendEmail}
-            disabled={selectedFiles.length === 0 || !recipient || !sender}
-          >
-            Отправить ссылку
-          </button>
         </div>
         )}
 
@@ -436,7 +413,7 @@ function DropPage() {
           </div>
           <div className="info-item">
             <span>Отправка</span>
-            <span>Email</span>
+            <span>Ссылка</span>
           </div>
         </div>
         <p className="info-note">

@@ -15,7 +15,7 @@ from django.http import FileResponse, HttpResponse
 from django.utils import timezone
 
 from userfiles.models import FileUpload
-from userfiles.serializers import DroppageSerializer
+from users.serializers import UserSerializer
 import utils
 
 class DroppageView(APIView):
@@ -98,6 +98,7 @@ class ViewFiles(APIView):
         if timezone.now() - files.created_at > datetime.timedelta(days=7):
             path = django.conf.settings.MEDIA_ROOT / f'uploads/{files.code}'
             if os.path.exists(path):
+                files.delete()
                 try:
                     shutil.rmtree(path)
                 except FileNotFoundError:
@@ -117,7 +118,7 @@ class ViewFiles(APIView):
         date = datetime.datetime.strftime(files.created_at, '%d.%m.%Y')
         expires_at = files.created_at + datetime.timedelta(days=7)
         expires_at = datetime.datetime.strftime(expires_at, '%d.%m.%Y')
-        data = {'size': file_size, 'count': len(files.files), 'created_at': date, 'user': files.user, 'expires_at': expires_at, 'files': files.files, 'code': files.code}
+        data = {'size': file_size, 'count': len(files.files), 'created_at': date, 'user': UserSerializer(files.user).data, 'expires_at': expires_at, 'files': files.files, 'code': files.code}
         return Response({
             'data': data,
         }, status=status.HTTP_200_OK)

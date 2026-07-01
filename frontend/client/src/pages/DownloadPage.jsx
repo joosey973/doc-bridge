@@ -92,27 +92,19 @@ function DownloadPage() {
         const response = await fetch(`${API_URL}/droppage/${fileCode}/`);
         if (response.ok) {
           const data = await response.json();
+          console.log(data.data)
           setFileData(data.data);;
           setFilePreviews(data.data.files);
+          setError(null);
         } else {
-          console.log('🔧 Сервер вернул ошибку, используем мок-данные');
-          setFileData({
-            filename: `${fileCode}_document.pdf`,
-            size: 1024000,
-            upload_date: new Date().toISOString(),
-            uploader: 'Тестовый пользователь',
-            expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
-          });
+          setError('Истек срок хранения или файлы не были созданы');
+          setFileData(null);
+          setFilePreviews([]);
         }
       } catch (err) {
-        console.log('🔧 Ошибка подключения, используем мок-данные');
-        setFileData({
-          filename: `${fileCode}_document.pdf`,
-          size: 1024000,
-          upload_date: new Date().toISOString(),
-          uploader: 'Тестовый пользователь',
-          expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
-        });
+        setError('Истек срок хранения или файлы не были созданы');
+        setFileData(null);
+        setFilePreviews([]);
       } finally {
         setLoading(false);
       }
@@ -323,7 +315,7 @@ function DownloadPage() {
                 <CiCalendarDate size={16} /> {fileData?.created_at}
               </span>
               <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                <MdPerson size={16} /> {fileData?.user || 'Аноним'}
+                <MdPerson size={16} /> {fileData?.user.username || 'Аноним'}
               </span>
             </div>
 
@@ -335,6 +327,7 @@ function DownloadPage() {
                 fontSize: '14px',
                 display: 'inline-flex',
                 alignItems: 'center',
+                justifyContent: 'center',
                 gap: '10px'
               }}
             >
@@ -371,7 +364,7 @@ function DownloadPage() {
               </div>
               <div className="info-item">
                 <span><MdPerson size={12} style={{ marginRight: '6px' }} /> Загрузил</span>
-                <span>{fileData?.user || 'Аноним'}</span>
+                <span>{fileData?.user.username || 'Аноним'}</span>
               </div>
               <div className="info-item">
                 <span><CiCalendarDate size={12} style={{ marginRight: '6px' }} /> Дата загрузки</span>

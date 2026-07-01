@@ -103,7 +103,6 @@ useEffect(() => {
   };
 }, [loadingAuth]);
 
-  // Проверка авторизации при монтировании
   useEffect(() => {
     const checkAuth = async () => {
       const savedToken = localStorage.getItem('token');

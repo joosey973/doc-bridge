@@ -2,7 +2,6 @@ import { useParams, useNavigate, useLocation, Link } from 'react-router-dom';
 import { useState, useEffect, useRef } from 'react';
 import './EditPastePage.css';
 
-// ===== ИКОНКИ =====
 import { 
   MdOutlineWorkOutline,
   MdAccessTime,
@@ -68,7 +67,6 @@ const ViewPastePage = () => {
   const location = useLocation();
   const from = location.state?.from || 'main';
   
-  // Данные пасты
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [language, setLanguage] = useState('javascript');
@@ -79,7 +77,6 @@ const ViewPastePage = () => {
   const token = localStorage.getItem('token');
   const user = location.state?.usr || 'null';
 
-  // ===== КАТЕГОРИИ С REACT-ИКОНКАМИ =====
   const categories = [
     { id: 'work', name: 'Работа', icon: <MdOutlineWorkOutline size={16} /> },
     { id: 'personal', name: 'Личная жизнь', icon: <BsPersonWorkspace size={16} /> },

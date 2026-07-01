@@ -3,7 +3,6 @@ import { Link, useNavigate } from 'react-router-dom';
 import './Pages.css';
 import '../MainPage.css';
 
-// ===== ИКОНКИ =====
 import { 
   MdOutlineWorkOutline,
   MdAccessTime,
@@ -76,7 +75,6 @@ function ProfilePage({ changePage }) {
     email: ''
   });
   const [authError, setAuthError] = useState('');
-  const isAuthenticated = !!user && !!token;
 
   const closeMenu = () => setIsOpen(false);
 
