@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import './Pages.css';
 import { 
   FaFileAlt, 
@@ -17,6 +18,8 @@ import {
 } from "react-icons/md";
 
 function CompressPage({ changePage }) {
+  const navigate = useNavigate();
+  const API_URL = 'http://localhost:8000/api';
   const [selectedFile, setSelectedFile] = useState(null);
   const [filePreview, setFilePreview] = useState(null);
   const [compressLevel, setCompressLevel] = useState('medium');
@@ -24,6 +27,8 @@ function CompressPage({ changePage }) {
   const [message, setMessage] = useState('');
   const [isCompressing, setIsCompressing] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [user, setUser] = useState(null);
   const canvasRef = useRef(null);
   const [isHovered, setIsHovered] = useState(false);
   const isHoveredRef = useRef(isHovered);
@@ -125,6 +130,35 @@ function CompressPage({ changePage }) {
         };
       }, []);
 
+    useEffect(() => {
+      const checkAuth = async () => {
+        const savedToken = localStorage.getItem('token');
+        if (savedToken) {
+          try {
+            const response = await fetch(`${API_URL}/auth/me/`, {
+              headers: { 'Authorization': `Bearer ${savedToken}` }
+            });
+            if (response.ok) {
+              const data = await response.json();
+              setIsAuthenticated(true);
+              setUser(data.user);
+            } else {
+              localStorage.removeItem('token');
+              localStorage.removeItem('userData');
+            }
+          } catch (error) {
+            console.error('Ошибка проверки авторизации:', error);
+          }
+        }
+      };
+      checkAuth();
+    }, []);
+
+    const getAvatarUrl = () => {
+      if (user?.avatar) return `http://localhost:8000${user.avatar}`;
+      return null;
+    };
+
   // Степени сжатия
   const compressLevels = [
     { id: 'low', label: 'Низкое сжатие (быстро)', icon: <MdSpeed size={18} />, desc: 'Минимальное сжатие, высокая скорость' },
@@ -216,34 +250,36 @@ function CompressPage({ changePage }) {
     <>
       <canvas ref={canvasRef} className="glitch-bg-canvas" />
 
-      <header className="page-header-wrapper">
-        <div className="page-header-left">
-          <button 
-            className={`burger-btn-page ${isSidebarOpen ? 'open' : ''}`} 
-            onClick={toggleSidebar}
-          >
-            <span></span>
-            <span></span>
-            <span></span>
-          </button>
-          <h1 className="page-logo" onClick={() => changePage && changePage('main')}>
-            DocBridge
-          </h1>
-        </div>
-        <div className="page-header-right">
-          <button className="page-icon-btn" title="Уведомления">[•]</button>
-          <button className="page-auth-btn">Войти</button>
+      {isSidebarOpen && <div className="background-overlay" onClick={closeSidebar}></div>}
+
+      <button 
+        className={`burger-btn ${isSidebarOpen ? 'open' : ''}`} 
+        onClick={toggleSidebar}
+      >
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+
+      <header className="top-header">
+        <div className="header-left"></div>
+        <h1 className="logo">
+          <Link to="/" style={{ textDecoration: 'none', color: 'inherit' }}>DocBridge</Link>
+        </h1>
+        <div className="header-right">
+          <button className="icon-btn" title="Уведомления">➤</button>
+          <Link to="/api/profile/" className="auth-btn" style={{ textDecoration: 'none', color: 'inherit' }}>Личный кабинет</Link>
         </div>
       </header>
 
-      <div className={`page-sidebar-overlay ${isSidebarOpen ? 'active' : ''}`} onClick={closeSidebar}></div>
-      <nav className={`page-sidebar ${isSidebarOpen ? 'active' : ''}`}>
-        <button className="page-sidebar-close" onClick={closeSidebar}>✕</button>
+      <nav className={`sidebar ${isSidebarOpen ? 'active' : ''}`}>
         <ul>
-          <li><a href="#" onClick={(e) => { e.preventDefault(); closeSidebar(); changePage && changePage('main'); }}>Главная</a></li>
-          <li><a href="#">Личный кабинет</a></li>
-          <li><a href="#">О нас</a></li>
-          <li><a href="#">Хранилище</a></li>
+          <li><Link to="/api/profile/" onClick={closeSidebar}>Личный кабинет</Link></li>
+          <li><Link to="/" onClick={closeSidebar}>Главная</Link></li>
+          <li><Link to="/api/converter/" onClick={closeSidebar}>Конвертер</Link></li>
+          <li><Link to="/api/compress/" onClick={closeSidebar}>Сжатие</Link></li>
+          <li><Link to="/api/droppage/" onClick={closeSidebar}>Файлообменник</Link></li>
+          <li><Link to="/api/about/" onClick={closeSidebar}>О нас</Link></li>
         </ul>
       </nav>
 

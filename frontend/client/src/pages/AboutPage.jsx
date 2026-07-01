@@ -249,14 +249,13 @@ function AboutPage() {
             <span className="notification-badge"></span>
             ➤
           </button>
-          <button className="auth-btn" onClick={isAuthenticated ? handleLogout : () => setShowAuthModal(true)}>
-            {isAuthenticated ? 'Выйти' : 'Войти'}
-          </button>
+          <Link to="/api/profile/" className="auth-btn" style={{ textDecoration: 'none', color: 'inherit' }}>Личный кабинет</Link>
         </div>
       </header>
 
       <nav className={`sidebar ${isOpen ? 'active' : ''}`}>
         <ul>
+          <li><Link to="/api/profile/" onClick={closeMenu}>Личный кабинет</Link></li>
           <li><Link to="/" onClick={closeMenu}>Главная</Link></li>
           <li><Link to="/api/converter/" onClick={closeMenu}>Конвертер</Link></li>
           <li><Link to="/api/compress/" onClick={closeMenu}>Сжатие</Link></li>
