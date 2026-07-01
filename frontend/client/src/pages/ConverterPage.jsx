@@ -7,14 +7,16 @@ import {
   FaRegFileImage, 
   FaRegFileAlt,
   FaRegFilePowerpoint,
-  FaRegFileCode,
-  FaFileCsv
+  FaRegFileCode
 } from "react-icons/fa";
 import { 
   MdCloudUpload, 
   MdArrowForward, 
-  MdClose 
+  MdClose,
+  MdAutorenew
 } from "react-icons/md";
+
+const API_URL = 'http://localhost:8000/api';
 
 function ConverterPage({ changePage }) {
   const [selectedFile, setSelectedFile] = useState(null);
@@ -24,6 +26,22 @@ function ConverterPage({ changePage }) {
   const [isDragging, setIsDragging] = useState(false);
   const [message, setMessage] = useState('');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isConverting, setIsConverting] = useState(false);
+  const [convertedFile, setConvertedFile] = useState(null);
+  
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [user, setUser] = useState(null);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [isLoginMode, setIsLoginMode] = useState(true);
+  const [authForm, setAuthForm] = useState({ 
+    login: '',
+    password: '',
+    passwordConfirm: '',
+    username: '',
+    email: ''
+  });
+  const [authError, setAuthError] = useState('');
+  const [loadingAuth, setLoadingAuth] = useState(true);
 
   const canvasRef = useRef(null);
   const [isHovered, setIsHovered] = useState(false);
@@ -33,7 +51,104 @@ function ConverterPage({ changePage }) {
     isHoveredRef.current = isHovered;
   }, [isHovered]);
 
-  // Эффект анимации матрицы/глитча
+  useEffect(() => {
+    const checkAuth = async () => {
+      const savedToken = localStorage.getItem('token');
+      if (savedToken) {
+        try {
+          const response = await fetch(`${API_URL}/auth/me/`, {
+            headers: { 'Authorization': `Bearer ${savedToken}` }
+          });
+          if (response.ok) {
+            const data = await response.json();
+            setIsAuthenticated(true);
+            setUser(data.user);
+            localStorage.setItem('userData', JSON.stringify(data.user));
+          } else {
+            localStorage.removeItem('token');
+            localStorage.removeItem('userData');
+          }
+        } catch (error) {
+          console.error('❌ Ошибка проверки авторизации:', error);
+          localStorage.removeItem('token');
+          localStorage.removeItem('userData');
+        }
+      }
+      setLoadingAuth(false);
+    };
+    checkAuth();
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('userData');
+    setIsAuthenticated(false);
+    setUser(null);
+    window.location.reload();
+  };
+
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setAuthError('');
+    try {
+      const isEmail = authForm.login.includes('@');
+      const loginData = { password: authForm.password };
+      if (isEmail) loginData.email = authForm.login;
+      else loginData.username = authForm.login;
+      
+      const response = await fetch(`${API_URL}/auth/login/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(loginData)
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('userData', JSON.stringify(data.user));
+        window.location.reload();
+      } else {
+        const error = await response.json();
+        setAuthError(error.message || 'Неверный логин или пароль');
+      }
+    } catch (error) {
+      setAuthError('Ошибка при входе');
+    }
+  };
+
+  const handleRegister = async (e) => {
+    e.preventDefault();
+    setAuthError('');
+    if (authForm.password !== authForm.passwordConfirm) {
+      setAuthError('❌ Пароли не совпадают!');
+      return;
+    }
+    try {
+      const response = await fetch(`${API_URL}/auth/register/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          username: authForm.username,
+          email: authForm.email,
+          password: authForm.password,
+          password_confirm: authForm.passwordConfirm 
+        })
+      });
+      if (response.ok) {
+        const data = await response.json();
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('userData', JSON.stringify(data.user));
+        window.location.reload();
+      } else {
+        const error = await response.json();
+        const errorMessages = Object.values(error.errors).flat().join(', ');
+        setAuthError(errorMessages || 'Ошибка регистрации');
+      }
+    } catch (error) {
+      setAuthError('Ошибка при регистрации');
+    }
+  };
+
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -128,39 +243,36 @@ function ConverterPage({ changePage }) {
     };
   }, []);
 
-  // === ФОРМАТЫ ===
   const formats = {
-    pdf: ['docx', 'txt', 'jpg', 'png', 'pptx'],
+    pdf: ['docx', 'txt', 'jpg', 'png', 'jpeg', 'pptx'],
     docx: ['pdf', 'txt', 'odt'],
-    jpg: ['png', 'pdf', 'webp'],
-    png: ['jpg', 'pdf', 'webp'],
-    txt: ['pdf', 'docx', 'xml', 'csv'],
+    jpg: ['png', 'pdf', 'webp', 'jpeg'],
+    jpeg: ['png', 'pdf', 'webp', 'jpg'],
+    png: ['jpg', 'pdf', 'webp', 'jpeg'],
+    txt: ['pdf', 'docx', 'csv'],
     pptx: ['pdf', 'jpg', 'png'],
-    xml: ['txt', 'csv'],
     csv: ['txt'],
-    webp: ['jpg', 'png', 'pdf'],
+    webp: ['jpg', 'png', 'pdf', 'jpeg'],
     odt: ['docx', 'pdf', 'txt'],
   };
 
-  // Поддерживаемые расширения для валидации
   const validExtensions = [
     'pdf', 'docx', 'jpg', 'jpeg', 'png', 'txt',
-    'pptx', 'xml', 'csv', 'webp', 'odt'
+    'pptx', 'csv', 'webp', 'odt'
   ];
 
-  // ===== ИКОНКИ =====
   const getFileIcon = (format, size = 18) => {
     const icons = {
       pdf: <FaRegFilePdf size={size} />,
       docx: <FaRegFileWord size={size} />,
       odt: <FaRegFileWord size={size} />,
       jpg: <FaRegFileImage size={size} />,
+      jpeg: <FaRegFileImage size={size} />,
       png: <FaRegFileImage size={size} />,
       webp: <FaRegFileImage size={size} />,
       txt: <FaRegFileAlt size={size} />,
       pptx: <FaRegFilePowerpoint size={size} />,
-      xml: <FaRegFileCode size={size} />,
-      csv: <BsFiletypeCsv size={size} />,  // ← только эта не Regular
+      csv: <BsFiletypeCsv size={size} />,
     };
     return icons[format] || <FaRegFileAlt size={size} />;
   };
@@ -171,9 +283,9 @@ function ConverterPage({ changePage }) {
       docx: 'DOCX',
       jpg: 'JPG',
       png: 'PNG',
+      jpeg: 'JPEG',
       txt: 'TXT',
       pptx: 'PPTX',
-      xml: 'XML',
       csv: 'CSV',
       webp: 'WEBP',
       odt: 'ODT'
@@ -187,16 +299,16 @@ function ConverterPage({ changePage }) {
     const ext = file.name.split('.').pop().toLowerCase();
 
     if (!validExtensions.includes(ext)) {
-      setMessage(`> Поддерживаются только: PDF, DOCX, JPG, PNG, TXT, PPTX, XML, CSV, WEBP, ODT`);
+      setMessage(`> Поддерживаются только: PDF, DOCX, JPG, PNG, JPEG, TXT, PPTX, CSV, WEBP, ODT`);
       setTimeout(() => setMessage(''), 3000);
       return;
     }
 
     let format = ext;
-    if (ext === 'jpeg') format = 'jpg';
 
     setSelectedFile(file);
     setConvertFrom(format);
+    setConvertedFile(null); 
 
     setFilePreview({
       name: file.name,
@@ -237,17 +349,103 @@ function ConverterPage({ changePage }) {
     handleFileSelect(file);
   };
 
-  const handleConvert = () => {
+  const handleConvert = async () => {
     if (!selectedFile) {
       setMessage('> Сначала загрузите файл!');
       setTimeout(() => setMessage(''), 3000);
       return;
     }
 
-    setMessage(`~ Конвертация ${selectedFile.name} из ${convertFrom.toUpperCase()} в ${convertTo.toUpperCase()}... (заглушка)`);
-    setTimeout(() => {
-      setMessage(`+ Конвертация завершена! (UI-заглушка)`);
-    }, 2000);
+    setIsConverting(true);
+    setMessage('~ Отправка на сервер...');
+
+    const formData = new FormData();
+    formData.append('file', selectedFile);
+    formData.append('from_format', convertFrom);
+    formData.append('to_format', convertTo);
+    formData.append('file_type', selectedFile.name.split('.').pop().toLowerCase());
+
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_URL}/converter/`, {
+        method: 'POST',
+        body: formData,
+        headers: token ? {
+          'Authorization': `Bearer ${token}`
+        } : {},
+      });
+
+      const contentType = response.headers.get('content-type');
+      
+      if (response.ok && contentType && contentType.includes('application/octet-stream')) {
+        const originalSize = response.headers.get('X-Original-Size');
+        const convertedSize = response.headers.get('X-Converted-Size');
+        const fromFormat = response.headers.get('X-From-Format');
+        const toFormat = response.headers.get('X-To-Format');
+        
+        const contentDisposition = response.headers.get('content-disposition');
+        let filename = `${selectedFile.name.replace(/\.[^.]+$/, '')}.${convertTo}`;
+        if (contentDisposition) {
+          const match = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+          if (match && match[1]) {
+            filename = match[1].replace(/['"]/g, '');
+          }
+        }
+        
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        window.URL.revokeObjectURL(url);
+        
+        setIsConverting(false);
+        setMessage(`✅ Файл сконвертирован! (${fromFormat || convertFrom.toUpperCase()} → ${toFormat || convertTo.toUpperCase()})`);
+        
+        setConvertedFile({
+          name: filename,
+          size: parseInt(convertedSize) || blob.size,
+          originalSize: parseInt(originalSize) || selectedFile.size,
+          downloadUrl: url
+        });
+        
+      } else {
+        const data = await response.json();
+        setIsConverting(false);
+        setMessage(`❌ ${data.error || 'Ошибка конвертации'}`);
+      }
+    } catch (error) {
+      setIsConverting(false);
+      setMessage('❌ Ошибка подключения к серверу');
+      console.error('Convert error:', error);
+    }
+  };
+
+  const handleDownload = () => {
+    if (!convertedFile) return;
+
+    if (convertedFile.downloadUrl) {
+      window.open(convertedFile.downloadUrl, '_blank');
+    } else {
+      const content = `Конвертированный файл: ${convertedFile.name}\nИсходный формат: ${convertFrom.toUpperCase()}\nЦелевой формат: ${convertTo.toUpperCase()}\nИсходный размер: ${formatFileSize(convertedFile.originalSize)}\nРазмер: ${formatFileSize(convertedFile.size)}\n\nЭто демонстрационный файл. Реальная конвертация будет добавлена позже.`;
+      const blob = new Blob([content], { type: 'text/plain' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = convertedFile.name;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    }
+    
+    setMessage('✅ Файл скачан!');
+    setTimeout(() => setMessage(''), 3000);
   };
 
   const formatFileSize = (bytes) => {
@@ -279,7 +477,9 @@ function ConverterPage({ changePage }) {
         </div>
         <div className="page-header-right">
           <button className="page-icon-btn" title="Уведомления">[•]</button>
-          <button className="page-auth-btn">Войти</button>
+          <button className="page-auth-btn" onClick={isAuthenticated ? handleLogout : () => setShowAuthModal(true)}>
+            {isAuthenticated ? 'Выйти' : 'Войти'}
+          </button>
         </div>
       </header>
 
@@ -313,7 +513,7 @@ function ConverterPage({ changePage }) {
               id="converterFileInput"
               style={{ display: 'none' }}
               onChange={handleFileInput}
-              accept=".pdf,.docx,.jpg,.jpeg,.png,.txt,.pptx,.xml,.csv,.webp,.odt"
+              accept=".pdf,.docx,.jpg,.jpeg,.png,.txt,.pptx,.csv,.webp,.odt"
             />
             
             {!selectedFile ? (
@@ -322,7 +522,7 @@ function ConverterPage({ changePage }) {
                 <h3>Перетащите файл сюда</h3>
                 <p>или нажмите для выбора</p>
                 <div className="supported-formats">
-                  Поддерживаемые форматы: PDF, DOCX, JPG, PNG, TXT, PPTX, XML, CSV, WEBP, ODT
+                  Поддерживаемые форматы: PDF, DOCX, JPG, PNG, JPEG, TXT, PPTX, CSV, WEBP, ODT
                 </div>
               </>
             ) : (
@@ -343,6 +543,7 @@ function ConverterPage({ changePage }) {
                     e.stopPropagation();
                     setSelectedFile(null);
                     setFilePreview(null);
+                    setConvertedFile(null);
                   }}
                 >
                   <MdClose size={18} />
@@ -351,7 +552,7 @@ function ConverterPage({ changePage }) {
             )}
           </div>
 
-          {selectedFile && (
+          {selectedFile && !convertedFile && (
             <div className="converter-options">
               <div className="converter-row">
                 <div className="converter-field">
@@ -382,104 +583,74 @@ function ConverterPage({ changePage }) {
                 </div>
               </div>
 
-              <button className="convert-btn" onClick={handleConvert} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-                <MdArrowForward size={18} /> Конвертировать
+              <button 
+                className="convert-btn" 
+                onClick={handleConvert}
+                disabled={isConverting}
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+              >
+                {isConverting ? (
+                  <>
+                    <MdAutorenew size={18} className="spinner-animation" style={{ marginRight: '8px' }} /> Обработка...
+                  </>
+                ) : (
+                  <>
+                    <MdArrowForward size={18} /> Конвертировать
+                  </>
+                )}
               </button>
             </div>
           )}
 
-          {message && <div className={`message ${message.includes('+') ? 'success' : 'error'}`}>{message}</div>}
+          {convertedFile && (
+            <div className="convert-result">
+              <div className="result-info">
+                <div className="result-row">
+                  <span>Исходный формат:</span>
+                  <span className="result-value">{convertFrom.toUpperCase()}</span>
+                </div>
+                <div className="result-row">
+                  <span>Целевой формат:</span>
+                  <span className="result-value">{convertTo.toUpperCase()}</span>
+                </div>
+                <div className="result-row">
+                  <span>Исходный размер:</span>
+                  <span className="result-value">{formatFileSize(convertedFile.originalSize)}</span>
+                </div>
+                <div className="result-row">
+                  <span>Размер после конвертации:</span>
+                  <span className="result-value result-success">{formatFileSize(convertedFile.size)}</span>
+                </div>
+              </div>
+              <button 
+                className="download-btn" 
+                onClick={handleDownload}
+              >
+                <MdArrowForward size={16} style={{ marginRight: '8px' }} /> Скачать сконвертированный файл
+              </button>
+            </div>
+          )}
+
+          {message && <div className={`message ${message.includes('+') || message.includes('✅') ? 'success' : 'error'}`}>{message}</div>}
         </div>
 
         <div className="info-card">
           <h3>Поддерживаемые форматы</h3>
           <div className="format-list">
-            <div className="info-item"><span>{getFileIcon('pdf')} PDF</span><span>→ DOCX, TXT, JPG, PNG, PPTX</span></div>
+            <div className="info-item"><span>{getFileIcon('pdf')} PDF</span><span>→ DOCX, TXT, JPG, PNG, PPTX, JPEG</span></div>
             <div className="info-item"><span>{getFileIcon('docx')} DOCX</span><span>→ PDF, TXT, ODT</span></div>
-            <div className="info-item"><span>{getFileIcon('jpg')} JPG</span><span>→ PNG, PDF, WEBP</span></div>
-            <div className="info-item"><span>{getFileIcon('png')} PNG</span><span>→ JPG, PDF, WEBP</span></div>
-            <div className="info-item"><span>{getFileIcon('txt')} TXT</span><span>→ PDF, DOCX, XML, CSV</span></div>
+            <div className="info-item"><span>{getFileIcon('jpg')} JPG</span><span>→ PNG, PDF, WEBP, JPEG</span></div>
+            <div className="info-item"><span>{getFileIcon('jpeg')} JPEG</span><span>→ PNG, PDF, WEBP</span></div>
+            <div className="info-item"><span>{getFileIcon('png')} PNG</span><span>→ JPG, PDF, WEBP, JPEG</span></div>
+            <div className="info-item"><span>{getFileIcon('txt')} TXT</span><span>→ PDF, DOCX, CSV</span></div>
             <div className="info-item"><span>{getFileIcon('pptx')} PPTX</span><span>→ PDF, JPG, PNG</span></div>
-            <div className="info-item"><span>{getFileIcon('xml')} XML</span><span>→ TXT, CSV</span></div>
             <div className="info-item"><span>{getFileIcon('csv')} CSV</span><span>→ TXT</span></div>
-            <div className="info-item"><span>{getFileIcon('webp')} WEBP</span><span>→ JPG, PNG, PDF</span></div>
+            <div className="info-item"><span>{getFileIcon('webp')} WEBP</span><span>→ JPG, PNG, PDF, JPEG</span></div>
             <div className="info-item"><span>{getFileIcon('odt')} ODT</span><span>→ DOCX, PDF, TXT</span></div>
           </div>
         </div>
       </div>
 
-      <style>{`
-        .glitch-bg-canvas {
-          position: fixed;
-          top: 0;
-          left: 0;
-          width: 100vw;
-          height: 100vh;
-          z-index: -1;
-          pointer-events: none;
-        }
-
-        .custom-select {
-          position: relative;
-          width: 100%;
-        }
-        .custom-select-trigger {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          padding: 8px 12px;
-          border: 1px solid #ddd;
-          border-radius: 8px;
-          background: #fff;
-          cursor: pointer;
-          font-size: 13px;
-          min-height: 38px;
-          box-sizing: border-box;
-        }
-        .custom-select-trigger:hover { border-color: #000; }
-        
-        .custom-select-value {
-          display: flex;
-          align-items: center;
-          gap: 6px;
-        }
-        .custom-select-arrow {
-          transition: transform 0.2s;
-          font-size: 16px;
-        }
-        .custom-select-arrow.open { transform: rotate(180deg); }
-        
-        .custom-select-options {
-          position: absolute;
-          top: calc(100% + 4px);
-          left: 0; right: 0;
-          background: #fff;
-          border: 1px solid #ddd;
-          border-radius: 8px;
-          height: 180px;
-          overflow-y: scroll;
-          z-index: 999;
-          box-shadow: 0 8px 24px rgba(229, 217, 217, 0.15);
-        }
-        
-        .custom-select-options::-webkit-scrollbar { width: 6px; }
-        .custom-select-options::-webkit-scrollbar-thumb { background: #ccc; border-radius: 4px; }
-        .custom-select-options::-webkit-scrollbar-track { background: #f1f1f1; }
-
-        .custom-select-option {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          padding: 8px 12px;
-          cursor: pointer;
-          font-size: 13px;
-          transition: background 0.15s;
-        }
-        .custom-select-option:hover { background: #f5f5f5; }
-        .custom-select-option.selected { background: #e8e8e8; font-weight: 600; }
-        
-        .form-row, .form-group, .create-paste, .main-content { overflow: visible !important; }
-      `}</style>
     </>
   );
 }

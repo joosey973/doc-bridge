@@ -29,8 +29,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'compress',
+    'dropfiles',
     'pastes',
-    'userfiles',
     'userprofile',
     'users',
 ]
@@ -139,7 +139,7 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 
-STATIC_ROOT = 'static'
+STATIC_ROOT = '/static/'
 
 
 MEDIA_URL = '/media/'

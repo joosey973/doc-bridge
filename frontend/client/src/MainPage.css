@@ -14,23 +14,22 @@ html, body {
   overflow-x: hidden;
 }
 
-/* Сайдбар — убираем transform, используем только left */
 .sidebar {
   position: fixed;
   top: 0;
-  left: -300px;        /* скрыт за экраном */
+  left: -300px;       
   width: 300px;
   height: 100vh;
   background-color: #ffffff;
   padding: 100px 40px;
-  transition: left 0.4s cubic-bezier(0.25, 1, 0.5, 1);  /* анимируем left */
+  transition: left 0.4s cubic-bezier(0.25, 1, 0.5, 1);  
   z-index: 90;
   box-shadow: 10px 0 30px rgba(0, 0, 0, 0.05);
   border-right: 1px solid #e2e2e2;
 }
 
 .sidebar.active {
-  left: 0;             /* выезжает — никакого transform */
+  left: 0;
 }
 
 .glitch-bg-canvas {
@@ -43,7 +42,6 @@ html, body {
   z-index: 0;
 }
 
-/* ОВЕРЛЕЙ ДЛЯ РАЗМЫТИЯ ФОНА */
 .background-overlay {
   position: fixed;
   top: 0;
@@ -58,7 +56,6 @@ html, body {
   transition: opacity 0.3s ease;
 }
 
-/* --- КНОПКА БУРГЕРА --- */
 .burger-btn {
   position: fixed;
   top: 30px;
@@ -101,7 +98,6 @@ html, body {
 
 .sidebar ul li a:hover { opacity: 0.5; }
 
-/* --- ВЕРХНЯЯ ПАНЕЛЬ (ШАПКА) --- */
 .top-header {
   min-height: 80px;
   display: flex;
@@ -174,12 +170,11 @@ html, body {
   color: #ffffff;
 }
 
-/* --- ОСНОВНОЙ КОНТЕНТ --- */
 .main-content { 
-  height: calc(100vh - 80px); /* Высота ровно в экран минус шапка */
+  height: calc(100vh - 80px);
   width: 100%; 
   z-index: 1;
-  flex-shrink: 0; /* Чтобы футер не сжимал контентную сетку */
+  flex-shrink: 0;
 }
 
 .buttons-grid { 
@@ -248,7 +243,7 @@ html, body {
   border-top: 0.5px solid #e2e2e2; 
   background-color: #ffffff;
   z-index: 10;
-  flex-shrink: 0; /* Защита от сжатия */
+  flex-shrink: 0;
 }
 
 .footer-buttons { display: flex; gap: 20px; }
@@ -268,12 +263,9 @@ html, body {
   .main-content { height: auto; }
   .buttons-grid { grid-template-columns: 1fr; grid-template-rows: repeat(4, 1fr); }
   .logo { font-size: 24px; letter-spacing: 3px; }
-  .menu-item-btn { font-size: 16px; } /* На мобилках делаем чуть меньше, чтоб не ломало строки */
+  .menu-item-btn { font-size: 16px; }
 }
 
-
-
-/* АНИМАЦИИ ГЛИТЧА */
 @keyframes glitch-anim {
   0% { clip: rect(12px, 9999px, 50px, 0); }
   25% { clip: rect(70px, 9999px, 85px, 0); }

@@ -14,7 +14,7 @@ import django.conf
 from django.http import FileResponse, HttpResponse
 from django.utils import timezone
 
-from userfiles.models import FileUpload
+from dropfiles.models import FileUpload
 from users.serializers import UserSerializer
 import utils
 

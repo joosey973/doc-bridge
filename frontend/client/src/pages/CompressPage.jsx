@@ -252,7 +252,6 @@ function CompressPage({ changePage }) {
     }
   };
 
-  // ===== СТЕПЕНИ СЖАТИЯ =====
   const compressLevels = [
     { id: 'low', label: 'Низкое сжатие (быстро)', icon: <MdSpeed size={18} />, desc: 'Минимальное сжатие, высокая скорость' },
     { id: 'medium', label: 'Среднее сжатие (рекомендуется)', icon: <FaBalanceScale size={18} />, desc: 'Оптимальный баланс размера и качества' },
@@ -344,7 +343,6 @@ function CompressPage({ changePage }) {
     }
   };
 
-  // ===== ОТПРАВКА НА СЕРВЕР =====
   const handleCompress = async () => {
     if (!selectedFile) {
       setMessage('Сначала загрузите файл!');
@@ -381,7 +379,6 @@ function CompressPage({ changePage }) {
         setMessage(`Сжатие завершено! (Уровень: ${compressLevel})`);
         setMessageType('success');
         
-        // Сохраняем данные для скачивания
         setCompressedFile({
           name: `compressed_${selectedFile.name}`,
           size: data.compressed_size || Math.floor(selectedFile.size * 0.7),
@@ -402,15 +399,12 @@ function CompressPage({ changePage }) {
     }
   };
 
-  // ===== СКАЧИВАНИЕ =====
   const handleDownload = () => {
     if (!compressedFile) return;
 
     if (compressedFile.downloadUrl) {
-      // Если сервер вернул ссылку
       window.open(compressedFile.downloadUrl, '_blank');
     } else {
-      // Тестовый файл (заглушка)
       const content = `Сжатый файл: ${compressedFile.name}\nИсходный размер: ${formatFileSize(compressedFile.originalSize)}\nСжатый размер: ${formatFileSize(compressedFile.size)}\nСтепень сжатия: ${compressedFile.reduction}%\n\nЭто демонстрационный файл. Реальное сжатие будет добавлено позже.`;
       const blob = new Blob([content], { type: 'text/plain' });
       const url = window.URL.createObjectURL(blob);
@@ -708,134 +702,6 @@ function CompressPage({ changePage }) {
         </div>
       </div>
 
-      <style>{`
-        .glitch-bg-canvas {
-          position: fixed;
-          top: 0;
-          left: 0;
-          width: 100vw;
-          height: 100vh;
-          z-index: -1;
-          pointer-events: none;
-        }
-
-        .compress-result {
-          margin-top: 20px;
-          padding: 20px;
-          border: 1px solid #000;
-          border-radius: 8px;
-          background: #f9f9f9;
-        }
-
-        .result-info {
-          margin-bottom: 16px;
-        }
-
-        .result-row {
-          display: flex;
-          justify-content: space-between;
-          padding: 4px 0;
-          font-size: 14px;
-        }
-
-        .result-value {
-          font-weight: 600;
-        }
-
-        .result-success {
-          color: #2e7d32;
-        }
-
-        .result-highlight {
-          color: #e65100;
-          font-size: 16px;
-        }
-
-        .download-btn {
-          width: 100%;
-          padding: 14px;
-          background: #000;
-          color: #fff;
-          border: none;
-          border-radius: 6px;
-          font-size: 15px;
-          font-weight: 600;
-          cursor: pointer;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          transition: all 0.3s;
-        }
-
-        .download-btn:hover {
-          background: #333;
-          transform: translateY(-2px);
-          box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-        }
-
-        .custom-select {
-          position: relative;
-          width: 100%;
-        }
-        .custom-select-trigger {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          padding: 8px 12px;
-          border: 1px solid #ddd;
-          border-radius: 8px;
-          background: #fff;
-          cursor: pointer;
-          font-size: 13px;
-          min-height: 38px;
-          box-sizing: border-box;
-        }
-        .custom-select-trigger:hover { border-color: #000; }
-        
-        .custom-select-value {
-          display: flex;
-          align-items: center;
-          gap: 6px;
-        }
-        .custom-select-arrow {
-          transition: transform 0.2s;
-          font-size: 16px;
-        }
-        .custom-select-arrow.open { transform: rotate(180deg); }
-        
-        .custom-select-options {
-          position: absolute;
-          top: calc(100% + 4px);
-          left: 0; right: 0;
-          background: #fff;
-          border: 1px solid #ddd;
-          border-radius: 8px;
-          height: 180px;
-          overflow-y: scroll;
-          z-index: 999;
-          box-shadow: 0 8px 24px rgba(229, 217, 217, 0.15);
-        }
-        
-        .custom-select-options::-webkit-scrollbar { width: 6px; }
-        .custom-select-options::-webkit-scrollbar-thumb { background: #ccc; border-radius: 4px; }
-        .custom-select-options::-webkit-scrollbar-track { background: #f1f1f1; }
-
-        .custom-select-option {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          padding: 8px 12px;
-          cursor: pointer;
-          font-size: 13px;
-          transition: background 0.15s;
-        }
-        .custom-select-option:hover { background: #f5f5f5; }
-        .custom-select-option.selected { background: #e8e8e8; font-weight: 600; }
-        
-        .form-row, .form-group, .create-paste, .main-content { overflow: visible !important; }
-      `}</style>
-
-      {/* Модальное окно авторизации */}
       {showAuthModal && (
         <div className="modal-overlay" onClick={() => setShowAuthModal(false)}>
           <div className="modal-content auth-modal" onClick={(e) => e.stopPropagation()}>

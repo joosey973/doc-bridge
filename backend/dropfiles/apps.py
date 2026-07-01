@@ -1,6 +1,6 @@
 from django.apps import AppConfig
 
 
-class UserfilesConfig(AppConfig):
-    name = 'userfiles'
+class DropFilesConfig(AppConfig):
+    name = 'dropfiles'
     verbose_name = 'Файлы'
