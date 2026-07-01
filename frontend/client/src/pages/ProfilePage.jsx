@@ -548,7 +548,17 @@ function ProfilePage({ changePage }) {
           <span></span>
         </button>
 
-       
+        <nav className={`sidebar ${isOpen ? 'active' : ''}`}>
+          <ul>
+            <li><Link to="/api/profile/" onClick={closeMenu}>Личный кабинет</Link></li>
+            <li><Link to="/" onClick={closeMenu}>Главная</Link></li>
+            <li><Link to="/api/converter/" onClick={closeMenu}>Конвертер</Link></li>
+            <li><Link to="/api/compress/" onClick={closeMenu}>Сжатие</Link></li>
+            <li><Link to="/api/pastes/" onClick={closeMenu}>Заметки</Link></li>
+            <li><Link to="/api/droppage/" onClick={closeMenu}>Файлообменник</Link></li>
+            <li><Link to="/api/about/" onClick={closeMenu}>О нас</Link></li>
+          </ul>
+        </nav>
 
         <header className="top-header">
           <div className="header-left"></div>
@@ -558,12 +568,7 @@ function ProfilePage({ changePage }) {
               <span className="notification-badge"></span>
               ➤
             </button>
-            <button 
-              className="auth-btn"
-              onClick={() => setShowAuthModal(true)}
-            >
-              Войти
-            </button>
+            <Link to="/api/profile/" className="auth-btn" style={{ textDecoration: 'none', color: 'inherit' }}>Личный кабинет</Link>
           </div>
         </header>
 
@@ -723,12 +728,7 @@ function ProfilePage({ changePage }) {
             <span className="notification-badge"></span>
             ➤
           </button>
-          <button 
-            className="auth-btn"
-            onClick={handleLogout}
-          >
-            Выйти
-          </button>
+          <Link to="/api/profile/" className="auth-btn" style={{ textDecoration: 'none', color: 'inherit' }}>Личный кабинет</Link>
         </div>
       </header>
 

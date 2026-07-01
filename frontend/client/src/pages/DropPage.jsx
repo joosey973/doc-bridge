@@ -1,12 +1,15 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import './Pages.css';
-import { 
+import '../MainPage.css';import { 
   FaFileAlt
 } from "react-icons/fa";
 import { 
   MdClose, 
   MdInfoOutline 
 } from "react-icons/md";
+
+const API_URL = 'http://localhost:8000/api';
 
 function DropPage({ changePage }) {
   const [selectedFile, setSelectedFile] = useState(null);
@@ -17,14 +20,53 @@ function DropPage({ changePage }) {
   const [message, setMessage] = useState('');
   const [isDragging, setIsDragging] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const canvasRef = useRef(null);
   const [isHovered, setIsHovered] = useState(false);
   const isHoveredRef = useRef(isHovered);
+
+  const [isOpen, setIsOpen] = useState(false); 
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [user, setUser] = useState(null);
+  const navigate = useNavigate();
   
   useEffect(() => {
     isHoveredRef.current = isHovered;
   }, [isHovered]);
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const savedToken = localStorage.getItem('token');
+      if (savedToken) {
+        try {
+          const response = await fetch(`${API_URL}/auth/me/`, {
+            headers: { 'Authorization': `Bearer ${savedToken}` }
+          });
+          if (response.ok) {
+            const data = await response.json();
+            setIsAuthenticated(true);
+            setUser(data.user);
+          } else {
+            localStorage.removeItem('token');
+            localStorage.removeItem('userData');
+          }
+        } catch (error) {
+          console.error('❌ Ошибка проверки авторизации:', error);
+        }
+      }
+    };
+    checkAuth();
+  }, []);
+
+  const closeMenu = () => setIsOpen(false);
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('userData');
+    setIsAuthenticated(false);
+    setUser(null);
+    navigate('/');
+    window.location.reload();
+  };
   
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -200,47 +242,49 @@ function DropPage({ changePage }) {
     return (bytes / 1048576).toFixed(1) + ' МБ';
   };
 
-  const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
-  const closeSidebar = () => setIsSidebarOpen(false);
-
   return (
     <>
-      {/* КАНВАС С ЦИФРАМИ - НА ФОНЕ */}
       <canvas ref={canvasRef} className="glitch-bg-canvas" />
 
-      {/* ВСЁ ОСТАЛЬНОЕ ПОВЕРХ */}
+      {isOpen && <div className="background-overlay" onClick={closeMenu}></div>}
+
+      <button 
+        className={`burger-btn ${isOpen ? 'open' : ''}`} 
+        onClick={() => setIsOpen(!isOpen)}
+      >
+        <span></span><span></span><span></span>
+      </button>
+
+      <nav className={`sidebar ${isOpen ? 'active' : ''}`}>
+        <ul>
+          <li><a href="/api/profile/" onClick={closeMenu}>Личный кабинет</a></li>
+          <li><a href="/api/converter/" onClick={closeMenu}>Конвертер</a></li>
+          <li><a href="/api/compress/" onClick={closeMenu}>Сжатие</a></li>
+          <li><a href="/api/pastes/" onClick={closeMenu}>Заметки</a></li>
+          {isAuthenticated ? (
+            <li><a href="#" onClick={(e) => { e.preventDefault(); closeMenu(); handleLogout(); }}>Выйти</a></li>
+          ) : (
+            <li><Link to="/" onClick={closeMenu}>Главная</Link></li>
+          )}
+          <li><a href="/api/about/" onClick={closeMenu}>О нас</a></li>
+        </ul>
+      </nav>
+
       <div className="drop-page-wrapper" style={{ position: 'relative', zIndex: 1 }}>
 
-        <header className="page-header-wrapper">
-          <div className="page-header-left">
-            <button 
-              className={`burger-btn-page ${isSidebarOpen ? 'open' : ''}`} 
-              onClick={toggleSidebar}
-            >
-              <span></span>
-              <span></span>
-              <span></span>
+        <header className="top-header">
+          <div className="header-left"></div>
+          <h1 className="logo">
+            <Link to="/" style={{ textDecoration: 'none', color: 'inherit' }}>DocBridge</Link>
+          </h1>
+          <div className="header-right">
+            <button className="icon-btn" title="Уведомления">
+              <span className="notification-badge"></span>
+              ➤
             </button>
-            <h1 className="page-logo" onClick={() => changePage && changePage('main')}>
-              DocBridge
-            </h1>
-          </div>
-          <div className="page-header-right">
-            <button className="page-icon-btn" title="Уведомления">[•]</button>
-            <button className="page-auth-btn">Войти</button>
+            <Link to="/api/profile/" className="auth-btn" style={{ textDecoration: 'none', color: 'inherit' }}>Личный кабинет</Link>
           </div>
         </header>
-
-        <div className={`page-sidebar-overlay ${isSidebarOpen ? 'active' : ''}`} onClick={closeSidebar}></div>
-        <nav className={`page-sidebar ${isSidebarOpen ? 'active' : ''}`}>
-          <button className="page-sidebar-close" onClick={closeSidebar}>✕</button>
-          <ul>
-            <li><a href="#" onClick={(e) => { e.preventDefault(); closeSidebar(); changePage && changePage('main'); }}>Главная</a></li>
-            <li><a href="#">Личный кабинет</a></li>
-            <li><a href="#">О нас</a></li>
-            <li><a href="#">Хранилище</a></li>
-          </ul>
-        </nav>
 
         <div className="page-container drop-container">
           <div className="page-card drop-card">
@@ -249,7 +293,6 @@ function DropPage({ changePage }) {
               <p className="page-subtitle">Загрузите большой файл и отправьте ссылку другу</p>
             </div>
 
-            {/* DRAG-AND-DROP ЗОНА */}
             <div 
               className={`drop-zone ${isDragging ? 'dragging' : ''} ${selectedFile ? 'has-file' : ''}`}
               onDragOver={handleDragOver}
@@ -299,7 +342,6 @@ function DropPage({ changePage }) {
               )}
             </div>
 
-            {/* ССЫЛКА И ОТПРАВКА */}
             {selectedFile && !fileLink && (
               <button 
                 className="upload-btn" 
@@ -362,7 +404,6 @@ function DropPage({ changePage }) {
             {message && <div className={`message ${message.includes('успешно') || message.includes('загружен') ? 'success' : 'error'}`}>{message}</div>}
           </div>
 
-          {/* ИНФОРМАЦИОННАЯ КАРТОЧКА */}
           <div className="info-card">
             <h3><MdInfoOutline size={18} style={{ marginRight: '6px', verticalAlign: 'middle' }} /> Информация</h3>
             <div className="info-list">

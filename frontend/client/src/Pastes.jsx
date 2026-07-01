@@ -673,48 +673,14 @@ function Pastes() {
         <div className="header-right">
           <button className="icon-btn" title="Уведомления">
             <span className="notification-badge"></span>
-            <GoPaperAirplane size={20} />
+            ➤
           </button>
-          <Link to="/api/profile/" style={{ textDecoration: 'none', color: 'inherit' }}>
-          {user ? (
-            <>
-              {getAvatarUrl() ? (
-                <img 
-                  src={getAvatarUrl()} 
-                  alt="Аватар пользователя" 
-                  className="profile-avatar-img"
-                  style={{
-                    width: '40px',
-                    height: '40px',
-                    borderRadius: '50%',
-                    objectFit: 'cover',
-                    border: '2px solid rgba(255,255,255,0.8)'
-                  }}
-                />
-              ) : (
-                <div className="profile-avatar-default" style={{
-                  width: '40px',
-                  height: '40px',
-                  borderRadius: '50%',
-                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '18px',
-                  fontWeight: '700',
-                  color: 'white'
-                }}>
-                  {user?.username?.charAt(0)?.toUpperCase() || 'U'}
-                </div>
-              )}
-            </>
-          ) : (user?.username?.charAt(0)?.toUpperCase() || 'U')}
-        </Link>
+          <Link to="/api/profile/" className="auth-btn" style={{ textDecoration: 'none', color: 'inherit' }}>Личный кабинет</Link>
         </div>
       </header>
 
-      <div className="main-content" style={{ height: 'auto', minHeight: 'calc(100vh - 80px)', padding: '40px 20px', overflowY: 'auto' }}>
-        <div className="container" style={{ maxWidth: '1200px', margin: '0 auto' }}>
+      <div className="main-content" style={{ flex: '1 1 auto', padding: '40px 20px', overflowY: 'auto' }}>
+        <div className="container" style={{ maxWidth: '1200px', margin: '0 auto', paddingBottom: '140px' }}>
           <div className="create-paste">
             <h2><ImFileText2 size={20} style={{ marginRight: '8px' }} /> Новая паста</h2>
             <form onSubmit={submitPaste}>
@@ -980,13 +946,6 @@ function Pastes() {
         </div>
       </div>
 
-      <footer className="bottom-footer">
-        <div className="footer-buttons">
-          <button className="footer-btn">Политика</button>
-          <button className="footer-btn">Условия</button>
-          <button className="footer-btn">Контакты</button>
-        </div>
-      </footer>
       
       {selectedPaste && (
         <div className="modal-overlay" onClick={closePaste} style={{ zIndex: 200 }}>
