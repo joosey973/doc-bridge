@@ -616,6 +616,7 @@ function ProfilePage({ changePage }) {
           <li><Link to="/api/pastes/" onClick={closeMenu}>Заметки</Link></li>
           <li><Link to="/api/droppage/" onClick={closeMenu}>Файлообменник</Link></li>
           <li><Link to="/api/about/" onClick={closeMenu}>О нас</Link></li>
+          {isAuthenticated ? <li><a href="#" onClick={(e) => { e.preventDefault(); closeMenu(); handleLogout(); }}>Выйти</a></li> : ''}
         </ul>
       </nav>
 
@@ -655,109 +656,103 @@ function ProfilePage({ changePage }) {
           </div>
         </main>
 
-        {showAuthModal && (
-          <div className="modal-overlay" onClick={() => setShowAuthModal(false)}>
-            <div className="modal-content auth-modal" onClick={(e) => e.stopPropagation()}>
-              <div className="modal-header">
-                <h2>{isLoginMode ? 'Вход в систему' : 'Регистрация'}</h2>
-                <button className="modal-close" onClick={() => setShowAuthModal(false)}>×</button>
-              </div>
-              
-              <form onSubmit={isLoginMode ? handleLogin : handleRegister}>
-                {isLoginMode ? (
-                  <div className="form-group">
-                    <label>Email или имя пользователя</label>
-                    <input
-                      type="text"
-                      placeholder="Введите email или username"
-                      value={authForm.login}
-                      onChange={(e) => setAuthForm({...authForm, login: e.target.value})}
-                      required
-                    />
-                    <small style={{ color: '#666', fontSize: '12px', display: 'block', marginTop: '4px' }}>
-                      Можно использовать email или имя пользователя
-                    </small>
-                  </div>
-                ) : (
-                  <>
-                    <div className="form-group">
-                      <label>Имя пользователя</label>
-                      <input
-                        type="text"
-                        placeholder="Придумайте имя пользователя"
-                        value={authForm.username}
-                        onChange={(e) => setAuthForm({...authForm, username: e.target.value})}
-                        required
-                        minLength={3}
-                      />
-                    </div>
-                    
-                    <div className="form-group">
-                      <label>Email</label>
-                      <input
-                        type="email"
-                        placeholder="example@mail.com"
-                        value={authForm.email}
-                        onChange={(e) => setAuthForm({...authForm, email: e.target.value})}
-                        required
-                      />
-                    </div>
-                  </>
-                )}
-                
+        {/* Модальное окно авторизации */}
+      {showAuthModal && (
+        <div className="modal-overlay" onClick={() => setShowAuthModal(false)}>
+          <div className="modal-content auth-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>{isLoginMode ? 'Вход в систему' : 'Регистрация'}</h2>
+              <button className="modal-close" onClick={() => setShowAuthModal(false)}>×</button>
+            </div>
+            
+            <form onSubmit={isLoginMode ? handleLogin : handleRegister}>
+              {isLoginMode ? (
                 <div className="form-group">
-                  <label>Пароль</label>
+                  <label>Email или имя пользователя</label>
                   <input
-                    type="password"
-                    placeholder="Введите пароль"
-                    value={authForm.password}
-                    onChange={(e) => setAuthForm({...authForm, password: e.target.value})}
+                    type="text"
+                    placeholder="Введите email или username"
+                    value={authForm.login}
+                    onChange={(e) => setAuthForm({...authForm, login: e.target.value})}
                     required
                   />
                 </div>
-
-                {!isLoginMode && (
+              ) : (
+                <>
                   <div className="form-group">
-                    <label>Подтверждение пароля</label>
+                    <label>Имя пользователя</label>
                     <input
-                      type="password"
-                      placeholder="Повторите пароль"
-                      value={authForm.passwordConfirm}
-                      onChange={(e) => setAuthForm({...authForm, passwordConfirm: e.target.value})}
+                      type="text"
+                      placeholder="Придумайте имя пользователя"
+                      value={authForm.username}
+                      onChange={(e) => setAuthForm({...authForm, username: e.target.value})}
                       required
                     />
                   </div>
-                )}
-
-                {authError && <div className="message error" style={{ marginTop: '12px' }}>{authError}</div>}
-                
-                <button type="submit" className="submit-btn" style={{ marginTop: '12px' }}>
-                  {isLoginMode ? 'Войти' : 'Зарегистрироваться'}
-                </button>
-              </form>
+                  <div className="form-group">
+                    <label>Email</label>
+                    <input
+                      type="email"
+                      placeholder="example@mail.com"
+                      value={authForm.email}
+                      onChange={(e) => setAuthForm({...authForm, email: e.target.value})}
+                      required
+                    />
+                  </div>
+                </>
+              )}
               
-              <div className="auth-switch">
-                {isLoginMode ? (
-                  <span>
-                    Нет аккаунта? <span onClick={() => {
-                      setIsLoginMode(false);
-                      setAuthError('');
-                      setAuthForm({...authForm, login: ''});
-                    }}>Зарегистрироваться</span>
-                  </span>
-                ) : (
-                  <span>
-                    Уже есть аккаунт? <span onClick={() => {
-                      setIsLoginMode(true);
-                      setAuthError('');
-                      setAuthForm({...authForm, username: '', email: '', passwordConfirm: ''});
-                    }}>Войти</span>
-                  </span>
-                )}
+              <div className="form-group">
+                <label>Пароль</label>
+                <input
+                  type="password"
+                  placeholder="Введите пароль"
+                  value={authForm.password}
+                  onChange={(e) => setAuthForm({...authForm, password: e.target.value})}
+                  required
+                />
               </div>
+
+              {!isLoginMode && (
+                <div className="form-group">
+                  <label>Подтверждение пароля</label>
+                  <input
+                    type="password"
+                    placeholder="Повторите пароль"
+                    value={authForm.passwordConfirm}
+                    onChange={(e) => setAuthForm({...authForm, passwordConfirm: e.target.value})}
+                    required
+                  />
+                </div>
+              )}
+
+              {authError && <div className="message error" style={{ marginTop: '12px' }}>{authError}</div>}
+              
+              <button type="submit" className="submit-btn" style={{ marginTop: '12px' }}>
+                {isLoginMode ? 'Войти' : 'Зарегистрироваться'}
+              </button>
+            </form>
+            
+            <div className="auth-switch">
+              {isLoginMode ? (
+                <span>
+                  Нет аккаунта? <span style={{ color: '#667eea', cursor: 'pointer' }} onClick={() => {
+                    setIsLoginMode(false);
+                    setAuthError('');
+                  }}>Зарегистрироваться</span>
+                </span>
+              ) : (
+                <span>
+                  Уже есть аккаунт? <span style={{ color: '#667eea', cursor: 'pointer' }} onClick={() => {
+                    setIsLoginMode(true);
+                    setAuthError('');
+                  }}>Войти</span>
+                </span>
+              )}
             </div>
           </div>
-        )}
+        </div>
+      )}
       </div>
     );
   }
@@ -785,6 +780,8 @@ function ProfilePage({ changePage }) {
           <li><Link to="/api/pastes/" onClick={closeMenu}>Заметки</Link></li>
           <li><Link to="/api/droppage/" onClick={closeMenu}>Файлообменник</Link></li>
           <li><Link to="/api/about/" onClick={closeMenu}>О нас</Link></li>
+          {isAuthenticated ? <li><a href="#" onClick={(e) => { e.preventDefault(); closeMenu(); handleLogout(); }}>Выйти</a></li> : ''}
+
         </ul>
       </nav>
 

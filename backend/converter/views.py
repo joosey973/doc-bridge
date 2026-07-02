@@ -1,3 +1,4 @@
+import datetime
 import tempfile
 import os
 import shutil
@@ -19,7 +20,7 @@ from rest_framework import status
 from django.http import HttpResponse
 import django.conf
 
-from dropfiles.models import UploadedFile
+from dropfiles.models import FileUpload
 
 
 class ConvertView(APIView):
@@ -71,7 +72,7 @@ class ConvertView(APIView):
             
             user = request.user if request.user.is_authenticated else None
 
-            UploadedFile.objects.create(
+            FileUpload.objects.create(
                 files=[file_name],
                 size=converted_size,
                 created_at=datetime.datetime.now(),
@@ -298,6 +299,16 @@ class ConvertView(APIView):
     def _pptx_to_layouts(self, input_path, output_path, to_format):
         try:
             prs = Presentation(input_path)
+            
+            if to_format in ['jpg', 'jpeg', 'png']:
+                for slide in prs.slides:
+                    for shape in slide.shapes:
+                        if shape.shape_type == 13:
+                            with open(output_path, 'wb') as f:
+                                f.write(shape.image.blob)
+                            return True, 'Первое найденное изображение успешно извлечено'
+                return False, 'В презентации не найдено изображений для извлечения'
+
             text_content = []
             for i, slide in enumerate(prs.slides):
                 text_content.append(f'--- Слайд {i+1} ---')
@@ -306,10 +317,12 @@ class ConvertView(APIView):
                         text_content.append(shape.text)
             
             full_text = '\n'.join(text_content)
-            
-            if to_format in ['jpg', 'jpeg', 'png']:
-                return False, 'Рендеринг слайдов PPTX в графику требует системный GUI-движок. Доступно только извлечение структуры.'
-                
+
+            if to_format == 'txt':
+                with open(output_path, 'w', encoding='utf-8') as f:
+                    f.write(full_text)
+                return True, 'Текст презентации сохранен в TXT'
+
             if to_format == 'pdf':
                 pdf = FPDF()
                 pdf.add_page()
@@ -319,10 +332,13 @@ class ConvertView(APIView):
                     pdf.set_font('Arial', size=11)
                 except:
                     pass
+                
                 pdf.multi_cell(0, 6, txt=full_text)
                 pdf.output(output_path)
                 return True, 'Текст презентации сохранен в PDF'
-            return False, 'Формат не поддерживается напрямую в Python'
+
+            return False, f'Формат {to_format.upper()} не поддерживается для PPTX'
+
         except Exception as e:
             return False, str(e)
 

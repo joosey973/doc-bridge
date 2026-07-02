@@ -521,9 +521,10 @@ function CompressPage({ changePage }) {
           <li><Link to="/api/profile/" onClick={closeSidebar}>Личный кабинет</Link></li>
           <li><Link to="/" onClick={closeSidebar}>Главная</Link></li>
           <li><Link to="/api/converter/" onClick={closeSidebar}>Конвертер</Link></li>
-          <li><Link to="/api/compress/" onClick={closeSidebar}>Сжатие</Link></li>
+          <li><Link to="/api/pastes/" onClick={closeSidebar}>Заметки</Link></li>
           <li><Link to="/api/droppage/" onClick={closeSidebar}>Файлообменник</Link></li>
           <li><Link to="/api/about/" onClick={closeSidebar}>О нас</Link></li>
+          {isAuthenticated ? <li><a href="#" onClick={(e) => { e.preventDefault(); closeMenu(); handleLogout(); }}>Выйти</a></li> : ''}
         </ul>
       </nav>
 

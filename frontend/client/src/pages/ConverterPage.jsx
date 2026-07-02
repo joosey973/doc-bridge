@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { Link } from 'react-router-dom';
 import './Pages.css';
 import { BsFiletypeCsv } from "react-icons/bs";
 import { 
@@ -19,6 +20,7 @@ import {
 const API_URL = 'http://localhost:8000/api';
 
 function ConverterPage({ changePage }) {
+  const fileInputRef = useRef(null);
   const [selectedFile, setSelectedFile] = useState(null);
   const [filePreview, setFilePreview] = useState(null);
   const [convertFrom, setConvertFrom] = useState('pdf');
@@ -28,6 +30,12 @@ function ConverterPage({ changePage }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isConverting, setIsConverting] = useState(false);
   const [convertedFile, setConvertedFile] = useState(null);
+  const [isOpen, setIsOpen] = useState(false);
+  const closeMenu = () => setIsOpen(false);
+  const getAvatarUrl = () => {
+    if (user?.avatar) return `http://localhost:8000${user.avatar}`;
+    return null;
+  };
   
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState(null);
@@ -69,7 +77,7 @@ function ConverterPage({ changePage }) {
             localStorage.removeItem('userData');
           }
         } catch (error) {
-          console.error('❌ Ошибка проверки авторизации:', error);
+          console.error('Ошибка проверки авторизации:', error);
           localStorage.removeItem('token');
           localStorage.removeItem('userData');
         }
@@ -142,7 +150,7 @@ function ConverterPage({ changePage }) {
       } else {
         const error = await response.json();
         const errorMessages = Object.values(error.errors).flat().join(', ');
-        setAuthError(errorMessages || 'Ошибка регистрации');
+        setAuthError(`${errorMessages || 'Ошибка регистрации'}`);
       }
     } catch (error) {
       setAuthError('Ошибка при регистрации');
@@ -405,7 +413,7 @@ function ConverterPage({ changePage }) {
         window.URL.revokeObjectURL(url);
         
         setIsConverting(false);
-        setMessage(`✅ Файл сконвертирован! (${fromFormat || convertFrom.toUpperCase()} → ${toFormat || convertTo.toUpperCase()})`);
+        setMessage(`~ Файл сконвертирован! (${fromFormat || convertFrom.toUpperCase()} → ${toFormat || convertTo.toUpperCase()})`);
         
         setConvertedFile({
           name: filename,
@@ -417,11 +425,11 @@ function ConverterPage({ changePage }) {
       } else {
         const data = await response.json();
         setIsConverting(false);
-        setMessage(`❌ ${data.error || 'Ошибка конвертации'}`);
+        setMessage(`${data.error || 'Ошибка конвертации'}`);
       }
     } catch (error) {
       setIsConverting(false);
-      setMessage('❌ Ошибка подключения к серверу');
+      setMessage('Ошибка подключения к серверу');
       console.error('Convert error:', error);
     }
   };
@@ -460,39 +468,73 @@ function ConverterPage({ changePage }) {
   return (
     <>
       <canvas ref={canvasRef} className="glitch-bg-canvas" />
+      
+      {isOpen && <div className="background-overlay" onClick={closeMenu}></div>}
 
-      <header className="page-header-wrapper">
-        <div className="page-header-left">
-          <button 
-            className={`burger-btn-page ${isSidebarOpen ? 'open' : ''}`} 
-            onClick={toggleSidebar}
-          >
-            <span></span>
-            <span></span>
-            <span></span>
-          </button>
-          <h1 className="page-logo" onClick={() => changePage && changePage('main')}>
-            DocBridge
-          </h1>
-        </div>
-        <div className="page-header-right">
-          <button className="page-icon-btn" title="Уведомления">[•]</button>
-          <button className="page-auth-btn" onClick={isAuthenticated ? handleLogout : () => setShowAuthModal(true)}>
-            {isAuthenticated ? 'Выйти' : 'Войти'}
-          </button>
-        </div>
-      </header>
+      <button 
+        className={`burger-btn ${isOpen ? 'open' : ''}`} 
+        onClick={() => setIsOpen(!isOpen)}
+      >
+        <span></span><span></span><span></span>
+      </button>
 
-      <div className={`page-sidebar-overlay ${isSidebarOpen ? 'active' : ''}`} onClick={closeSidebar}></div>
-      <nav className={`page-sidebar ${isSidebarOpen ? 'active' : ''}`}>
-        <button className="page-sidebar-close" onClick={closeSidebar}>✕</button>
+      <nav className={`sidebar ${isOpen ? 'active' : ''}`}>
         <ul>
-          <li><a href="#" onClick={(e) => { e.preventDefault(); closeSidebar(); changePage && changePage('main'); }}>Главная</a></li>
-          <li><a href="#">Личный кабинет</a></li>
-          <li><a href="#">О нас</a></li>
-          <li><a href="#">Хранилище</a></li>
+          <li><Link to="/api/profile/" onClick={closeMenu}>Личный кабинет</Link></li>
+          <li><Link to="/" onClick={closeMenu}>Главная</Link></li>
+          <li><Link to="/api/compress/" onClick={closeMenu}>Сжатие</Link></li>
+          <li><Link to="/api/pastes/" onClick={closeMenu}>Заметки</Link></li>
+          <li><Link to="/api/droppage/" onClick={closeMenu}>Файлообменник</Link></li>
+          <li><Link to="/api/about/" onClick={closeMenu}>О нас</Link></li>
+          {isAuthenticated ? <li><a href="#" onClick={(e) => { e.preventDefault(); closeMenu(); handleLogout(); }}>Выйти</a></li> : ''}
         </ul>
       </nav>
+
+      <header className="top-header">
+        <div className="header-left"></div>
+        <h1 className="logo"><Link to="/" style={{ textDecoration: 'none', color: 'inherit' }}>DocBridge</Link></h1>
+        <div className="header-right">
+          <button className="icon-btn" title="Уведомления">
+            <span className="notification-badge"></span>
+            ➤
+          </button>
+          <Link to="/api/profile/" style={{ textDecoration: 'none', color: 'inherit' }}>
+                    {user ? (
+                      <>
+                        {getAvatarUrl() ? (
+                          <img 
+                            src={getAvatarUrl()} 
+                            alt="Аватар пользователя" 
+                            className="profile-avatar-img"
+                            style={{
+                              width: '40px',
+                              height: '40px',
+                              borderRadius: '50%',
+                              objectFit: 'cover',
+                              border: '2px solid rgba(255,255,255,0.8)'
+                            }}
+                          />
+                        ) : (
+                          <div className="profile-avatar-default" style={{
+                            width: '40px',
+                            height: '40px',
+                            borderRadius: '50%',
+                            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: '18px',
+                            fontWeight: '700',
+                            color: 'white'
+                          }}>
+                            {user?.username?.charAt(0)?.toUpperCase() || 'U'}
+                          </div>
+                        )}
+                      </>
+                    ) : (user?.username?.charAt(0)?.toUpperCase() || 'U')}
+                  </Link>
+        </div>
+      </header>
 
       <div className="page-container converter-container">
         <div className="page-card converter-card">
@@ -511,6 +553,7 @@ function ConverterPage({ changePage }) {
             <input
               type="file"
               id="converterFileInput"
+              ref={fileInputRef}
               style={{ display: 'none' }}
               onChange={handleFileInput}
               accept=".pdf,.docx,.jpg,.jpeg,.png,.txt,.pptx,.csv,.webp,.odt"
@@ -538,16 +581,20 @@ function ConverterPage({ changePage }) {
                   </div>
                 </div>
                 <button 
-                  className="file-remove"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setSelectedFile(null);
-                    setFilePreview(null);
-                    setConvertedFile(null);
-                  }}
-                >
-                  <MdClose size={18} />
-                </button>
+                className="file-remove"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setSelectedFile(null);
+                  setFilePreview(null);
+                  setConvertedFile(null);
+                  
+                  if (fileInputRef.current) {
+                    fileInputRef.current.value = '';
+                  }
+                }}
+              >
+                <MdClose size={18} />
+              </button>
               </div>
             )}
           </div>
@@ -631,7 +678,7 @@ function ConverterPage({ changePage }) {
             </div>
           )}
 
-          {message && <div className={`message ${message.includes('+') || message.includes('✅') ? 'success' : 'error'}`}>{message}</div>}
+          {message && <div className={`message ${message.includes('~') || message.includes('+') ? 'success' : 'error'}`}>{message}</div>}
         </div>
 
         <div className="info-card">

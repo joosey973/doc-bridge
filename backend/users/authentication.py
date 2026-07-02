@@ -8,6 +8,7 @@ User = django.contrib.auth.get_user_model()
 
 class EmailOrUsernameBackend(django.contrib.auth.backends.ModelBackend):
     def authenticate(self, request, username = None, password = None, **kwargs):
+        print('da')
         try:
             user = User.objects.get(Q(username=username)|Q(email=username))
         except User.DoesNotExist:

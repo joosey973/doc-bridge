@@ -49,7 +49,12 @@ class LoginView(APIView):
     permission_classes = [AllowAny]
     
     def post(self, request):
-        serializer = LoginSerializer(data=request.data)
+        print(request.data)
+        username = request.data.get('email', '')
+        if not username:
+            username = request.data.get('username', '')
+        data = {'password': request.data['password'], 'username': username}
+        serializer = LoginSerializer(data=data)
         
         if serializer.is_valid():
             user = serializer.validated_data['user']
@@ -72,6 +77,7 @@ class LoginView(APIView):
             else:
                 errors[field] = field_errors[0] if field_errors else 'Неверное значение'
         
+        print(errors)
         return Response({
             'success': False,
             'errors': errors,

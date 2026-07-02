@@ -298,9 +298,10 @@ function AboutPage() {
           <li><Link to="/api/profile/" onClick={closeMenu}>Личный кабинет</Link></li>
           <li><Link to="/" onClick={closeMenu}>Главная</Link></li>
           <li><Link to="/api/converter/" onClick={closeMenu}>Конвертер</Link></li>
-          <li><Link to="/api/compress/" onClick={closeMenu}>Сжатие</Link></li>
           <li><Link to="/api/pastes/" onClick={closeMenu}>Заметки</Link></li>
+          <li><Link to="/api/compress/" onClick={closeMenu}>Сжатие</Link></li>
           <li><Link to="/api/droppage/" onClick={closeMenu}>Файлообменник</Link></li>
+          {isAuthenticated ? <li><a href="#" onClick={(e) => { e.preventDefault(); closeMenu(); handleLogout(); }}>Выйти</a></li> : ''}
         </ul>
       </nav>
       <div className="about-glass-card">

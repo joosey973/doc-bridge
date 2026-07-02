@@ -17,7 +17,7 @@ from rest_framework.permissions import AllowAny
 from rest_framework.views import APIView
 
 import utils
-from userfiles.models import FileUpload
+from dropfiles.models import FileUpload
 
 
 class CompressView(APIView):
@@ -95,7 +95,6 @@ class CompressView(APIView):
 
         user = request.user
         user = user if user.is_authenticated else None
-        print(user)
         obj = FileUpload.objects.create(
             size=compressed_size,
             created_at=datetime.datetime.now(),

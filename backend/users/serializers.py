@@ -86,18 +86,10 @@ class RegisterSerializer(serializers.ModelSerializer):
 class LoginSerializer(serializers.Serializer):
     username = serializers.CharField(
         required=True,
-        error_messages={
-            'required': 'Имя или почта пользователя обязательны',
-            'blank': 'Имя пользователя или почта не может быть пустыми'
-        }
     )
     password = serializers.CharField(
         required=True,
-        write_only=True,
-        error_messages={
-            'required': 'Пароль обязателен',
-            'blank': 'Пароль не может быть пустым'
-        }
+        write_only=True
     )
     
     def validate(self, attrs):
@@ -129,3 +121,7 @@ class LoginSerializer(serializers.Serializer):
         
         attrs['user'] = user
         return attrs
+    
+    class Meta:
+        model = User
+        fields = ['username', 'email', 'password']

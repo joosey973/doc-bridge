@@ -287,15 +287,12 @@ function DropPage() {
     <nav className={`sidebar ${isOpen ? 'active' : ''}`}>
         <ul>
           <li><a href="/api/profile/" onClick={closeMenu}>Личный кабинет</a></li>
+          <li><a href="/" onClick={closeMenu}>Главная</a></li>
           <li><a href="/api/converter/" onClick={closeMenu}>Конвертер</a></li>
-          <li><a href="/api/compress/" onClick={closeMenu}>Сжатие</a></li>
           <li><a href="/api/pastes/" onClick={closeMenu}>Заметки</a></li>
-          {isAuthenticated ? (
-            <li><a href="#" onClick={(e) => { e.preventDefault(); closeMenu(); handleLogout(); }}>Выйти</a></li>
-          ) : (
-            <li><Link to="/" onClick={closeMenu}>Главная</Link></li>
-          )}
+          <li><a href="/api/compress/" onClick={closeMenu}>Сжатие</a></li>
           <li><a href="/api/about/" onClick={closeMenu}>О нас</a></li>
+          {isAuthenticated ? <li><a href="#" onClick={(e) => { e.preventDefault(); closeMenu(); handleLogout(); }}>Выйти</a></li> : ''}
         </ul>
       </nav>
     <div className="drop-page-wrapper" style={{ position: 'relative', zIndex: 1 }}>

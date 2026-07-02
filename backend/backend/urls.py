@@ -9,7 +9,7 @@ urlpatterns = [
     path('api/pastes/', include('pastes.urls')),
     path('api/auth/', include('users.urls')),
     path('api/profile/', include('userprofile.urls')),
-    path('api/droppage/', include('userfiles.urls')),
+    path('api/droppage/', include('dropfiles.urls')),
     path('api/compress/', include('compress.urls')),
     path('api/converter/', include('converter.urls')),
     path('admin/', admin.site.urls),

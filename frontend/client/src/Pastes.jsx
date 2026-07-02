@@ -36,8 +36,9 @@ import {
   DiPhp, 
   DiRuby, 
   DiGo} from "react-icons/di";
+import { FaFileAlt } from 'react-icons/fa';
 import { SiSqlite } from "react-icons/si";
-import { FaFileAlt, FaLock } from "react-icons/fa";
+import { SlLock } from "react-icons/sl";
 import { 
   IoTrashOutline 
 } from "react-icons/io5";
@@ -57,11 +58,18 @@ function Pastes() {
   const [tagInput, setTagInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
-  const [serverStatus, setServerStatus] = useState('Проверка...');
   const [selectedPaste, setSelectedPaste] = useState(null);
   const [loadingAuth, setLoadingAuth] = useState(true);
+  const [isLoginMode, setIsLoginMode] = useState(true);
+  const [authForm, setAuthForm] = useState({ 
+      login: '',
+      password: '',
+      passwordConfirm: '',
+      username: '',
+      email: ''
+    });
   
-  // Состояния для кастомного select
+  
   const [isCategoryOpen, setIsCategoryOpen] = useState(false);
   const [isLanguageOpen, setIsLanguageOpen] = useState(false);
   const categoryRef = useRef(null);
@@ -197,6 +205,7 @@ function Pastes() {
 
   const [token, setToken] = useState(localStorage.getItem('token') || '');
   const [user, setUser] = useState(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authMode, setAuthMode] = useState('login');
   const [authUsername, setAuthUsername] = useState('');
@@ -255,11 +264,13 @@ function Pastes() {
             setUser(data.user);
             setToken(savedToken);
             setProfileData(data.user);
+            setIsAuthenticated(true);
           } else {
             localStorage.removeItem('token');
             setToken('');
             setUser(null);
             setProfileData(null);
+            setIsAuthenticated(false);
           }
         } catch (error) {
           console.error('Ошибка проверки:', error);
@@ -267,6 +278,7 @@ function Pastes() {
           setToken('');
           setUser(null);
           setProfileData(null);
+          setIsAuthenticated(false);
         }
       }
       
@@ -345,30 +357,92 @@ function Pastes() {
     }
   };
 
-  const logout = () => {
-    setToken('');
-    setUser(null);
-    setProfileData(null);
-    localStorage.removeItem('token');
-    setMessage('Вы вышли');
-    setTimeout(() => setMessage(''), 3000);
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setAuthError('');
+    
+    try {
+      const isEmail = authForm.login.includes('@');
+      const loginData = { password: authForm.password };
+      
+      if (isEmail) {
+        loginData.email = authForm.login;
+      } else {
+        loginData.username = authForm.login;
+      }
+      const response = await fetch(`${API_URL}/auth/login/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(loginData)
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('userData', JSON.stringify(data.user));
+        setToken(data.token);
+        setUser(data.user);
+        setShowAuthModal(false);
+        setAuthForm({ login: '', password: '', passwordConfirm: '', username: '', email: '' });
+        window.location.reload();
+      } else {
+        const error = await response.json();
+        setAuthError(error.message || 'Неверный логин или пароль');
+      }
+    } catch (error) {
+      setAuthError('Ошибка при входе');
+    }
   };
 
-  useEffect(() => {
-    const checkServer = async () => {
-      try {
-        const response = await fetch(`${API_URL}/pastes/`);
-        if (response.ok) {
-          setServerStatus('Сервер работает');
-        } else {
-          setServerStatus('Сервер недоступен');
-        }
-      } catch {
-        setServerStatus('Сервер не запущен');
+  const handleRegister = async (e) => {
+    e.preventDefault();
+    setAuthError('');
+
+    if (authForm.password !== authForm.passwordConfirm) {
+      setAuthError('Пароли не совпадают!');
+      return;
+    }
+
+    try {
+      const response = await fetch(`${API_URL}/auth/register/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          username: authForm.username,
+          email: authForm.email,
+          password: authForm.password,
+          password_confirm: authForm.passwordConfirm
+        })
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('userData', JSON.stringify(data.user));
+        setToken(data.token);
+        setUser(data.user);
+        setShowAuthModal(false);
+        setAuthForm({ login: '', password: '', passwordConfirm: '', username: '', email: '' });
+        window.location.reload();
+      } else {
+        const error = await response.json();
+        setAuthError(error.message || 'Ошибка регистрации');
       }
-    };
-    checkServer();
-  }, []);
+    } catch (error) {
+      setAuthError('Ошибка при регистрации');
+    }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('userData');
+    setToken('');
+    setUser(null);
+    setMessage('Вы вышли');
+    setMessageType('success');
+    setIsAuthenticated(false);
+    setTimeout(() => setMessage(''), 3000);
+  };
 
   useEffect(() => {
     fetchPastes();
@@ -665,6 +739,7 @@ function Pastes() {
           <li><Link to="/api/compress/" onClick={closeMenu}>Сжатие</Link></li>
           <li><Link to="/api/droppage/" onClick={closeMenu}>Файлообменник</Link></li>
           <li><Link to="/api/about/" onClick={closeMenu}>О нас</Link></li>
+          {isAuthenticated ? <li><a href="#" onClick={(e) => { e.preventDefault(); closeMenu(); handleLogout(); }}>Выйти</a></li> : ''}
         </ul>
       </nav>
 
@@ -850,7 +925,7 @@ function Pastes() {
                 background: 'rgba(255,255,255,0.5)',
                 borderRadius: '16px'
               }}>
-                <div style={{ fontSize: '64px', marginBottom: '20px' }}><FaLock size={64} /></div>
+                <div style={{ fontSize: '64px', marginBottom: '20px' }}><SlLock size={64} /></div>
                 <h2 style={{ color: '#1a1a1a', marginBottom: '10px', fontSize: '24px' }}>
                   Войдите в аккаунт
                 </h2>
@@ -1045,91 +1120,98 @@ function Pastes() {
 
       {/* Модальное окно авторизации */}
       {showAuthModal && (
-        <div className="modal-overlay" onClick={() => setShowAuthModal(false)} style={{ zIndex: 300 }}>
+        <div className="modal-overlay" onClick={() => setShowAuthModal(false)}>
           <div className="modal-content auth-modal" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
-              <h2>
-                {authMode === 'login' ? (
-                  <><MdLock size={20} style={{ marginRight: '8px' }} /> Вход</>
-                ) : (
-                  <><MdCreate size={20} style={{ marginRight: '8px' }} /> Регистрация</>
-                )}
-              </h2>
-              <button className="modal-close" onClick={() => setShowAuthModal(false)}><MdClose size={24} /></button>
+              <h2>{isLoginMode ? 'Вход в систему' : 'Регистрация'}</h2>
+              <button className="modal-close" onClick={() => setShowAuthModal(false)}>×</button>
             </div>
-            <form onSubmit={handleAuth}>
-              <div className="modal-body">
-                {authError && <div className="message error">{authError}</div>}
-                
+            
+            <form onSubmit={isLoginMode ? handleLogin : handleRegister}>
+              {isLoginMode ? (
                 <div className="form-group">
-                  <label>Имя пользователя</label>
+                  <label>Email или имя пользователя</label>
                   <input
                     type="text"
-                    value={authUsername}
-                    onChange={(e) => setAuthUsername(e.target.value)}
-                    placeholder="Введите username"
+                    placeholder="Введите email или username"
+                    value={authForm.login}
+                    onChange={(e) => setAuthForm({...authForm, login: e.target.value})}
                     required
                   />
                 </div>
-
-                {authMode === 'register' && (
+              ) : (
+                <>
+                  <div className="form-group">
+                    <label>Имя пользователя</label>
+                    <input
+                      type="text"
+                      placeholder="Придумайте имя пользователя"
+                      value={authForm.username}
+                      onChange={(e) => setAuthForm({...authForm, username: e.target.value})}
+                      required
+                    />
+                  </div>
                   <div className="form-group">
                     <label>Email</label>
                     <input
                       type="email"
-                      value={authEmail}
-                      onChange={(e) => setAuthEmail(e.target.value)}
-                      placeholder="Введите email"
-                      required={authMode === 'register'}
-                    />
-                  </div>
-                )}
-
-                <div className="form-group">
-                  <label>Пароль</label>
-                  <input
-                    type="password"
-                    value={authPassword}
-                    onChange={(e) => setAuthPassword(e.target.value)}
-                    placeholder="Введите пароль"
-                    required
-                  />
-                </div>
-
-                {authMode === 'register' && (
-                  <div className="form-group">
-                    <label>Подтверждение пароля</label>
-                    <input
-                      type="password"
-                      value={authPasswordConfirm}
-                      onChange={(e) => setAuthPasswordConfirm(e.target.value)}
-                      placeholder="Повторите пароль"
+                      placeholder="example@mail.com"
+                      value={authForm.email}
+                      onChange={(e) => setAuthForm({...authForm, email: e.target.value})}
                       required
                     />
                   </div>
-                )}
+                </>
+              )}
+              
+              <div className="form-group">
+                <label>Пароль</label>
+                <input
+                  type="password"
+                  placeholder="Введите пароль"
+                  value={authForm.password}
+                  onChange={(e) => setAuthForm({...authForm, password: e.target.value})}
+                  required
+                />
+              </div>
 
-                <div className="auth-switch">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setAuthMode(authMode === 'login' ? 'register' : 'login');
-                      setAuthError('');
-                    }}
-                    className="switch-btn"
-                  >
-                    {authMode === 'login' 
-                      ? 'Нет аккаунта? Зарегистрироваться' 
-                      : 'Уже есть аккаунт? Войти'}
-                  </button>
+              {!isLoginMode && (
+                <div className="form-group">
+                  <label>Подтверждение пароля</label>
+                  <input
+                    type="password"
+                    placeholder="Повторите пароль"
+                    value={authForm.passwordConfirm}
+                    onChange={(e) => setAuthForm({...authForm, passwordConfirm: e.target.value})}
+                    required
+                  />
                 </div>
-              </div>
-              <div className="modal-footer">
-                <button type="submit" className="submit-btn">
-                  {authMode === 'login' ? 'Войти' : 'Зарегистрироваться'}
-                </button>
-              </div>
+              )}
+
+              {authError && <div className="message error" style={{ marginTop: '12px' }}>{authError}</div>}
+              
+              <button type="submit" className="submit-btn" style={{ marginTop: '12px' }}>
+                {isLoginMode ? 'Войти' : 'Зарегистрироваться'}
+              </button>
             </form>
+            
+            <div className="auth-switch">
+              {isLoginMode ? (
+                <span>
+                  Нет аккаунта? <span style={{ color: '#667eea', cursor: 'pointer' }} onClick={() => {
+                    setIsLoginMode(false);
+                    setAuthError('');
+                  }}>Зарегистрироваться</span>
+                </span>
+              ) : (
+                <span>
+                  Уже есть аккаунт? <span style={{ color: '#667eea', cursor: 'pointer' }} onClick={() => {
+                    setIsLoginMode(true);
+                    setAuthError('');
+                  }}>Войти</span>
+                </span>
+              )}
+            </div>
           </div>
         </div>
       )}
