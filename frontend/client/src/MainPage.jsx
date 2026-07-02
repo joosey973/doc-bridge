@@ -239,6 +239,7 @@ useEffect(() => {
           <li><Link to="/api/compress/" onClick={closeMenu}>Сжатие</Link></li>
           <li><Link to="/api/droppage/" onClick={closeMenu}>Файлообменник</Link></li>
           <li><Link to="/api/about/" onClick={closeMenu}>О нас</Link></li>
+          <li><Link to="/api/teampage/" onClick={closeMenu}>Наша команда</Link></li>
           {isAuthenticated ? <li><a href="#" onClick={(e) => { e.preventDefault(); closeMenu(); handleLogout(); }}>Выйти</a></li> : ''}
         </ul>
       </nav>

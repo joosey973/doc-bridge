@@ -1,8 +1,18 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import './Pages.css';
 
 function PolicyPage() {
   return (
+    <>
+    <header className="top-header">
+        <div className="header-left"></div>
+        <h1 className="logo"><Link to="/" style={{ textDecoration: 'none', color: 'inherit' }}>DocBridge</Link></h1>
+        <div className="header-right">
+          <button className="icon-btn" title="Уведомления">
+          </button>
+        </div>
+      </header>
     <div className="about-page-wrapper">
       <div className="about-glass-card">
         
@@ -64,6 +74,7 @@ function PolicyPage() {
         
       </div>
     </div>
+    </>
   );
 }
 

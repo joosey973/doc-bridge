@@ -13,6 +13,7 @@ import TermsofService from "./pages/termsofservice";
 import ContactsPage from "./pages/contacts";
 import PolicyPage from "./pages/policypage";
 import DownloadPage from "./pages/DownloadPage";
+import TeamPage from './pages/TeamPage';
 
 function App(){
   return (
@@ -32,6 +33,7 @@ function App(){
       <Route path="/api/contacts/" element={<ContactsPage/>}/>
       <Route path="/api/policy/" element={<PolicyPage/>}/>
       <Route path="/api/droppage/:fileCode/" element={<DownloadPage />} />
+      <Route path="/api/teampage/" element={<TeamPage />} />
     </Routes>
     </Router>
   );

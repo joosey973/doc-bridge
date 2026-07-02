@@ -36,6 +36,7 @@ function CompressPage({ changePage }) {
   const [isHovered, setIsHovered] = useState(false);
   const isHoveredRef = useRef(isHovered);
   const fileInputRef = useRef(null);
+  const closeMenu = () => setIsOpen(false);
   const getAvatarUrl = () => {
     if (user?.avatar) {
       return `http://localhost:8000${user?.avatar}`;
@@ -524,6 +525,7 @@ function CompressPage({ changePage }) {
           <li><Link to="/api/pastes/" onClick={closeSidebar}>Заметки</Link></li>
           <li><Link to="/api/droppage/" onClick={closeSidebar}>Файлообменник</Link></li>
           <li><Link to="/api/about/" onClick={closeSidebar}>О нас</Link></li>
+          <li><Link to="/api/teampage/" onClick={closeMenu}>Наша команда</Link></li>
           {isAuthenticated ? <li><a href="#" onClick={(e) => { e.preventDefault(); closeMenu(); handleLogout(); }}>Выйти</a></li> : ''}
         </ul>
       </nav>
@@ -783,6 +785,13 @@ function CompressPage({ changePage }) {
           </div>
         </div>
       )}
+      <footer className="bottom-footer" style={{marginTop: '130px'}}>
+              <div className="footer-buttons">
+                <Link to="/api/policy/" className="footer-btn">Политика</Link>
+                <Link to="/api/termsofservice/" className="footer-btn">Условия</Link>
+                <Link to="/api/contacts/" className="footer-btn">Контакты</Link>
+              </div>
+            </footer>
     </>
   );
 }

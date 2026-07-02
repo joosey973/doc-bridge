@@ -51,6 +51,75 @@ function DropPage() {
   });
   const [authError, setAuthError] = useState('');
   const [loadingAuth, setLoadingAuth] = useState(true);
+
+  useEffect(() => {
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      
+      let animationFrameId;
+      let width = (canvas.width = window.innerWidth);
+      let height = (canvas.height = window.innerHeight);
+  
+      const numDigits = 60;
+      const digits = [];
+  
+      for (let i = 0; i < numDigits; i++) {
+        digits.push({
+          x: Math.random() * width,
+          y: Math.random() * height,
+          char: Math.random() > 0.5 ? '1' : '0',
+          size: Math.floor(Math.random() * 6) + 12,
+          speedX: (Math.random() - 0.5) * 0.5,
+          speedY: (Math.random() - 0.5) * 0.5,
+          opacity: Math.random() * 0.3 + 0.1,
+          tick: 0,
+          tickMax: Math.floor(Math.random() * 40) + 20
+        });
+      }
+  
+      const handleResize = () => {
+        if (!canvas) return;
+        width = canvas.width = window.innerWidth;
+        height = canvas.height = window.innerHeight;
+      };
+      window.addEventListener('resize', handleResize);
+  
+      const animate = () => {
+        ctx.clearRect(0, 0, width, height);
+        
+        digits.forEach((d) => {
+          d.x += d.speedX;
+          d.y += d.speedY;
+  
+          d.tick++;
+          if (d.tick >= d.tickMax) {
+            d.speedX = (Math.random() - 0.5) * 0.8;
+            d.speedY = (Math.random() - 0.5) * 0.8;
+            d.char = Math.random() > 0.5 ? '1' : '0';
+            d.tick = 0;
+            d.tickMax = Math.floor(Math.random() * 40) + 20;
+            d.opacity = Math.random() * 0.3 + 0.1;
+          }
+  
+          if (d.x < 0 || d.x > width) d.speedX *= -1;
+          if (d.y < 0 || d.y > height) d.speedY *= -1;
+  
+          ctx.fillStyle = `rgba(0, 0, 0, ${d.opacity})`;
+          ctx.font = `${d.size}px monospace`;
+          ctx.fillText(d.char, d.x, d.y);
+        });
+  
+        animationFrameId = requestAnimationFrame(animate);
+      };
+  
+      animate();
+  
+      return () => {
+        window.removeEventListener('resize', handleResize);
+        cancelAnimationFrame(animationFrameId);
+      };
+    }, []);
   
   useEffect(() => {
         const checkAuth = async () => {
@@ -292,6 +361,7 @@ function DropPage() {
           <li><a href="/api/pastes/" onClick={closeMenu}>Заметки</a></li>
           <li><a href="/api/compress/" onClick={closeMenu}>Сжатие</a></li>
           <li><a href="/api/about/" onClick={closeMenu}>О нас</a></li>
+          <li><Link to="/api/teampage/" onClick={closeMenu}>Наша команда</Link></li>
           {isAuthenticated ? <li><a href="#" onClick={(e) => { e.preventDefault(); closeMenu(); handleLogout(); }}>Выйти</a></li> : ''}
         </ul>
       </nav>
@@ -478,6 +548,13 @@ function DropPage() {
       </div>
     </div>
     </div>
+    <footer className="bottom-footer" style={{marginTop: '200px'}}>
+                  <div className="footer-buttons">
+                    <Link to="/api/policy/" className="footer-btn">Политика</Link>
+                    <Link to="/api/termsofservice/" className="footer-btn">Условия</Link>
+                    <Link to="/api/contacts/" className="footer-btn">Контакты</Link>
+                  </div>
+                </footer>
     </>
   );
 }

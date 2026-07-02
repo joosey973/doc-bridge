@@ -301,6 +301,7 @@ function AboutPage() {
           <li><Link to="/api/pastes/" onClick={closeMenu}>Заметки</Link></li>
           <li><Link to="/api/compress/" onClick={closeMenu}>Сжатие</Link></li>
           <li><Link to="/api/droppage/" onClick={closeMenu}>Файлообменник</Link></li>
+          <li><Link to="/api/teampage/" onClick={closeMenu}>Наша команда</Link></li>
           {isAuthenticated ? <li><a href="#" onClick={(e) => { e.preventDefault(); closeMenu(); handleLogout(); }}>Выйти</a></li> : ''}
         </ul>
       </nav>
@@ -373,30 +374,13 @@ function AboutPage() {
 
         </div>
 
-        {/* Футер */}
-        <footer className="about-page-footer">
-          <section className="about-page-section" style={{ marginBottom: 0 }}>
-            <h2>Контакты для связи</h2>
-            <div className="about-contacts-row">
-              
-              <div className="about-contact-card">
-                <div className="about-contact-label">Email</div>
-                <div className="about-contact-value">docbridge@mail.com</div>
-              </div>
-
-              <div className="about-contact-card">
-                <div className="about-contact-label">Telegram</div>
-                <div className="about-contact-value">@docbridge_bot</div>
-              </div>
-
-              <div className="about-contact-card">
-                <div className="about-contact-label">GitHub</div>
-                <div className="about-contact-value">github.com/docbridge</div>
-              </div>
-
-            </div>
-          </section>
-        </footer>
+        <footer className="bottom-footer" style={{marginTop: '130px'}}>
+                <div className="footer-buttons">
+                  <Link to="/api/policy/" className="footer-btn">Политика</Link>
+                  <Link to="/api/termsofservice/" className="footer-btn">Условия</Link>
+                  <Link to="/api/contacts/" className="footer-btn">Контакты</Link>
+                </div>
+              </footer>
 
       </div>
     </div>

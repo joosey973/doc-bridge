@@ -739,6 +739,7 @@ function Pastes() {
           <li><Link to="/api/compress/" onClick={closeMenu}>Сжатие</Link></li>
           <li><Link to="/api/droppage/" onClick={closeMenu}>Файлообменник</Link></li>
           <li><Link to="/api/about/" onClick={closeMenu}>О нас</Link></li>
+          <li><Link to="/api/teampage/" onClick={closeMenu}>Наша команда</Link></li>
           {isAuthenticated ? <li><a href="#" onClick={(e) => { e.preventDefault(); closeMenu(); handleLogout(); }}>Выйти</a></li> : ''}
         </ul>
       </nav>
@@ -1215,7 +1216,15 @@ function Pastes() {
           </div>
         </div>
       )}
+      <footer className="bottom-footer">
+        <div className="footer-buttons">
+          <Link to="/api/policy/" className="footer-btn">Политика</Link>
+          <Link to="/api/termsofservice/" className="footer-btn">Условия</Link>
+          <Link to="/api/contacts/" className="footer-btn">Контакты</Link>
+        </div>
+      </footer>
     </div>
+    
   );
 }
 
